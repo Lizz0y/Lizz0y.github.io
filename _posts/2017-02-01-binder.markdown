@@ -40,6 +40,7 @@ static struct miscdevice binder_miscdev = {
 
 ### Binder_open(驱动层内)
 创建`binder_procs`并进行初始化一系列哈希列表与红黑树，
+
 * `binder_thread`: `binder_procs`中用来处理请求的线程
 * `binder_node`: binder实体
 
@@ -78,14 +79,13 @@ static int binder_update_page_range(struct binder_proc *proc, int allocate,
   
         BUG_ON(*page);  
         *page = alloc_page(GFP_KERNEL | __GFP_ZERO);  
-        	tmp_area.addr = page_addr;
-		   tmp_area.size = PAGE_SIZE + PAGE_SIZE /* guard page? */;
-		   page_array_ptr = page;
-		   ret = map_vm_area(&tmp_area, PAGE_KERNEL, &page_array_ptr);//完成内核区的映射
-		   user_page_addr =
-			(uintptr_t)page_addr + proc->user_buffer_offset;
-		   ret = vm_insert_page(vma, user_page_addr, page[0]);//更新vma对应的页表，完成用户层的映射
-		}
+        tmp_area.addr = page_addr;
+        tmp_area.size = PAGE_SIZE + PAGE_SIZE /* guard page? */;
+        page_array_ptr = page;
+        ret = map_vm_area(&tmp_area, PAGE_KERNEL, &page_array_ptr);//完成内核区的映射
+        user_page_addr =(uintptr_t)page_addr + proc->user_buffer_offset;
+        ret = vm_insert_page(vma, user_page_addr, page[0]);//更新vma对应的页表，完成用户层的映射
+    }
 }
 ```
 可以看到，映射的时候其实只映射了一块物理页面，因为用户空间和内核虚拟空间不占用实际空间，所以无所谓，而真正的物理页面要按需获取。
@@ -275,6 +275,7 @@ int binder_thread_write(struct binder_proc *proc, struct binder_thread *thread,
 			void __user *buffer, int size, signed long *consumed)
 ```
 这里__user *buffer 是`write_buffer`，先从`write_buffer`用户空间读出cmd，如下：
+
 * BC_INCREFS
 * BC_ACQUIRE
 * BC_RELEASE
@@ -299,17 +300,17 @@ int binder_thread_write(struct binder_proc *proc, struct binder_thread *thread,
 1)先向`read_buffer`放一个BR_NOOP进去
   
   ```c
-if (*consumed == 0) {
-    if (put_user(BR_NOOP, (uint32_t __user *)ptr))
-        return -EFAULT;
-    ptr += sizeof(uint32_t);
-}
+    if (*consumed == 0) {
+        if (put_user(BR_NOOP, (uint32_t __user *)ptr))
+            return -EFAULT;
+        ptr += sizeof(uint32_t);
+    }
   ```
   
   2)检查是否当前线程有工作需要处理
   
   ```c
-  wait_for_proc_work = thread->transaction_stack == NULL &&list_empty(&thread->todo);
+    wait_for_proc_work = thread->transaction_stack == NULL &&list_empty(&thread->todo);
   ```
   如果没有，等会就要去看proc是否有工作需要处理
 
@@ -320,7 +321,7 @@ if (*consumed == 0) {
   `binder_has_thread_work`，没有等待
   
   ```c
-ret = wait_event_freezable_exclusive(proc->wait, binder_has_proc_work(proc, thread));
+    ret = wait_event_freezable_exclusive(proc->wait, binder_has_proc_work(proc, thread));
   ```
 
 总结一下：一个`binder_proc`与`binder_open`绑定，与多个`binder_thread`对应。
