@@ -769,6 +769,7 @@ status_t IPCThreadState::waitForResponse(Parcel *reply, status_t *acquireResult)
         cmd = mIn.readInt32();
 ```
 cmd:
+
 * BR_TRANSACTION_COMPLETE:
 * BR_DEAD_REPLY:
 * BR_FAILED_REPLY:
@@ -838,17 +839,16 @@ if (tr->target.handle) {
     struct binder_ref *ref;
     ref = binder_get_ref(proc, tr->target.handle);
     if (ref == NULL) {
-			binder_user_error("binder: %d:%d got transaction to invalid handle\n",
-					proc->pid, thread->pid);
-			return_error = BR_FAILED_REPLY;
-			goto err_invalid_target_handle;
+        binder_user_error("binder: %d:%d got transaction to invalid handle\n",proc->pid, thread->pid);
+        return_error = BR_FAILED_REPLY;
+        goto err_invalid_target_handle;
 	  }
 	  target_node = ref->node;
 } else {
     target_node = binder_context_mgr_node;
     if (target_node == NULL) {
         return_error = BR_DEAD_REPLY;
-			goto err_no_context_mgr_node;
+        goto err_no_context_mgr_node;
     }
 }
 ```
@@ -862,14 +862,14 @@ target_wait = &target_proc->wait;
 
 ```c
 t = kzalloc(sizeof(*t), GFP_KERNEL);
-	if (t == NULL) {
-		return_error = BR_FAILED_REPLY;
-		goto err_alloc_t_failed;
-	}
-	binder_stats_created(BINDER_STAT_TRANSACTION);
+if (t == NULL) {
+    return_error = BR_FAILED_REPLY;
+    goto err_alloc_t_failed;
+}
+binder_stats_created(BINDER_STAT_TRANSACTION);
 
-	tcomplete = kzalloc(sizeof(*tcomplete), GFP_KERNEL);
-	t->buffer = binder_alloc_buf(target_proc, tr->data_size,  
+tcomplete = kzalloc(sizeof(*tcomplete), GFP_KERNEL);
+t->buffer = binder_alloc_buf(target_proc, tr->data_size,  
 
 ```
 
@@ -895,14 +895,10 @@ if (copy_from_user(offp, tr->data.ptr.offsets, tr->offsets_size)) {
 off_end = (void *)offp + tr->offsets_size;
 for (; offp < off_end; offp++) {
     struct flat_binder_object *fp;
-    if (*offp > t->buffer->data_size - sizeof(*fp) ||
-		    t->buffer->data_size < sizeof(*fp) ||
-		    !IS_ALIGNED(*offp, sizeof(void *))) {
-			binder_user_error("binder: %d:%d got transaction with "
-				"invalid offset, %zd\n",
-				proc->pid, thread->pid, *offp);
-			return_error = BR_FAILED_REPLY;
-			goto err_bad_offset;
+    if (*offp > t->buffer->data_size - sizeof(*fp) ||t->buffer->data_size < sizeof(*fp) ||!IS_ALIGNED(*offp, sizeof(void *))) {
+        binder_user_error("binder: %d:%d got transaction with invalid offset, %zd\n",proc->pid, thread->pid, *offp);
+        return_error = BR_FAILED_REPLY;
+        goto err_bad_offset;
     }
     fp = (struct flat_binder_object *)(t->buffer->data + *offp);
     switch (fp->type) {
@@ -1050,8 +1046,8 @@ err = waitForResponse(reply);
             break;
         }
 ```
-还记得我们在mIn中，放了BR_NOOP，所以也没干啥
-循环再进入talkWithDriver,因为还没读完，所以不需要再读，mOut也为0，所以也不需要写，退出再读cmd为BR_TRANSACTION_COMPLETE，其实也没干啥，再进入talkWithDriver，可以读了，读的时候就wait睡眠了
+还记得我们在mIn中，放了`BR_NOOP`，所以也没干啥
+循环再进入`talkWithDriver`,因为还没读完，所以不需要再读，`mOut`也为0，所以也不需要写，退出再读cmd为`BR_TRANSACTION_COMPLETE`，其实也没干啥，再进入`talkWithDriver`，可以读了，读的时候就wait睡眠了
 
 #### ServiceManager被唤醒
 从队列中取出work,binder_transaction的cmd为BINDER_WORK_TRANSACTION
@@ -1064,10 +1060,10 @@ tr.data.ptr.offsets = tr.data.ptr.buffer +
 					ALIGN(t->buffer->data_size,
 					    sizeof(void *));
 if (put_user(cmd, (uint32_t __user *)ptr))
-		return -EFAULT;
+    return -EFAULT;
 ptr += sizeof(uint32_t);
 if (copy_to_user(ptr, &tr, sizeof(tr)))
-		return -EFAULT;
+    return -EFAULT;
 ```
 
 binder完美的只拷贝了一次，从用户层到内核层，这里从内核到用户没有进行拷贝，而是用了偏移量增加。
@@ -1080,6 +1076,7 @@ binder完美的只拷贝了一次，从用户层到内核层，这里从内核�
 `res = binder_parse(bs, 0, readbuf, bwr.read_consumed, func);`
 
 ###### binder_parse
+
 ```c
 int binder_parse(struct binder_state *bs, struct binder_io *bio,
                  uint32_t *ptr, uint32_t size, binder_handler func)
@@ -1122,13 +1119,15 @@ int binder_parse(struct binder_state *bs, struct binder_io *bio,
 
 这里ptr是`read_buffer`
 仔细研究一下四部曲：
+
 ```c
 bio_init(&reply, rdata, sizeof(rdata), 4);  
 bio_init_from_txn(&msg, txn);  
 res = func(bs, txn, &msg, &reply);  
 binder_send_reply(bs, &reply, txn->data, res);  
 ```
-1.`bio_init(&reply, rdata, sizeof(rdata), 4);`
+
+1. `bio_init(&reply, rdata, sizeof(rdata), 4);`
 
 `binder_txn`与`binder_io`其实都是与`binder_transaction_data`差不多的数据结构
 
@@ -1153,7 +1152,8 @@ void bio_init(struct binder_io *bio, void *data,
 }  
 ```
 可以看出，读了4个字节，所以reply->data是data开始的4个字节以后，reply->data_avail是maxdata-4个字节 这里4个字节因为还有个cmd= =
-2.`bio_init_from_txn(&msg,txn)`
+
+2. `bio_init_from_txn(&msg,txn)`
 
 ```c
 void bio_init_from_txn(struct binder_io *bio, struct binder_txn *txn)  
@@ -1165,7 +1165,8 @@ void bio_init_from_txn(struct binder_io *bio, struct binder_txn *txn)
     bio->flags = BIO_F_SHARED;  
 }  
 ```
-3.func(bs, txn, &msg, &reply);
+
+3. func(bs, txn, &msg, &reply);
 
 ```c
 int svcmgr_handler(struct binder_state *bs,
@@ -1472,7 +1473,7 @@ return finish_unflatten_binder(static_cast<BpBinder*>(out->get()), *flat, in);
 又跟以前差不多，返回`gDefaultServiceManager = new BpServiceManager(new BpBinder(0));`
 这里返回`BpServiceManager(new BpBinder(handle))`
 
-### C接口
+### Java接口
 
 #### ServiceManager接口
 
