@@ -1127,7 +1127,7 @@ res = func(bs, txn, &msg, &reply);
 binder_send_reply(bs, &reply, txn->data, res);  
 ```
 
-1. `bio_init(&reply, rdata, sizeof(rdata), 4);`
+1)`bio_init(&reply, rdata, sizeof(rdata), 4);`
 
 `binder_txn`与`binder_io`其实都是与`binder_transaction_data`差不多的数据结构
 
@@ -1153,7 +1153,7 @@ void bio_init(struct binder_io *bio, void *data,
 ```
 可以看出，读了4个字节，所以reply->data是data开始的4个字节以后，reply->data_avail是maxdata-4个字节 这里4个字节因为还有个cmd= =
 
-2. `bio_init_from_txn(&msg,txn)`
+2)`bio_init_from_txn(&msg,txn)`
 
 ```c
 void bio_init_from_txn(struct binder_io *bio, struct binder_txn *txn)  
@@ -1166,7 +1166,7 @@ void bio_init_from_txn(struct binder_io *bio, struct binder_txn *txn)
 }  
 ```
 
-3. func(bs, txn, &msg, &reply);
+3)func(bs, txn, &msg, &reply);
 
 ```c
 int svcmgr_handler(struct binder_state *bs,
@@ -1200,7 +1200,7 @@ int svcmgr_handler(struct binder_state *bs,
 
 也就是`ptr=bio_get_ref(msg)`，得到service引用，在`do_add_service`中，把引用加入到`ServiceManager`的管理中。
 
-4. `binder_send_reply(bs, &reply, txn->data, res);`
+4)`binder_send_reply(bs, &reply, txn->data, res);`
 用户层通知驱动层已经完成任务
 
 ```c
@@ -1386,8 +1386,8 @@ virtual sp<IBinder> checkService( const String16& name) const{
 }
 ```
     
-    后面一系列其实都跟`addService类似`，区别:
-    在ServiceManager处理过程中，会去已经注册的service name中寻找是否有当前的request name handler,找到后,放到reply中:
+后面一系列其实都跟`addService类似`，区别:
+在ServiceManager处理过程中，会去已经注册的service name中寻找是否有当前的request name handler,找到后,放到reply中:
     
 ```c
     void bio_put_ref(struct binder_io *bio, void *ptr)  {  
