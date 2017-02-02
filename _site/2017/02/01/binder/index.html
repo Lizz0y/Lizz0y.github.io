@@ -186,6 +186,7 @@
 </code></pre>
 </div>
 <p>在驱动程序注册的入口 <code class="highlighter-rouge">__init binder_init</code>中，<code class="highlighter-rouge">misc_register</code>将生成<code class="highlighter-rouge">/dev/binder</code>接口供用户层调用，并且将<code class="highlighter-rouge">open</code>等系统调用与<code class="highlighter-rouge">fops</code>绑定。</p>
+
 <h3 id="binder_open驱动层内">Binder_open(驱动层内)</h3>
 <p>创建<code class="highlighter-rouge">binder_procs</code>并进行初始化一系列哈希列表与红黑树，</p>
 <ul>
@@ -214,8 +215,10 @@
 <span class="p">}</span>  
 </code></pre>
 </div>
+
 <h4 id="binder_buffer">binder_buffer</h4>
 <p>binder驱动程序的内存结构</p>
+
 <h5 id="binder_update_page_range">binder_update_page_range</h5>
 
 <div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="kt">int</span> <span class="n">binder_update_page_range</span><span class="p">(</span><span class="k">struct</span> <span class="n">binder_proc</span> <span class="o">*</span><span class="n">proc</span><span class="p">,</span> <span class="kt">int</span> <span class="n">allocate</span><span class="p">,</span>  
@@ -905,6 +908,7 @@
 </code></pre>
 </div>
 <p>注意，这里tr.offset_size是count<em>sizeof(size_t),offsets是mObject数组，size_t</em></p>
+
 <h4 id="cmdbc_transaction">cmd:BC_TRANSACTION</h4>
 
 <div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="n">status_t</span> <span class="n">IPCThreadState</span><span class="o">::</span><span class="n">waitForResponse</span><span class="p">(</span><span class="n">Parcel</span> <span class="o">*</span><span class="n">reply</span><span class="p">,</span> <span class="n">status_t</span> <span class="o">*</span><span class="n">acquireResult</span><span class="p">)</span>
@@ -1636,6 +1640,7 @@ target_wait = &amp;target_proc-&gt;wait;
 这里返回<code class="highlighter-rouge">BpServiceManager(new BpBinder(handle))</code></p>
 
 <h3 id="c接口">C接口</h3>
+
 <h4 id="servicemanager接口">ServiceManager接口</h4>
 
 <h5 id="初始化">初始化</h5>
@@ -2026,10 +2031,6 @@ Binder，进程通信的... | Lizz0y's Notes " >
 
 
                 <ul class="pager">
-                    
-                    <li class="previous">
-                        <a href="/2015/09/22/js-versia/" data-toggle="tooltip" data-placement="top" title="Example Post">&larr; Previous Post</a>
-                    </li>
                     
                     
                 </ul>

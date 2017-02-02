@@ -37,6 +37,7 @@ static struct miscdevice binder_miscdev = {
 };
 ```
 在驱动程序注册的入口 `__init binder_init`中，`misc_register`将生成`/dev/binder`接口供用户层调用，并且将`open`等系统调用与`fops`绑定。
+
 ### Binder_open(驱动层内)
 创建`binder_procs`并进行初始化一系列哈希列表与红黑树，
 * `binder_thread`: `binder_procs`中用来处理请求的线程
@@ -61,8 +62,10 @@ if (binder_update_page_range(proc, 1, proc->buffer, proc->buffer + PAGE_SIZE, vm
     goto err_alloc_small_buf_failed;  
 }  
 ```
+
 #### binder_buffer
 binder驱动程序的内存结构
+
 ##### binder_update_page_range
 
 ```c
@@ -745,6 +748,7 @@ status_t IPCThreadState::writeTransactionData(int32_t cmd, uint32_t binderFlags,
 }
 ```
 注意，这里tr.offset_size是count*sizeof(size_t),offsets是mObject数组，size_t*
+
 #### cmd:BC_TRANSACTION
 
 ```c
@@ -1466,6 +1470,7 @@ return finish_unflatten_binder(static_cast<BpBinder*>(out->get()), *flat, in);
 这里返回`BpServiceManager(new BpBinder(handle))`
 
 ### C接口
+
 #### ServiceManager接口
 
 ##### 初始化
