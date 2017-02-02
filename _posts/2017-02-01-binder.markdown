@@ -711,6 +711,7 @@ err = waitForResponse(reply);
 
 ##### writeTransactionData
 作用:写入handle句柄，构建`binder_transaction_data`，往`mOut`中写入tr
+
 ```c
 status_t IPCThreadState::writeTransactionData(int32_t cmd, uint32_t binderFlags,
     int32_t handle, uint32_t code, const Parcel& data, status_t* statusBuffer)
@@ -747,6 +748,7 @@ status_t IPCThreadState::writeTransactionData(int32_t cmd, uint32_t binderFlags,
     return NO_ERROR;
 }
 ```
+
 注意，这里tr.offset_size是count*sizeof(size_t),offsets是mObject数组，size_t*
 
 #### cmd:BC_TRANSACTION
