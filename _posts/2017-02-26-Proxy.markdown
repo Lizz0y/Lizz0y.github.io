@@ -1,0 +1,591 @@
+---
+layout:     post
+title:      "代理机制"
+date:       2017-02-26
+author:     "Liz"
+header-img: "img/2017-02-01-binder/pic.jpeg"
+tags:
+    - Android 
+    - Proxy
+    - Hook
+---
+
+### 代理
+
+#### 静态代理
+静态代理就是实现接口,将原始接口Impl当成参数传入
+
+```java
+public interface Shopping {
+    Object[] doShopping(long money);
+}
+public class ShoppingImpl implements Shopping {
+    @Override
+    public Object[] doShopping(long money) {
+        System.out.println("逛淘宝 ,逛商场,买买买!!");
+        System.out.println(String.format("花了%s块钱", money));
+        return new Object[] { "鞋子", "衣服", "零食" };
+    }
+}
+public class ProxyShopping implements Shopping {
+
+    Shopping base;
+
+    ProxyShopping(Shopping base) {
+        this.base = base;
+    }
+
+    @Override
+    public Object[] doShopping(long money) {
+
+        // 先黑点钱(修改输入参数)
+        long readCost = (long) (money * 0.5);
+
+        System.out.println(String.format("花了%s块钱", readCost));
+
+        // 帮忙买东西
+        Object[] things = base.doShopping(readCost);
+
+        // 偷梁换柱(修改返回值)
+        if (things != null && things.length > 1) {
+            things[0] = "被掉包的东西!!";
+        }
+
+        return things;
+    }
+}
+```
+
+`Shopping`是接口,`ShoppingImpl`是接口Impl。将`Impl`当成参数传入代理`ProxyShopping`,代理就能在真实调用前和后做一些事情,`base.doShopping`就是真实的调用。
+![](/img/2017-02-26-proxy/14880782089927.jpg)
+
+#### 动态代理
+
+```java
+import java.lang.reflect.InvocationHandler;  
+import java.lang.reflect.Method;  
+import java.lang.reflect.Proxy;  
+ 
+//抽象主题类,这里不能用abstract抽象类，一定要是interface  
+interface AbstractSubject {  
+    public abstract void request();  
+}  
+ 
+// 真实主题类，即被代理类  
+class RealSubject implements AbstractSubject {  
+    public void request() {  
+        System.out.println("RealSubject's request() ...");  
+    }  
+}  
+ 
+// 动态代理类，实现InvocationHandler接口  
+class DynamicProxy implements InvocationHandler {  
+ 
+    // 被代理类的实例  
+    Object obj = null;  
+ 
+    // 将被代理者的实例传进动态代理类的构造函数中  
+    public DynamicProxy(Object obj) {  
+        this.obj = obj;  
+    }  
+ 
+    /**  
+     * 覆盖InvocationHandler接口中的invoke()方法  
+     *   
+     * 更重要的是，动态代理模式可以使得我们在不改变原来已有的代码结构  
+     * 的情况下，对原来的“真实方法”进行扩展、增强其功能，并且可以达到  
+     * 控制被代理对象的行为，下面的before、after就是我们可以进行特殊  
+     * 代码切入的扩展点了。  
+     */ 
+    public Object invoke(Object proxy, Method method, Object[] args)  
+            throws Throwable {  
+        /*  
+         * before ：doSomething();  
+         */ 
+        Object result = method.invoke(this.obj, args);  
+          
+        /*  
+         * after : doSomething();  
+         */ 
+        return result;  
+    }  
+}  
+ 
+// 测试类  
+public class Client {  
+    public static void main(String[] args) {  
+ 
+        // 被代理类的实例  
+        AbstractSubject realSubject = new RealSubject();  
+ 
+        // 获得被代理类的类加载器，使得JVM能够加载并找到被代理类的内部结构，以及已实现的interface  
+        ClassLoader loader = realSubject.getClass().getClassLoader();  
+ 
+        // 获得被代理类已实现的所有接口interface,使得动态代理类的实例  
+        Class<?>[] interfaces = realSubject.getClass().getInterfaces();  
+ 
+        // 用被代理类的实例创建动态代理类的实例，用于真正调用处理程序  
+        InvocationHandler handler = new DynamicProxy(realSubject);  
+ 
+        /*  
+         * loader : 被代理类的类加载器  
+         * interfaces ：被代理类已实现的所有接口，而这些是动态代理类要实现的接口列表  
+         * handler ： 用被代理类的实例创建动态代理类的实例，用于真正调用处理程序  
+         *   
+         * return ：返回实现了被代理类所实现的所有接口的Object对象，即动态代理，需要强制转型  
+         */ 
+        //获得代理的实例  
+        AbstractSubject proxy = (AbstractSubject) Proxy.newProxyInstance(  
+                loader, interfaces, handler);  
+ 
+        proxy.request();  
+        //打印出该代理实例的名称  
+        System.out.println(proxy.getClass().getName());  
+    }  
+} 
+```
+
+分析:
+`InvocationHandler`最主要的方法即为`invoke()`,通常在该方法中实现对委托类的代理访问。
+通过一个`ClassLoader`与一组接口`interface`来创建动态代理类
+
+以下是重要的静态方法
+
+```java
+// 方法 1: 该方法用于获取指定代理对象所关联的调用处理器
+static InvocationHandler getInvocationHandler(Object proxy) 
+
+// 方法 2：该方法用于获取关联于指定类装载器和一组接口的动态代理类的类对象
+static Class getProxyClass(ClassLoader loader, Class[] interfaces) 
+
+// 方法 3：该方法用于判断指定类对象是否是一个动态代理类
+static boolean isProxyClass(Class cl) 
+
+// 方法 4：该方法用于为指定类装载器、一组接口及调用处理器生成动态代理类实例
+static Object newProxyInstance(ClassLoader loader, Class[] interfaces, 
+    InvocationHandler h)
+```
+
+实现动态代理步骤:
+
+* 通过实现 InvocationHandler 接口创建自己的调用处理器；
+* 通过为 Proxy 类指定 ClassLoader 对象和一组 interface 来创建动态代理类；
+* 通过反射机制获得动态代理类的构造函数，其唯一参数类型是调用处理器接口类型；
+* 通过构造函数创建动态代理类实例，构造时调用处理器对象作为参数被传入。
+
+```java
+// InvocationHandlerImpl 实现了 InvocationHandler 接口，并能实现方法调用从代理类到委托类的分派转发
+// 其内部通常包含指向委托类实例的引用，用于真正执行分派转发过来的方法调用
+InvocationHandler handler = new InvocationHandlerImpl(..); 
+
+// 通过 Proxy 为包括 Interface 接口在内的一组接口动态创建代理类的类对象
+Class clazz = Proxy.getProxyClass(classLoader, new Class[] { Interface.class, ... }); 
+
+// 通过反射从生成的类对象获得构造函数对象
+Constructor constructor = clazz.getConstructor(new Class[] { InvocationHandler.class }); 
+
+// 通过构造函数对象创建动态代理类实例
+Interface Proxy = (Interface)constructor.newInstance(new Object[] { handler });
+```
+
+这个与前面的例子不大一样,是因为`newProxyInstance`为我们进行了封装
+
+```java
+ AbstractSubject proxy = (AbstractSubject) Proxy.newProxyInstance(  
+                loader, interfaces, handler);  
+```
+
+![](/img/2017-02-26-proxy/14880809556091.jpg)
+
+![](/img/2017-02-26-proxy/14880810477854.jpg)
+
+* 上图看出代理类修饰符为final&public,不能被再度继承
+* 类名格式为$ProxyN
+
+如果对同一组接口重复创建动态代理类,会返回同一个。只有当接口变了,N才会递增。
+
+![](/img/2017-02-26-proxy/14880811477639.jpg)
+
+注意点:
+
+* 不能有重复的接口，以避免动态代理类代码生成时的编译错误。
+* 这些接口对于类装载器必须可见，否则类装载器将无法链接它们，将会导致类定义失败
+* 需被代理的所有非 public 的接口必须在同一个包中，否则代理类生成也会失败
+* 接口的数目不能超过 65535，这是 JVM 设定的限制。
+
+##### 原理
+
+```java
+public static Object newProxyInstance(ClassLoader loader, 
+            Class<?>[] interfaces, 
+            InvocationHandler h) 
+            throws IllegalArgumentException { 
+    
+    // 检查 h 不为空，否则抛异常
+    if (h == null) { 
+        throw new NullPointerException(); 
+    } 
+
+    // 获得与制定类装载器和一组接口相关的代理类类型对象
+    Class cl = getProxyClass(loader, interfaces); 
+
+    // 通过反射获取构造函数对象并生成代理类实例
+    try { 
+        Constructor cons = cl.getConstructor(constructorParams); 
+        return (Object) cons.newInstance(new Object[] { h }); 
+    } catch (NoSuchMethodException e) { throw new InternalError(e.toString()); 
+    } catch (IllegalAccessException e) { throw new InternalError(e.toString()); 
+    } catch (InstantiationException e) { throw new InternalError(e.toString()); 
+    } catch (InvocationTargetException e) { throw new InternalError(e.toString()); 
+    } 
+}
+```
+
+`getProxyClass(loader,insterfaces)`
+
+1. 安全检查
+
+检查通过后将会得到一个包含所有接口名称的字符串数组，记为 String[] interfaceNames。
+
+2. 映射表
+```
+// 映射表：用于维护类装载器对象到其对应的代理类缓存
+private static Map loaderToCache = new WeakHashMap(); 
+```
+通过loader获取缓存表,它将存放键值对（接口名字列表，动态生成的代理类的类对象引用）
+
+3. 动态生成类
+
+> 动态创建代理类的类对象。首先是确定代理类所在的包，其原则如前所述，如果都为 public 接口，则包名为空字符串表示顶层包；如果所有非 public 接口都在同一个包，则包名与这些接口的包名相同；如果有多个非 public 接口且不同包，则抛异常终止代理类的生成。确定了包后，就开始生成代理类的类名，同样如前所述按格式“$ProxyN”生成。类名也确定了
+
+```java
+// 动态地生成代理类的字节码数组
+byte[] proxyClassFile = ProxyGenerator.generateProxyClass( proxyName, interfaces); 
+try { 
+    // 动态地定义新生成的代理类
+    proxyClass = defineClass0(loader, proxyName, proxyClassFile, 0, 
+        proxyClassFile.length); 
+} catch (ClassFormatError e) { 
+    throw new IllegalArgumentException(e.toString()); 
+} 
+// 把生成的代理类的类对象记录进 proxyClasses 表
+proxyClasses.put(proxyClass, null);
+```
+Proxy 静态方法生成动态代理类同样需要通过类装载器来进行装载才能使用，它与普通类的唯一区别就是其字节码是由 JVM 在运行时动态生成的而非预存在于任何一个 .class 文件中
+
+4. 更新缓存表
+
+
+#### 实际运行时
+
+```java
+r = handler.invoke(this, method, 
+    // 对于原始类型参数需要进行装箱操作
+    new Object[] {new Integer(arg1), new Long(arg2), arg3});
+```
+在`invoke()`中,如果有调用原始方法,用`method.invoke(base,arg)`即可               
+                
+### 缺陷
+> 动态代理始终无法摆脱仅支持 interface 代理的桎梏，因为它的设计注定了这个遗憾。回想一下那些动态生成的代理类的继承关系图，它们已经注定有一个共同的父类叫 Proxy。Java 的继承机制注定了这些动态代理类们无法实现对 class 的动态代理，因为Java没有多继承啊摔
+
+### 实例
+没有实例总觉得不能真正理解动态代理的精髓,当它用在插件与hook上时,才会发现动态代理有多么美妙
+
+动态代理的本质:
+对于一系列接口,生成一个代理类,一般把原始接口实现类通过handler传给代理类,代理类帮助原始类运行接口,自然而然可以运用在Hook上。
+
+`weishu`的`BinderHook`是个很好的例子。
+
+#### 替换剪贴板内容
+
+在`ClipboardManager`中:
+```Java
+static private IClipboard getService() {
+        synchronized (sStaticLock) {
+            if (sService != null) {
+                return sService;
+            }
+            IBinder b = ServiceManager.getService("clipboard");
+            sService = IClipboard.Stub.asInterface(b);
+            return sService;
+        }
+    }
+```
+```java
+public interface IClipboard extends android.os.IInterface
+{
+/** Local-side IPC implementation stub class. */
+public static abstract class Stub extends android.os.Binder implements android.content.IClipboard
+{
+private static final java.lang.String DESCRIPTOR = "android.content.IClipboard";
+/** Construct the stub at attach it to the interface. */
+public Stub()
+{
+this.attachInterface(this, DESCRIPTOR);
+}
+/**
+ * Cast an IBinder object into an android.content.IClipboard interface,
+ * generating a proxy if needed.
+ */
+public static android.content.IClipboard asInterface(android.os.IBinder obj)
+{
+if ((obj==null)) {
+return null;
+}
+android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);
+if (((iin!=null)&&(iin instanceof android.content.IClipboard))) {
+return ((android.content.IClipboard)iin);
+}
+return new android.content.IClipboard.Stub.Proxy(obj);
+}
+```
+所以按`weishu`的思路,我们要进行Hook,可以替换`asInterface`中的obj,实现自己的`queryLocalInterface`。Lucky Enough，obj是一个IBinder接口,可以使用动态代理进行替换。
+
+所以我们要实现两次动态代理:
+1.替换`Ibinder b`,在自己实现的IBinder中定义新的`queryLocalInterface`
+2.在上述的`queryLocalInterface`中,返回新的`private static IClipboard sService`
+
+这里回顾一下动态代理的初衷,就是把接口实现类进行代理,在自己的类中可以完成接口的新实现。所以这里可以对IBinder代理,完成`queryLocalInterface`的新实现;可以对IClipboard进行代理,完成剪贴等功能的新实现。
+
+
+这里看`IBinder b = ServiceManager.getService("clipboard");`
+不能替换静态方法,但是在getService内部
+
+```java
+    public static IBinder getService(String name) {
+        try {
+            IBinder service = sCache.get(name);
+            if (service != null) {
+                return service;
+            } else {
+                return getIServiceManager().getService(name);
+            }
+        } catch (RemoteException e) {
+            Log.e(TAG, "error in getService", e);
+        }
+        return null;
+    }
+```
+可以看到用了一个缓存,用反射把这个缓存内容替换即可。
+
+```java
+public static void hookClipboardService() throws Exception {
+
+        final String CLIPBOARD_SERVICE = "clipboard";
+
+        // 下面这一段的意思实际就是: ServiceManager.getService("clipboard");
+        // 只不过 ServiceManager这个类是@hide的
+        Class<?> serviceManager = Class.forName("android.os.ServiceManager");
+        Method getService = serviceManager.getDeclaredMethod("getService", String.class);
+
+        // ServiceManager里面管理的原始的Clipboard Binder对象
+        // 一般来说这是一个Binder代理对象
+        IBinder rawBinder = (IBinder) getService.invoke(null, CLIPBOARD_SERVICE);
+
+        // Hook 掉这个Binder代理对象的 queryLocalInterface 方法
+        // 然后在 queryLocalInterface 返回一个IInterface对象, hook掉我们感兴趣的方法即可.
+        IBinder hookedBinder = (IBinder) Proxy.newProxyInstance(serviceManager.getClassLoader(),
+                new Class<?>[] { IBinder.class },
+                new BinderProxyHookHandler(rawBinder));
+
+        // 把这个hook过的Binder代理对象放进ServiceManager的cache里面
+        // 以后查询的时候 会优先查询缓存里面的Binder, 这样就会使用被我们修改过的Binder了
+        Field cacheField = serviceManager.getDeclaredField("sCache");
+        cacheField.setAccessible(true);
+        Map<String, IBinder> cache = (Map) cacheField.get(null);
+        cache.put(CLIPBOARD_SERVICE, hookedBinder);
+    }
+```
+
+```
+ Field cacheField = serviceManager.getDeclaredField("sCache");
+        cacheField.setAccessible(true);
+        Map<String, IBinder> cache = (Map) cacheField.get(null);
+        cache.put(CLIPBOARD_SERVICE, hookedBinder);
+```
+这里在sCache中,对应剪贴板服务,返回一个新的服务(本地服务或服务代理,其实一样啦)。
+再看这个代理IBinder:
+
+```java
+public class BinderProxyHookHandler implements InvocationHandler {
+
+    private static final String TAG = "BinderProxyHookHandler";
+
+    // 绝大部分情况下,这是一个BinderProxy对象
+    // 只有当Service和我们在同一个进程的时候才是Binder本地对象
+    // 这个基本不可能
+    IBinder base;
+
+    Class<?> stub;
+
+    Class<?> iinterface;
+
+    public BinderProxyHookHandler(IBinder base) {
+        this.base = base;
+        try {
+            this.stub = Class.forName("android.content.IClipboard$Stub");
+            this.iinterface = Class.forName("android.content.IClipboard");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+        if ("queryLocalInterface".equals(method.getName())) {
+
+            Log.d(TAG, "hook queryLocalInterface");
+
+            // 这里直接返回真正被Hook掉的Service接口
+            // 这里的 queryLocalInterface 就不是原本的意思了
+            // 我们肯定不会真的返回一个本地接口, 因为我们接管了 asInterface方法的作用
+            // 因此必须是一个完整的 asInterface 过的 IInterface对象, 既要处理本地对象,也要处理代理对象
+            // 这只是一个Hook点而已, 它原始的含义已经被我们重定义了; 因为我们会永远确保这个方法不返回null
+            // 让 IClipboard.Stub.asInterface 永远走到if语句的else分支里面
+            return Proxy.newProxyInstance(proxy.getClass().getClassLoader(),
+
+                    // asInterface 的时候会检测是否是特定类型的接口然后进行强制转换
+                    // 因此这里的动态代理生成的类型信息的类型必须是正确的
+
+                    // 这里面Hook的是一个BinderProxy对象(Binder代理) (代理Binder的queryLocalInterface正常情况下是返回null)
+                    // 因此, 正常情况下 在asInterface里面会由于BinderProxy的queryLocalInterface返回null导致系统创建一个匿名的代理对象, 这样我们就无法控制了
+                    // 所以我们要伪造一个对象, 瞒过这个if检测, 使得系统把这个queryLocalInterface返回的对象透传给asInterface的返回值;
+                    // 检测有两个要求, 其一: 非空, 其二, IXXInterface类型。
+                    // 所以, 其实返回的对象不需要是Binder对象, 我们把它当作普通的对象Hook掉就ok(拦截这个对象里面对于IXXInterface相关方法的调用)
+                    // tks  jeremyhe_cn@qq.com
+                    new Class[] { this.iinterface },
+                    new BinderHookHandler(base, stub));
+        }
+
+        Log.d(TAG, "method:" + method.getName());
+        return method.invoke(base, args);
+    }
+}
+
+
+```
+先看invoke(),对于它的`queryLocalInterface`,会返回一个IClipBoard代理类。
+
+```java
+public class BinderHookHandler implements InvocationHandler {
+
+    private static final String TAG = "BinderHookHandler";
+
+    // 原始的Service对象 (IInterface)
+    Object base;
+
+    public BinderHookHandler(IBinder base, Class<?> stubClass) {
+        try {
+            Method asInterfaceMethod = stubClass.getDeclaredMethod("asInterface", IBinder.class);
+            // IClipboard.Stub.asInterface(base);
+            this.base = asInterfaceMethod.invoke(null, base);
+        } catch (Exception e) {
+            throw new RuntimeException("hooked failed!");
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+        // 把剪切版的内容替换为 "you are hooked"
+        if ("getPrimaryClip".equals(method.getName())) {
+            Log.d(TAG, "hook getPrimaryClip");
+            return ClipData.newPlainText(null, "you are hooked");
+        }
+
+        // 欺骗系统,使之认为剪切版上一直有内容
+        if ("hasPrimaryClip".equals(method.getName())) {
+            return true;
+        }
+
+        return method.invoke(base, args);
+    }
+}
+
+```
+
+在代理IClipBoard类中,invoke遇到具体的service调用函数时,我们可以自由发挥,做到完美hook。
+
+注意:
+
+```java
+this.stub = Class.forName("android.content.IClipboard$Stub");
+this.iinterface = Class.forName("android.content.IClipboard");
+
+Method asInterfaceMethod = stubClass.getDeclaredMethod("asInterface", IBinder.class);
+// IClipboard.Stub.asInterface(base);
+this.base = asInterfaceMethod.invoke(null, base);
+
+```
+#### 总结
+
+
+
+```java
+return Proxy.newProxyInstance(proxy.getClass().getClassLoader(),new Class[] { this.iinterface },
+                    new BinderHookHandler(base, stub));
+```
+第一个参数目前看来无所谓,随便指定个classLoader即可
+第二个参数是要被代理的接口
+第三个参数handler,一般传入base代理类,在内部invoke中实现对method的任意蹂躏。
+
+所以在剪贴板案例中,
+
+```Java
+static private IClipboard getService() {
+        synchronized (sStaticLock) {
+            if (sService != null) {
+                return sService;
+            }
+            IBinder b = ServiceManager.getService("clipboard");
+            sService = IClipboard.Stub.asInterface(b);
+            return sService;
+        }
+    }
+```
+```java
+public interface IClipboard extends android.os.IInterface
+{
+public static android.content.IClipboard asInterface(android.os.IBinder obj)
+{
+if ((obj==null)) {
+return null;
+}
+android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);
+if (((iin!=null)&&(iin instanceof android.content.IClipboard))) {
+return ((android.content.IClipboard)iin);
+}
+return new android.content.IClipboard.Stub.Proxy(obj);
+}
+```
+替换了IBinder的queryLocalInterface,出现第一个动态代理;
+替换了IClipboard的service函数,出现第二个动态代理
+
+### 插件Activity的实现
+
+简要分析一下Activity启动过程:
+
+![](/img/2017-02-26-proxy/14881008275563.png)
+
+从这张图可以看出,在应用进程startActivity,AMS只负责控制生命周期,做一些安全检查,最终还是回调到应用进程反射创建Activity与实现周期变化
+
+插件Activity的难处在于你的Activity都要在manifest里注册,所以可以先注册一个fakeActivity，然后再通过hook实现realActivity的启动与生命周期变换。
+
+
+```java
+
+int result = ActivityManagerNative.getDefault().startActivity(whoThread, who.getBasePackageName(), intent,intent.resolveTypeIfNeeded(who.getContentResolver()),token, target != null ? target.mEmbeddedID : null,requestCode, 0, null, null, options);
+                
+```
+
+可以看到,使用AMS的proxy来进行startActivity，因此把IActivityManager这个接口hook掉,即可实现realActivity->fakeActivity->ams的过程。
+
+因为最终App进程的ApplicationThread通过handler与ActivityThread交互,所以通过代理重写handler,即可实现fakeActivity->create new realActivity的过程。
+
+### 未完待续
+
+关于生命周期暂时延后,等分析完全部四大组件的sourceCode再继续。
+
+
