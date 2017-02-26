@@ -5,13 +5,15 @@
     <description>永远好奇，永远敬畏</description>
     <link>http://localhost:5001/</link>
     <atom:link href="http://localhost:5001/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Sun, 26 Feb 2017 19:33:57 +0800</pubDate>
-    <lastBuildDate>Sun, 26 Feb 2017 19:33:57 +0800</lastBuildDate>
+    <pubDate>Sun, 26 Feb 2017 19:40:20 +0800</pubDate>
+    <lastBuildDate>Sun, 26 Feb 2017 19:40:20 +0800</lastBuildDate>
     <generator>Jekyll v3.4.0</generator>
     
       <item>
         <title>代理机制</title>
         <description>&lt;h3 id=&quot;代理&quot;&gt;代理&lt;/h3&gt;
+
+&lt;p&gt;最近想学习插件机制和Hook原理,决定从droidPlugin开始。以下资料多来自&lt;a href=&quot;http://weishu.me&quot;&gt;weishu&lt;/a&gt;与IBM资料,附带一些自己的理解,希望可以共同学习。&lt;/p&gt;
 
 &lt;h4 id=&quot;静态代理&quot;&gt;静态代理&lt;/h4&gt;
 &lt;p&gt;静态代理就是实现接口,将原始接口Impl当成参数传入&lt;/p&gt;
