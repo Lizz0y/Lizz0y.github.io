@@ -1,0 +1,473 @@
+---
+layout:     post
+title:      "Serivice启动机制"
+date:       2017-02-28
+author:     "Liz"
+header-img: "img/2017-02-01-binder/pic.jpeg"
+tags:
+    - Android 
+    - Proxy
+    - Hook
+---
+
+>ContextWrapper.java
+
+```java
+@Override
+public ComponentName startService(Intent service) {
+    return mBase.startService(service);
+}
+```    
+
+`mBase:ContextImpl`
+
+>ContextImpl.java
+
+```java
+private ComponentName startServiceCommon(Intent service, UserHandle user) {
+    try {
+        validateServiceIntent(service);
+        service.prepareToLeaveProcess();
+        ComponentName cn = ActivityManagerNative.getDefault().startService(mMainThread.getApplicationThread(), service,service.resolveTypeIfNeeded(getContentResolver()), user.getIdentifier());
+        ......
+        } 
+    catch (RemoteException e) {
+            return null;
+        }
+    }
+```
+
+
+* `getApplicationThread()`就是`ActivityThread$ApplicationThread`
+* `resolveType`是返回`MIME` 但一般正常的app都是null
+* `user.getIdentifier()`调试下来还都是0
+
+#### getDefault():
+通过`ActivityManagerNative.getDefault()`拿到AMS的代理binder:
+
+```java
+private static final Singleton<IActivityManager> gDefault = new Singleton<IActivityManager>() {
+    protected IActivityManager create() {
+        IBinder b = ServiceManager.getService("activity");
+        if (false) {
+            Log.v("ActivityManager", "default service binder = " + b);
+        }
+        IActivityManager am = asInterface(b);
+        if (false) {
+            Log.v("ActivityManager", "default service = " + am);
+        }
+        return am;
+    }
+};
+
+```
+我们看到,4.4已经变成了单例模式,因为经常调用AMS代理,所以干脆搞个单例省的老是去`get/asInterface`
+
+>ActivityManagerNative.java
+
+
+```java  
+public ComponentName startService(IApplicationThread caller, Intent service,String resolvedType, int userId) throws RemoteException{
+    Parcel data = Parcel.obtain();
+    Parcel reply = Parcel.obtain();
+    data.writeInterfaceToken(IActivityManager.descriptor);
+    data.writeStrongBinder(caller != null ? caller.asBinder() : null);
+    service.writeToParcel(data, 0);
+    data.writeString(resolvedType);
+    data.writeInt(userId);
+    mRemote.transact(START_SERVICE_TRANSACTION, data, reply, 0);
+    reply.readException();
+    ComponentName res = ComponentName.readFromParcel(reply);
+    data.recycle();
+    reply.recycle();
+    return res;
+}
+```
+
+具体见下图调试:
+
+* caller:ApplicationThread,代表当前调用service进程的ApplicationThread,这其实就是个Binder对象,拿着它AMS就能和当前进程交互了
+* service:intent
+* mRemote:BinderProxy,AMS的代理对象
+
+![](/img/2017-02-28-Service/14881222309428.jpg)
+
+#### START_SERVICE_TRANSACTION
+
+```java
+data.enforceInterface(IActivityManager.descriptor);
+IBinder b = data.readStrongBinder();
+IApplicationThread app = ApplicationThreadNative.asInterface(b);
+Intent service = Intent.CREATOR.createFromParcel(data);
+String resolvedType = data.readString();
+int userId = data.readInt();
+ComponentName cn = startService(app, service, resolvedType, userId);
+reply.writeNoException();
+ComponentName.writeToParcel(cn, reply);
+return true;
+```
+分析:
+
+* app 是调用进程在AMS中的AlicationThreadProxy
+* service:调用进程传过来的intent
+
+![](/img/2017-02-28-Service/14881227389113.jpg)
+
+>ActivityManagerService.java
+
+```java
+public ComponentName startService(IApplicationThread caller, Intent service,String resolvedType, int userId) {
+    ComponentName res = mServices.startServiceLocked(caller, service,resolvedType, callingPid, callingUid, userId);
+    ...
+}
+```
+
+![](/img/2017-02-28-Service/14881230897893.jpg)
+最终进入`ActivityServices`的`startServiceLocked`
+
+>ActiviveServices.java
+
+```java
+ComponentName startServiceLocked(IApplicationThread caller,
+Intent service, String resolvedType,int callingPid, int callingUid, int userId) {
+    ServiceLookupResult res = retrieveServiceLocked(service, resolvedType,callingPid, callingUid, userId, true, callerFg);
+    ServiceRecord r = res.record;
+    r.pendingStarts.add(new ServiceReceord.StartItem(r, false, r.makeNextStartId(),service, neededGrants));
+    return startServiceInnerLocked(smap, service, r, callerFg, addToStarting);
+}
+```
+
+在这个函数中,首先根据intent/uid/pid等信息获取`ServiceRecord`,然后在该record的pendingStart中加入一个StartItem表示等会要开始的Service
+
+```java
+  ComponentName startServiceInnerLocked(ServiceMap smap, Intent service,ServiceRecord r, boolean callerFg, boolean addToStarting) {
+    String error = bringUpServiceLocked(r,service.getFlags(), callerFg, false);
+}  
+```
+
+```java
+private final String bringUpServiceLocked(ServiceRecord r,
+int intentFlags, boolean execInFg, boolean whileRestarting){
+    if (r.app != null && r.app.thread != null) {
+        sendServiceArgsLocked(r, execInFg, false);
+        return null;
+    }
+    final boolean isolated = (r.serviceInfo.flags&ServiceInfo.FLAG_ISOLATED_PROCESS) != 0;
+    final String procName = r.processName;
+    ProcessRecord app;
+    if (!isolated) {
+        app = mAm.getProcessRecordLocked(procName, r.appInfo.uid, false);
+        if (app != null && app.thread != null) {
+            try {
+                app.addPackage(r.appInfo.packageName, mAm.mProcessStats);
+                realStartServiceLocked(r, app, execInFg);
+                return null;
+            } catch (RemoteException e) {
+                Slog.w(TAG, "Exception when starting service " + r.shortName, e);
+            }
+
+                // If a dead object exception was thrown -- fall through to
+                // restart the application.
+        }
+    } else {
+            // If this service runs in an isolated process, then each time
+            // we call startProcessLocked() we will get a new isolated
+            // process, starting another process if we are currently waiting
+            // for a previous process to come up.  To deal with this, we store
+            // in the service any current isolated process it is running in or
+            // waiting to have come up.
+        app = r.isolatedProc;
+    }
+
+        // Not running -- get it started, and enqueue this service record
+        // to be executed when the app comes up.
+    if (app == null) {
+        if ((app=mAm.startProcessLocked(procName, r.appInfo, true, intentFlags,"service", r.name, false, isolated, false)) == null) {
+            String msg = "Unable to launch app "
+                        + r.appInfo.packageName + "/"
+                        + r.appInfo.uid + " for service "
+                        + r.intent.getIntent() + ": process is bad";
+            Slog.w(TAG, msg);
+            bringDownServiceLocked(r);
+            return msg;
+        }
+        if (isolated) {
+            r.isolatedProc = app;
+        }
+    }
+
+        if (!mPendingServices.contains(r)) {
+            mPendingServices.add(r);
+        }
+
+        if (r.delayedStop) {
+            // Oh and hey we've already been asked to stop!
+            r.delayedStop = false;
+            if (r.startRequested) {
+                if (DEBUG_DELAYED_STARTS) Slog.v(TAG, "Applying delayed stop (in bring up): " + r);
+                stopServiceLocked(r);
+            }
+        }
+```
+
+
+![](/img/2017-02-28-Service/14881254686652.jpg)
+
+进入app = null,最终进入mAm.startProcessLocked创建进程
+
+```java
+ if ((app=mAm.startProcessLocked(procName, r.appInfo, true, intentFlags,"service", r.name, false, isolated, false)) == null)
+```
+
+* r:ServiceRecord
+* appInfo:Service的ApplicationInfo
+* r.name是ComponentName
+   
+    
+    
+>ActivityManagerService.java
+ 
+ 
+ ```java   
+ final ProcessRecord startProcessLocked(String processName,
+            ApplicationInfo info, boolean knownToBeDead, int intentFlags,
+            String hostingType, ComponentName hostingName, boolean allowWhileBooting,
+            boolean isolated, boolean keepIfLarge){
+    if (app == null) {
+        app = newProcessRecordLocked(info, processName, isolated);
+        if (app == null) {
+            Slog.w(TAG, "Failed making new process record for "
+                        + processName + "/" + info.uid + " isolated=" + isolated);
+                return null;
+        }
+        mProcessNames.put(processName, app.uid, app);
+        if (isolated) {
+            mIsolatedProcesses.put(app.uid, app);
+        }
+    } else {
+            // If this is a new package in the process, add the package to the list
+        app.addPackage(info.packageName, mProcessStats);
+    }
+        // If the system is not ready yet, then hold off on starting this
+        // process until it is.
+    if (!mProcessesReady
+                && !isAllowedWhileBooting(info)
+                && !allowWhileBooting) {
+        if (!mProcessesOnHold.contains(app)) {
+            mProcessesOnHold.add(app);
+        }
+        if (DEBUG_PROCESSES) Slog.v(TAG, "System not ready, putting on hold: " + app);
+        return app;
+    }
+    startProcessLocked(app, hostingType, hostingNameStr);
+}
+
+```
+
+通过`newProcessRecordLocked`创建一个新的`ProcessRecord`,包括`applicationinfo`,`processName`,`uid`
+
+`startProcessLocked`创建新的进程
+
+![](/img/2017-02-28-Service/14881263805693.jpg)
+
+```java
+// Start the process.  It will either succeed and return a result containing
+// the PID of the new process, or else throw a RuntimeException.
+    Process.ProcessStartResult startResult = Process.start("android.app.ActivityThread",app.processName, uid, uid, gids, debugFlags, mountExternal,app.info.targetSdkVersion, app.info.seinfo, null);
+    app.setPid(startResult.pid);
+    app.usingWrapper = startResult.usingWrapper;
+    app.removed = false;
+    synchronized (mPidsSelfLocked) {
+        this.mPidsSelfLocked.put(startResult.pid, app);
+        Message msg = mHandler.obtainMessage(PROC_START_TIMEOUT_MSG);
+        msg.obj = app;
+        mHandler.sendMessageDelayed(msg, startResult.usingWrapper ? PROC_START_TIMEOUT_WITH_WRAPPER : PROC_START_TIMEOUT);
+    }
+            
+```
+     
+#### 进入.Server进程:
+>ActivityThread.java
+
+```java
+public static void main(String[] args) {
+    SamplingProfilerIntegration.start();
+    // CloseGuard defaults to true and can be quite spammy.  We
+    // disable it here, but selectively enable it later (via
+    // StrictMode) on debug builds, but using DropBox, not logs.
+    CloseGuard.setEnabled(false);
+    Environment.initForCurrentUser();
+    // Set the reporter for event logging in libcore
+    EventLogger.setReporter(new EventLoggingReporter());
+    Security.addProvider(new AndroidKeyStoreProvider());
+    Process.setArgV0("<pre-initialized>");
+    Looper.prepareMainLooper();
+    ActivityThread thread = new ActivityThread();
+    thread.attach(false);
+    if (sMainThreadHandler == null) {
+        sMainThreadHandler = thread.getHandler();
+    }
+    AsyncTask.init();
+    if (false) {
+        Looper.myLooper().setMessageLogging(new LogPrinter(Log.DEBUG, "ActivityThread"));
+    }
+    Looper.loop();
+    throw new RuntimeException("Main thread loop unexpectedly exited");
+}
+private void attach(boolean system) {
+    IActivityManager mgr = ActivityManagerNative.getDefault();
+    try {
+        mgr.attachApplication(mAppThread);
+    } catch (RemoteException ex) {
+     // Ignore
+    }
+    ...
+}     
+public void attachApplication(IApplicationThread app) throws RemoteException{
+    Parcel data = Parcel.obtain();
+    Parcel reply = Parcel.obtain();
+    data.writeInterfaceToken(IActivityManager.descriptor);
+    data.writeStrongBinder(app.asBinder());
+    mRemote.transact(ATTACH_APPLICATION_TRANSACTION, data, reply, 0);
+    reply.readException();
+    data.recycle();
+    reply.recycle();
+}
+
+private final boolean attachApplicationLocked(IApplicationThread thread,
+            int pid) {
+// Find the application record that is being attached...  either via
+// the pid if we are running in multiple processes, or just pull the
+// next app record if we are emulating process with anonymous threads.
+    ProcessRecord app;
+    if (pid != MY_PID && pid >= 0) {
+        synchronized (mPidsSelfLocked) {
+            app = mPidsSelfLocked.get(pid);
+        }
+    } else {
+        app = null;
+    } 
+    ...  
+    if (!badApp) {
+        try {
+            didSomething |= mServices.attachApplicationLocked(app, processName);
+            } catch (Exception e) {
+            badApp = true;
+        }
+    }
+     ...   
+}        
+```
+        
+>ActivityService.java
+
+```java        
+boolean attachApplicationLocked(ProcessRecord proc, String processName) throws Exception {
+    boolean didSomething = false;
+    // Collect any services that are waiting for this process to come up.
+    if (mPendingServices.size() > 0) {
+        ServiceRecord sr = null;
+        try {
+            for (int i=0; i<mPendingServices.size(); i++) {
+                sr = mPendingServices.get(i);
+                if (proc != sr.isolatedProc && (proc.uid != sr.appInfo.uid
+                            || !processName.equals(sr.processName))) {
+                    continue;
+                }
+                mPendingServices.remove(i);
+                i--;
+                proc.addPackage(sr.appInfo.packageName, mAm.mProcessStats);
+                realStartServiceLocked(sr, proc, sr.createdFromFg);
+                didSomething = true;
+            }
+        } catch (Exception e) {
+            Slog.w(TAG, "Exception in new application when starting service "
+                     + sr.shortName, e);
+            throw e;
+        }
+    }
+        // Also, if there are any services that are waiting to restart and
+        // would run in this process, now is a good time to start them.  It would
+        // be weird to bring up the process but arbitrarily not let the services
+        // run at this point just because their restart time hasn't come up.
+    if (mRestartingServices.size() > 0) {
+        ServiceRecord sr = null;
+        for (int i=0; i<mRestartingServices.size(); i++) {
+            sr = mRestartingServices.get(i);
+            if (proc != sr.isolatedProc && (proc.uid != sr.appInfo.uid
+                        || !processName.equals(sr.processName))) {
+                continue;
+            }
+            mAm.mHandler.removeCallbacks(sr.restarter);
+            mAm.mHandler.post(sr.restarter);
+        }
+    }
+    return didSomething;
+}
+```
+
+在成员变量`mPendingServices`中，保存了一个`ServiceRecord`，这里通过进程uid和进程名称将它找出来，然后通过`realStartServiceLocked`函数来进一步处理。
+
+![](/img/2017-02-28-Service/14882085908272.jpg)
+
+![](/img/2017-02-28-Service/14882086141710.jpg)
+
+![](/img/2017-02-28-Service/14882086659921.jpg)
+
+ #### SCHEDULE_CREATE_SERVICE_TRANSACTION
+ 
+ `mRemote.transact(SCHEDULE_CREATE_SERVICE_TRANSACTION, data, null,IBinder.FLAG_ONEWAY);`
+
+
+```java
+                
+public final void scheduleCreateService(IBinder token,
+    ServiceInfo info, CompatibilityInfo compatInfo, int processState) {
+        updateProcessState(processState, false);
+        CreateServiceData s = new CreateServiceData();
+        s.token = token;
+        s.info = info;
+        s.compatInfo = compatInfo;
+        sendMessage(H.CREATE_SERVICE, s);
+}
+        
+private void handleCreateService(CreateServiceData data) {
+        // If we are getting ready to gc after going to the background, well
+        // we are back active so skip it.
+    unscheduleGcIdler();
+    LoadedApk packageInfo = getPackageInfoNoCheck(data.info.applicationInfo, data.compatInfo);
+    Service service = null;
+    try {
+        java.lang.ClassLoader cl = packageInfo.getClassLoader();
+        service = (Service) cl.loadClass(data.info.name).newInstance();
+    } catch (Exception e) {
+        if (!mInstrumentation.onException(service, e)) {
+            throw new RuntimeException(
+                "Unable to instantiate service " + data.info.name
+                + ": " + e.toString(), e);
+        }
+    }
+    try {
+        if (localLOGV) Slog.v(TAG, "Creating service " + data.info.name);
+        ContextImpl context = ContextImpl.createAppContext(this, packageInfo);
+        context.setOuterContext(service);
+        Application app = packageInfo.makeApplication(false, mInstrumentation);
+        service.attach(context, this, data.info.name, data.token, app,
+        ActivityManagerNative.getDefault());
+        service.onCreate();
+        mServices.put(data.token, service);
+        try {
+            ActivityManagerNative.getDefault().serviceDoneExecuting(data.token, 0, 0, 0);
+        } catch (RemoteException e) {
+            // nothing to do.
+        }
+    } catch (Exception e) {
+        if (!mInstrumentation.onException(service, e)) {
+            throw new RuntimeException(
+                    "Unable to create service " + data.info.name
+                    + ": " + e.toString(), e);
+        }
+    }
+}
+```
+

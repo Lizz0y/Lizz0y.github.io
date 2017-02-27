@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Serivice启动机制 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/02/28/Service/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Android" title="Android">Android</a>
+                        
+                        <a class="tag" href="/tags/#Proxy" title="Proxy">Proxy</a>
+                        
+                        <a class="tag" href="/tags/#Hook" title="Hook">Hook</a>
+                        
+                    </div>
+                    <h1>Serivice启动机制</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on February 28, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<blockquote>
+  <p>ContextWrapper.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="n">ComponentName</span> <span class="nf">startService</span><span class="o">(</span><span class="n">Intent</span> <span class="n">service</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">mBase</span><span class="o">.</span><span class="na">startService</span><span class="o">(</span><span class="n">service</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">mBase:ContextImpl</code></p>
+
+<blockquote>
+  <p>ContextImpl.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="n">ComponentName</span> <span class="nf">startServiceCommon</span><span class="o">(</span><span class="n">Intent</span> <span class="n">service</span><span class="o">,</span> <span class="n">UserHandle</span> <span class="n">user</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">validateServiceIntent</span><span class="o">(</span><span class="n">service</span><span class="o">);</span>
+        <span class="n">service</span><span class="o">.</span><span class="na">prepareToLeaveProcess</span><span class="o">();</span>
+        <span class="n">ComponentName</span> <span class="n">cn</span> <span class="o">=</span> <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">().</span><span class="na">startService</span><span class="o">(</span><span class="n">mMainThread</span><span class="o">.</span><span class="na">getApplicationThread</span><span class="o">(),</span> <span class="n">service</span><span class="o">,</span><span class="n">service</span><span class="o">.</span><span class="na">resolveTypeIfNeeded</span><span class="o">(</span><span class="n">getContentResolver</span><span class="o">()),</span> <span class="n">user</span><span class="o">.</span><span class="na">getIdentifier</span><span class="o">());</span>
+        <span class="o">......</span>
+        <span class="o">}</span> 
+    <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<ul>
+  <li><code class="highlighter-rouge">getApplicationThread()</code>就是<code class="highlighter-rouge">ActivityThread$ApplicationThread</code></li>
+  <li><code class="highlighter-rouge">resolveType</code>是返回<code class="highlighter-rouge">MIME</code> 但一般正常的app都是null</li>
+  <li><code class="highlighter-rouge">user.getIdentifier()</code>调试下来还都是0</li>
+</ul>
+
+<h4 id="getdefault">getDefault():</h4>
+<p>通过<code class="highlighter-rouge">ActivityManagerNative.getDefault()</code>拿到AMS的代理binder:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Singleton</span><span class="o">&lt;</span><span class="n">IActivityManager</span><span class="o">&gt;</span> <span class="n">gDefault</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Singleton</span><span class="o">&lt;</span><span class="n">IActivityManager</span><span class="o">&gt;()</span> <span class="o">{</span>
+    <span class="kd">protected</span> <span class="n">IActivityManager</span> <span class="nf">create</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">IBinder</span> <span class="n">b</span> <span class="o">=</span> <span class="n">ServiceManager</span><span class="o">.</span><span class="na">getService</span><span class="o">(</span><span class="s">"activity"</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="kc">false</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Log</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="s">"ActivityManager"</span><span class="o">,</span> <span class="s">"default service binder = "</span> <span class="o">+</span> <span class="n">b</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">IActivityManager</span> <span class="n">am</span> <span class="o">=</span> <span class="n">asInterface</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="kc">false</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Log</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="s">"ActivityManager"</span><span class="o">,</span> <span class="s">"default service = "</span> <span class="o">+</span> <span class="n">am</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">am</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">};</span>
+
+</code></pre>
+</div>
+<p>我们看到,4.4已经变成了单例模式,因为经常调用AMS代理,所以干脆搞个单例省的老是去<code class="highlighter-rouge">get/asInterface</code></p>
+
+<blockquote>
+  <p>ActivityManagerNative.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="n">ComponentName</span> <span class="nf">startService</span><span class="o">(</span><span class="n">IApplicationThread</span> <span class="n">caller</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">service</span><span class="o">,</span><span class="n">String</span> <span class="n">resolvedType</span><span class="o">,</span> <span class="kt">int</span> <span class="n">userId</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span><span class="o">{</span>
+    <span class="n">Parcel</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+    <span class="n">Parcel</span> <span class="n">reply</span> <span class="o">=</span> <span class="n">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+    <span class="n">data</span><span class="o">.</span><span class="na">writeInterfaceToken</span><span class="o">(</span><span class="n">IActivityManager</span><span class="o">.</span><span class="na">descriptor</span><span class="o">);</span>
+    <span class="n">data</span><span class="o">.</span><span class="na">writeStrongBinder</span><span class="o">(</span><span class="n">caller</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">caller</span><span class="o">.</span><span class="na">asBinder</span><span class="o">()</span> <span class="o">:</span> <span class="kc">null</span><span class="o">);</span>
+    <span class="n">service</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="n">data</span><span class="o">.</span><span class="na">writeString</span><span class="o">(</span><span class="n">resolvedType</span><span class="o">);</span>
+    <span class="n">data</span><span class="o">.</span><span class="na">writeInt</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
+    <span class="n">mRemote</span><span class="o">.</span><span class="na">transact</span><span class="o">(</span><span class="n">START_SERVICE_TRANSACTION</span><span class="o">,</span> <span class="n">data</span><span class="o">,</span> <span class="n">reply</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="n">reply</span><span class="o">.</span><span class="na">readException</span><span class="o">();</span>
+    <span class="n">ComponentName</span> <span class="n">res</span> <span class="o">=</span> <span class="n">ComponentName</span><span class="o">.</span><span class="na">readFromParcel</span><span class="o">(</span><span class="n">reply</span><span class="o">);</span>
+    <span class="n">data</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+    <span class="n">reply</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+    <span class="k">return</span> <span class="n">res</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>具体见下图调试:</p>
+
+<ul>
+  <li>caller:ApplicationThread,代表当前调用service进程的ApplicationThread,这其实就是个Binder对象,拿着它AMS就能和当前进程交互了</li>
+  <li>service:intent</li>
+  <li>mRemote:BinderProxy,AMS的代理对象</li>
+</ul>
+
+<p><img src="/img/2017-02-28-Service/14881222309428.jpg" alt="" /></p>
+
+<h4 id="start_service_transaction">START_SERVICE_TRANSACTION</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">data</span><span class="o">.</span><span class="na">enforceInterface</span><span class="o">(</span><span class="n">IActivityManager</span><span class="o">.</span><span class="na">descriptor</span><span class="o">);</span>
+<span class="n">IBinder</span> <span class="n">b</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readStrongBinder</span><span class="o">();</span>
+<span class="n">IApplicationThread</span> <span class="n">app</span> <span class="o">=</span> <span class="n">ApplicationThreadNative</span><span class="o">.</span><span class="na">asInterface</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+<span class="n">Intent</span> <span class="n">service</span> <span class="o">=</span> <span class="n">Intent</span><span class="o">.</span><span class="na">CREATOR</span><span class="o">.</span><span class="na">createFromParcel</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+<span class="n">String</span> <span class="n">resolvedType</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readString</span><span class="o">();</span>
+<span class="kt">int</span> <span class="n">userId</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readInt</span><span class="o">();</span>
+<span class="n">ComponentName</span> <span class="n">cn</span> <span class="o">=</span> <span class="n">startService</span><span class="o">(</span><span class="n">app</span><span class="o">,</span> <span class="n">service</span><span class="o">,</span> <span class="n">resolvedType</span><span class="o">,</span> <span class="n">userId</span><span class="o">);</span>
+<span class="n">reply</span><span class="o">.</span><span class="na">writeNoException</span><span class="o">();</span>
+<span class="n">ComponentName</span><span class="o">.</span><span class="na">writeToParcel</span><span class="o">(</span><span class="n">cn</span><span class="o">,</span> <span class="n">reply</span><span class="o">);</span>
+<span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</code></pre>
+</div>
+<p>分析:</p>
+
+<ul>
+  <li>app 是调用进程在AMS中的AlicationThreadProxy</li>
+  <li>service:调用进程传过来的intent</li>
+</ul>
+
+<p><img src="/img/2017-02-28-Service/14881227389113.jpg" alt="" /></p>
+
+<blockquote>
+  <p>ActivityManagerService.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="n">ComponentName</span> <span class="nf">startService</span><span class="o">(</span><span class="n">IApplicationThread</span> <span class="n">caller</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">service</span><span class="o">,</span><span class="n">String</span> <span class="n">resolvedType</span><span class="o">,</span> <span class="kt">int</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">ComponentName</span> <span class="n">res</span> <span class="o">=</span> <span class="n">mServices</span><span class="o">.</span><span class="na">startServiceLocked</span><span class="o">(</span><span class="n">caller</span><span class="o">,</span> <span class="n">service</span><span class="o">,</span><span class="n">resolvedType</span><span class="o">,</span> <span class="n">callingPid</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span> <span class="n">userId</span><span class="o">);</span>
+    <span class="o">...</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p><img src="/img/2017-02-28-Service/14881230897893.jpg" alt="" />
+最终进入<code class="highlighter-rouge">ActivityServices</code>的<code class="highlighter-rouge">startServiceLocked</code></p>
+
+<blockquote>
+  <p>ActiviveServices.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">ComponentName</span> <span class="nf">startServiceLocked</span><span class="o">(</span><span class="n">IApplicationThread</span> <span class="n">caller</span><span class="o">,</span>
+<span class="n">Intent</span> <span class="n">service</span><span class="o">,</span> <span class="n">String</span> <span class="n">resolvedType</span><span class="o">,</span><span class="kt">int</span> <span class="n">callingPid</span><span class="o">,</span> <span class="kt">int</span> <span class="n">callingUid</span><span class="o">,</span> <span class="kt">int</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">ServiceLookupResult</span> <span class="n">res</span> <span class="o">=</span> <span class="n">retrieveServiceLocked</span><span class="o">(</span><span class="n">service</span><span class="o">,</span> <span class="n">resolvedType</span><span class="o">,</span><span class="n">callingPid</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span> <span class="n">userId</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">callerFg</span><span class="o">);</span>
+    <span class="n">ServiceRecord</span> <span class="n">r</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="na">record</span><span class="o">;</span>
+    <span class="n">r</span><span class="o">.</span><span class="na">pendingStarts</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">ServiceReceord</span><span class="o">.</span><span class="na">StartItem</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">makeNextStartId</span><span class="o">(),</span><span class="n">service</span><span class="o">,</span> <span class="n">neededGrants</span><span class="o">));</span>
+    <span class="k">return</span> <span class="nf">startServiceInnerLocked</span><span class="o">(</span><span class="n">smap</span><span class="o">,</span> <span class="n">service</span><span class="o">,</span> <span class="n">r</span><span class="o">,</span> <span class="n">callerFg</span><span class="o">,</span> <span class="n">addToStarting</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>在这个函数中,首先根据intent/uid/pid等信息获取<code class="highlighter-rouge">ServiceRecord</code>,然后在该record的pendingStart中加入一个StartItem表示等会要开始的Service</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>  <span class="n">ComponentName</span> <span class="nf">startServiceInnerLocked</span><span class="o">(</span><span class="n">ServiceMap</span> <span class="n">smap</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">service</span><span class="o">,</span><span class="n">ServiceRecord</span> <span class="n">r</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">callerFg</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">addToStarting</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">error</span> <span class="o">=</span> <span class="n">bringUpServiceLocked</span><span class="o">(</span><span class="n">r</span><span class="o">,</span><span class="n">service</span><span class="o">.</span><span class="na">getFlags</span><span class="o">(),</span> <span class="n">callerFg</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+<span class="o">}</span>  
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">String</span> <span class="nf">bringUpServiceLocked</span><span class="o">(</span><span class="n">ServiceRecord</span> <span class="n">r</span><span class="o">,</span>
+<span class="kt">int</span> <span class="n">intentFlags</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">execInFg</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">whileRestarting</span><span class="o">){</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">app</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">r</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">thread</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">sendServiceArgsLocked</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="n">execInFg</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">isolated</span> <span class="o">=</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">serviceInfo</span><span class="o">.</span><span class="na">flags</span><span class="o">&amp;</span><span class="n">ServiceInfo</span><span class="o">.</span><span class="na">FLAG_ISOLATED_PROCESS</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="kd">final</span> <span class="n">String</span> <span class="n">procName</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="na">processName</span><span class="o">;</span>
+    <span class="n">ProcessRecord</span> <span class="n">app</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">isolated</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">mAm</span><span class="o">.</span><span class="na">getProcessRecordLocked</span><span class="o">(</span><span class="n">procName</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">appInfo</span><span class="o">.</span><span class="na">uid</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">app</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">app</span><span class="o">.</span><span class="na">thread</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">try</span> <span class="o">{</span>
+                <span class="n">app</span><span class="o">.</span><span class="na">addPackage</span><span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">appInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">mAm</span><span class="o">.</span><span class="na">mProcessStats</span><span class="o">);</span>
+                <span class="n">realStartServiceLocked</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="n">app</span><span class="o">,</span> <span class="n">execInFg</span><span class="o">);</span>
+                <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">Slog</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Exception when starting service "</span> <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="na">shortName</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+            <span class="o">}</span>
+
+                <span class="c1">// If a dead object exception was thrown -- fall through to</span>
+                <span class="c1">// restart the application.</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="c1">// If this service runs in an isolated process, then each time</span>
+            <span class="c1">// we call startProcessLocked() we will get a new isolated</span>
+            <span class="c1">// process, starting another process if we are currently waiting</span>
+            <span class="c1">// for a previous process to come up.  To deal with this, we store</span>
+            <span class="c1">// in the service any current isolated process it is running in or</span>
+            <span class="c1">// waiting to have come up.</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="na">isolatedProc</span><span class="o">;</span>
+    <span class="o">}</span>
+
+        <span class="c1">// Not running -- get it started, and enqueue this service record</span>
+        <span class="c1">// to be executed when the app comes up.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">app</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">((</span><span class="n">app</span><span class="o">=</span><span class="n">mAm</span><span class="o">.</span><span class="na">startProcessLocked</span><span class="o">(</span><span class="n">procName</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">appInfo</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">intentFlags</span><span class="o">,</span><span class="s">"service"</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">name</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">isolated</span><span class="o">,</span> <span class="kc">false</span><span class="o">))</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">String</span> <span class="n">msg</span> <span class="o">=</span> <span class="s">"Unable to launch app "</span>
+                        <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="na">appInfo</span><span class="o">.</span><span class="na">packageName</span> <span class="o">+</span> <span class="s">"/"</span>
+                        <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="na">appInfo</span><span class="o">.</span><span class="na">uid</span> <span class="o">+</span> <span class="s">" for service "</span>
+                        <span class="o">+</span> <span class="n">r</span><span class="o">.</span><span class="na">intent</span><span class="o">.</span><span class="na">getIntent</span><span class="o">()</span> <span class="o">+</span> <span class="s">": process is bad"</span><span class="o">;</span>
+            <span class="n">Slog</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="n">msg</span><span class="o">);</span>
+            <span class="n">bringDownServiceLocked</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+            <span class="k">return</span> <span class="n">msg</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">isolated</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">r</span><span class="o">.</span><span class="na">isolatedProc</span> <span class="o">=</span> <span class="n">app</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+        <span class="k">if</span> <span class="o">(!</span><span class="n">mPendingServices</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">r</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">mPendingServices</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="k">if</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">delayedStop</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">// Oh and hey we've already been asked to stop!</span>
+            <span class="n">r</span><span class="o">.</span><span class="na">delayedStop</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">startRequested</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_DELAYED_STARTS</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Applying delayed stop (in bring up): "</span> <span class="o">+</span> <span class="n">r</span><span class="o">);</span>
+                <span class="n">stopServiceLocked</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+</code></pre>
+</div>
+
+<p><img src="/img/2017-02-28-Service/14881254686652.jpg" alt="" /></p>
+
+<p>进入app = null,最终进入mAm.startProcessLocked创建进程</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="k">if</span> <span class="o">((</span><span class="n">app</span><span class="o">=</span><span class="n">mAm</span><span class="o">.</span><span class="na">startProcessLocked</span><span class="o">(</span><span class="n">procName</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">appInfo</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">intentFlags</span><span class="o">,</span><span class="s">"service"</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">name</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">isolated</span><span class="o">,</span> <span class="kc">false</span><span class="o">))</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<ul>
+  <li>r:ServiceRecord</li>
+  <li>appInfo:Service的ApplicationInfo</li>
+  <li>r.name是ComponentName</li>
+</ul>
+
+<blockquote>
+  <p>ActivityManagerService.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="kd">final</span> <span class="n">ProcessRecord</span> <span class="nf">startProcessLocked</span><span class="o">(</span><span class="n">String</span> <span class="n">processName</span><span class="o">,</span>
+            <span class="n">ApplicationInfo</span> <span class="n">info</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">knownToBeDead</span><span class="o">,</span> <span class="kt">int</span> <span class="n">intentFlags</span><span class="o">,</span>
+            <span class="n">String</span> <span class="n">hostingType</span><span class="o">,</span> <span class="n">ComponentName</span> <span class="n">hostingName</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">allowWhileBooting</span><span class="o">,</span>
+            <span class="kt">boolean</span> <span class="n">isolated</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">keepIfLarge</span><span class="o">){</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">app</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">newProcessRecordLocked</span><span class="o">(</span><span class="n">info</span><span class="o">,</span> <span class="n">processName</span><span class="o">,</span> <span class="n">isolated</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">app</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Slog</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Failed making new process record for "</span>
+                        <span class="o">+</span> <span class="n">processName</span> <span class="o">+</span> <span class="s">"/"</span> <span class="o">+</span> <span class="n">info</span><span class="o">.</span><span class="na">uid</span> <span class="o">+</span> <span class="s">" isolated="</span> <span class="o">+</span> <span class="n">isolated</span><span class="o">);</span>
+                <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="n">mProcessNames</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">processName</span><span class="o">,</span> <span class="n">app</span><span class="o">.</span><span class="na">uid</span><span class="o">,</span> <span class="n">app</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">isolated</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">mIsolatedProcesses</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">app</span><span class="o">.</span><span class="na">uid</span><span class="o">,</span> <span class="n">app</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="c1">// If this is a new package in the process, add the package to the list</span>
+        <span class="n">app</span><span class="o">.</span><span class="na">addPackage</span><span class="o">(</span><span class="n">info</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">mProcessStats</span><span class="o">);</span>
+    <span class="o">}</span>
+        <span class="c1">// If the system is not ready yet, then hold off on starting this</span>
+        <span class="c1">// process until it is.</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">mProcessesReady</span>
+                <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">isAllowedWhileBooting</span><span class="o">(</span><span class="n">info</span><span class="o">)</span>
+                <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">allowWhileBooting</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(!</span><span class="n">mProcessesOnHold</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">app</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">mProcessesOnHold</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">app</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_PROCESSES</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"System not ready, putting on hold: "</span> <span class="o">+</span> <span class="n">app</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">app</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">startProcessLocked</span><span class="o">(</span><span class="n">app</span><span class="o">,</span> <span class="n">hostingType</span><span class="o">,</span> <span class="n">hostingNameStr</span><span class="o">);</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<p>通过<code class="highlighter-rouge">newProcessRecordLocked</code>创建一个新的<code class="highlighter-rouge">ProcessRecord</code>,包括<code class="highlighter-rouge">applicationinfo</code>,<code class="highlighter-rouge">processName</code>,<code class="highlighter-rouge">uid</code></p>
+
+<p><code class="highlighter-rouge">startProcessLocked</code>创建新的进程</p>
+
+<p><img src="/img/2017-02-28-Service/14881263805693.jpg" alt="" /></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="c1">// Start the process.  It will either succeed and return a result containing</span>
+<span class="c1">// the PID of the new process, or else throw a RuntimeException.</span>
+    <span class="n">Process</span><span class="o">.</span><span class="na">ProcessStartResult</span> <span class="n">startResult</span> <span class="o">=</span> <span class="n">Process</span><span class="o">.</span><span class="na">start</span><span class="o">(</span><span class="s">"android.app.ActivityThread"</span><span class="o">,</span><span class="n">app</span><span class="o">.</span><span class="na">processName</span><span class="o">,</span> <span class="n">uid</span><span class="o">,</span> <span class="n">uid</span><span class="o">,</span> <span class="n">gids</span><span class="o">,</span> <span class="n">debugFlags</span><span class="o">,</span> <span class="n">mountExternal</span><span class="o">,</span><span class="n">app</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">targetSdkVersion</span><span class="o">,</span> <span class="n">app</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">seinfo</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+    <span class="n">app</span><span class="o">.</span><span class="na">setPid</span><span class="o">(</span><span class="n">startResult</span><span class="o">.</span><span class="na">pid</span><span class="o">);</span>
+    <span class="n">app</span><span class="o">.</span><span class="na">usingWrapper</span> <span class="o">=</span> <span class="n">startResult</span><span class="o">.</span><span class="na">usingWrapper</span><span class="o">;</span>
+    <span class="n">app</span><span class="o">.</span><span class="na">removed</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mPidsSelfLocked</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">mPidsSelfLocked</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">startResult</span><span class="o">.</span><span class="na">pid</span><span class="o">,</span> <span class="n">app</span><span class="o">);</span>
+        <span class="n">Message</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">mHandler</span><span class="o">.</span><span class="na">obtainMessage</span><span class="o">(</span><span class="n">PROC_START_TIMEOUT_MSG</span><span class="o">);</span>
+        <span class="n">msg</span><span class="o">.</span><span class="na">obj</span> <span class="o">=</span> <span class="n">app</span><span class="o">;</span>
+        <span class="n">mHandler</span><span class="o">.</span><span class="na">sendMessageDelayed</span><span class="o">(</span><span class="n">msg</span><span class="o">,</span> <span class="n">startResult</span><span class="o">.</span><span class="na">usingWrapper</span> <span class="o">?</span> <span class="n">PROC_START_TIMEOUT_WITH_WRAPPER</span> <span class="o">:</span> <span class="n">PROC_START_TIMEOUT</span><span class="o">);</span>
+    <span class="o">}</span>
+            
+</code></pre>
+</div>
+
+<h4 id="进入server进程">进入.Server进程:</h4>
+<blockquote>
+  <p>ActivityThread.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">SamplingProfilerIntegration</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+    <span class="c1">// CloseGuard defaults to true and can be quite spammy.  We</span>
+    <span class="c1">// disable it here, but selectively enable it later (via</span>
+    <span class="c1">// StrictMode) on debug builds, but using DropBox, not logs.</span>
+    <span class="n">CloseGuard</span><span class="o">.</span><span class="na">setEnabled</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+    <span class="n">Environment</span><span class="o">.</span><span class="na">initForCurrentUser</span><span class="o">();</span>
+    <span class="c1">// Set the reporter for event logging in libcore</span>
+    <span class="n">EventLogger</span><span class="o">.</span><span class="na">setReporter</span><span class="o">(</span><span class="k">new</span> <span class="n">EventLoggingReporter</span><span class="o">());</span>
+    <span class="n">Security</span><span class="o">.</span><span class="na">addProvider</span><span class="o">(</span><span class="k">new</span> <span class="n">AndroidKeyStoreProvider</span><span class="o">());</span>
+    <span class="n">Process</span><span class="o">.</span><span class="na">setArgV0</span><span class="o">(</span><span class="s">"&lt;pre-initialized&gt;"</span><span class="o">);</span>
+    <span class="n">Looper</span><span class="o">.</span><span class="na">prepareMainLooper</span><span class="o">();</span>
+    <span class="n">ActivityThread</span> <span class="n">thread</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ActivityThread</span><span class="o">();</span>
+    <span class="n">thread</span><span class="o">.</span><span class="na">attach</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">sMainThreadHandler</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">sMainThreadHandler</span> <span class="o">=</span> <span class="n">thread</span><span class="o">.</span><span class="na">getHandler</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="n">AsyncTask</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="kc">false</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Looper</span><span class="o">.</span><span class="na">myLooper</span><span class="o">().</span><span class="na">setMessageLogging</span><span class="o">(</span><span class="k">new</span> <span class="n">LogPrinter</span><span class="o">(</span><span class="n">Log</span><span class="o">.</span><span class="na">DEBUG</span><span class="o">,</span> <span class="s">"ActivityThread"</span><span class="o">));</span>
+    <span class="o">}</span>
+    <span class="n">Looper</span><span class="o">.</span><span class="na">loop</span><span class="o">();</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span><span class="s">"Main thread loop unexpectedly exited"</span><span class="o">);</span>
+<span class="o">}</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">attach</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">system</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">IActivityManager</span> <span class="n">mgr</span> <span class="o">=</span> <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">();</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">mgr</span><span class="o">.</span><span class="na">attachApplication</span><span class="o">(</span><span class="n">mAppThread</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+     <span class="c1">// Ignore</span>
+    <span class="o">}</span>
+    <span class="o">...</span>
+<span class="o">}</span>     
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">attachApplication</span><span class="o">(</span><span class="n">IApplicationThread</span> <span class="n">app</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span><span class="o">{</span>
+    <span class="n">Parcel</span> <span class="n">data</span> <span class="o">=</span> <span class="n">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+    <span class="n">Parcel</span> <span class="n">reply</span> <span class="o">=</span> <span class="n">Parcel</span><span class="o">.</span><span class="na">obtain</span><span class="o">();</span>
+    <span class="n">data</span><span class="o">.</span><span class="na">writeInterfaceToken</span><span class="o">(</span><span class="n">IActivityManager</span><span class="o">.</span><span class="na">descriptor</span><span class="o">);</span>
+    <span class="n">data</span><span class="o">.</span><span class="na">writeStrongBinder</span><span class="o">(</span><span class="n">app</span><span class="o">.</span><span class="na">asBinder</span><span class="o">());</span>
+    <span class="n">mRemote</span><span class="o">.</span><span class="na">transact</span><span class="o">(</span><span class="n">ATTACH_APPLICATION_TRANSACTION</span><span class="o">,</span> <span class="n">data</span><span class="o">,</span> <span class="n">reply</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="n">reply</span><span class="o">.</span><span class="na">readException</span><span class="o">();</span>
+    <span class="n">data</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+    <span class="n">reply</span><span class="o">.</span><span class="na">recycle</span><span class="o">();</span>
+<span class="o">}</span>
+
+<span class="kd">private</span> <span class="kd">final</span> <span class="kt">boolean</span> <span class="nf">attachApplicationLocked</span><span class="o">(</span><span class="n">IApplicationThread</span> <span class="n">thread</span><span class="o">,</span>
+            <span class="kt">int</span> <span class="n">pid</span><span class="o">)</span> <span class="o">{</span>
+<span class="c1">// Find the application record that is being attached...  either via</span>
+<span class="c1">// the pid if we are running in multiple processes, or just pull the</span>
+<span class="c1">// next app record if we are emulating process with anonymous threads.</span>
+    <span class="n">ProcessRecord</span> <span class="n">app</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">pid</span> <span class="o">!=</span> <span class="n">MY_PID</span> <span class="o">&amp;&amp;</span> <span class="n">pid</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mPidsSelfLocked</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="n">mPidsSelfLocked</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">pid</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span> 
+    <span class="o">...</span>  
+    <span class="k">if</span> <span class="o">(!</span><span class="n">badApp</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">didSomething</span> <span class="o">|=</span> <span class="n">mServices</span><span class="o">.</span><span class="na">attachApplicationLocked</span><span class="o">(</span><span class="n">app</span><span class="o">,</span> <span class="n">processName</span><span class="o">);</span>
+            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">badApp</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+     <span class="o">...</span>   
+<span class="o">}</span>        
+</code></pre>
+</div>
+
+<blockquote>
+  <p>ActivityService.java</p>
+</blockquote>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">boolean</span> <span class="nf">attachApplicationLocked</span><span class="o">(</span><span class="n">ProcessRecord</span> <span class="n">proc</span><span class="o">,</span> <span class="n">String</span> <span class="n">processName</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kt">boolean</span> <span class="n">didSomething</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="c1">// Collect any services that are waiting for this process to come up.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">mPendingServices</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">ServiceRecord</span> <span class="n">sr</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">mPendingServices</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">sr</span> <span class="o">=</span> <span class="n">mPendingServices</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">proc</span> <span class="o">!=</span> <span class="n">sr</span><span class="o">.</span><span class="na">isolatedProc</span> <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">proc</span><span class="o">.</span><span class="na">uid</span> <span class="o">!=</span> <span class="n">sr</span><span class="o">.</span><span class="na">appInfo</span><span class="o">.</span><span class="na">uid</span>
+                            <span class="o">||</span> <span class="o">!</span><span class="n">processName</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">sr</span><span class="o">.</span><span class="na">processName</span><span class="o">)))</span> <span class="o">{</span>
+                    <span class="k">continue</span><span class="o">;</span>
+                <span class="o">}</span>
+                <span class="n">mPendingServices</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+                <span class="n">i</span><span class="o">--;</span>
+                <span class="n">proc</span><span class="o">.</span><span class="na">addPackage</span><span class="o">(</span><span class="n">sr</span><span class="o">.</span><span class="na">appInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">mAm</span><span class="o">.</span><span class="na">mProcessStats</span><span class="o">);</span>
+                <span class="n">realStartServiceLocked</span><span class="o">(</span><span class="n">sr</span><span class="o">,</span> <span class="n">proc</span><span class="o">,</span> <span class="n">sr</span><span class="o">.</span><span class="na">createdFromFg</span><span class="o">);</span>
+                <span class="n">didSomething</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Slog</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Exception in new application when starting service "</span>
+                     <span class="o">+</span> <span class="n">sr</span><span class="o">.</span><span class="na">shortName</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+            <span class="k">throw</span> <span class="n">e</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+        <span class="c1">// Also, if there are any services that are waiting to restart and</span>
+        <span class="c1">// would run in this process, now is a good time to start them.  It would</span>
+        <span class="c1">// be weird to bring up the process but arbitrarily not let the services</span>
+        <span class="c1">// run at this point just because their restart time hasn't come up.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">mRestartingServices</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">ServiceRecord</span> <span class="n">sr</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">mRestartingServices</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">sr</span> <span class="o">=</span> <span class="n">mRestartingServices</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">proc</span> <span class="o">!=</span> <span class="n">sr</span><span class="o">.</span><span class="na">isolatedProc</span> <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">proc</span><span class="o">.</span><span class="na">uid</span> <span class="o">!=</span> <span class="n">sr</span><span class="o">.</span><span class="na">appInfo</span><span class="o">.</span><span class="na">uid</span>
+                        <span class="o">||</span> <span class="o">!</span><span class="n">processName</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">sr</span><span class="o">.</span><span class="na">processName</span><span class="o">)))</span> <span class="o">{</span>
+                <span class="k">continue</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">mAm</span><span class="o">.</span><span class="na">mHandler</span><span class="o">.</span><span class="na">removeCallbacks</span><span class="o">(</span><span class="n">sr</span><span class="o">.</span><span class="na">restarter</span><span class="o">);</span>
+            <span class="n">mAm</span><span class="o">.</span><span class="na">mHandler</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">sr</span><span class="o">.</span><span class="na">restarter</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">didSomething</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>在成员变量<code class="highlighter-rouge">mPendingServices</code>中，保存了一个<code class="highlighter-rouge">ServiceRecord</code>，这里通过进程uid和进程名称将它找出来，然后通过<code class="highlighter-rouge">realStartServiceLocked</code>函数来进一步处理。</p>
+
+<p><img src="/img/2017-02-28-Service/14882085908272.jpg" alt="" /></p>
+
+<p><img src="/img/2017-02-28-Service/14882086141710.jpg" alt="" /></p>
+
+<p><img src="/img/2017-02-28-Service/14882086659921.jpg" alt="" /></p>
+
+<p>#### SCHEDULE_CREATE_SERVICE_TRANSACTION</p>
+
+<p><code class="highlighter-rouge">mRemote.transact(SCHEDULE_CREATE_SERVICE_TRANSACTION, data, null,IBinder.FLAG_ONEWAY);</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>                
+<span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">scheduleCreateService</span><span class="o">(</span><span class="n">IBinder</span> <span class="n">token</span><span class="o">,</span>
+    <span class="n">ServiceInfo</span> <span class="n">info</span><span class="o">,</span> <span class="n">CompatibilityInfo</span> <span class="n">compatInfo</span><span class="o">,</span> <span class="kt">int</span> <span class="n">processState</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">updateProcessState</span><span class="o">(</span><span class="n">processState</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+        <span class="n">CreateServiceData</span> <span class="n">s</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CreateServiceData</span><span class="o">();</span>
+        <span class="n">s</span><span class="o">.</span><span class="na">token</span> <span class="o">=</span> <span class="n">token</span><span class="o">;</span>
+        <span class="n">s</span><span class="o">.</span><span class="na">info</span> <span class="o">=</span> <span class="n">info</span><span class="o">;</span>
+        <span class="n">s</span><span class="o">.</span><span class="na">compatInfo</span> <span class="o">=</span> <span class="n">compatInfo</span><span class="o">;</span>
+        <span class="n">sendMessage</span><span class="o">(</span><span class="n">H</span><span class="o">.</span><span class="na">CREATE_SERVICE</span><span class="o">,</span> <span class="n">s</span><span class="o">);</span>
+<span class="o">}</span>
+        
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">handleCreateService</span><span class="o">(</span><span class="n">CreateServiceData</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// If we are getting ready to gc after going to the background, well</span>
+        <span class="c1">// we are back active so skip it.</span>
+    <span class="n">unscheduleGcIdler</span><span class="o">();</span>
+    <span class="n">LoadedApk</span> <span class="n">packageInfo</span> <span class="o">=</span> <span class="n">getPackageInfoNoCheck</span><span class="o">(</span><span class="n">data</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">,</span> <span class="n">data</span><span class="o">.</span><span class="na">compatInfo</span><span class="o">);</span>
+    <span class="n">Service</span> <span class="n">service</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">ClassLoader</span> <span class="n">cl</span> <span class="o">=</span> <span class="n">packageInfo</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">();</span>
+        <span class="n">service</span> <span class="o">=</span> <span class="o">(</span><span class="n">Service</span><span class="o">)</span> <span class="n">cl</span><span class="o">.</span><span class="na">loadClass</span><span class="o">(</span><span class="n">data</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">name</span><span class="o">).</span><span class="na">newInstance</span><span class="o">();</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(!</span><span class="n">mInstrumentation</span><span class="o">.</span><span class="na">onException</span><span class="o">(</span><span class="n">service</span><span class="o">,</span> <span class="n">e</span><span class="o">))</span> <span class="o">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span>
+                <span class="s">"Unable to instantiate service "</span> <span class="o">+</span> <span class="n">data</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">name</span>
+                <span class="o">+</span> <span class="s">": "</span> <span class="o">+</span> <span class="n">e</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">localLOGV</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Creating service "</span> <span class="o">+</span> <span class="n">data</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">name</span><span class="o">);</span>
+        <span class="n">ContextImpl</span> <span class="n">context</span> <span class="o">=</span> <span class="n">ContextImpl</span><span class="o">.</span><span class="na">createAppContext</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">packageInfo</span><span class="o">);</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">setOuterContext</span><span class="o">(</span><span class="n">service</span><span class="o">);</span>
+        <span class="n">Application</span> <span class="n">app</span> <span class="o">=</span> <span class="n">packageInfo</span><span class="o">.</span><span class="na">makeApplication</span><span class="o">(</span><span class="kc">false</span><span class="o">,</span> <span class="n">mInstrumentation</span><span class="o">);</span>
+        <span class="n">service</span><span class="o">.</span><span class="na">attach</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="k">this</span><span class="o">,</span> <span class="n">data</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">name</span><span class="o">,</span> <span class="n">data</span><span class="o">.</span><span class="na">token</span><span class="o">,</span> <span class="n">app</span><span class="o">,</span>
+        <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">());</span>
+        <span class="n">service</span><span class="o">.</span><span class="na">onCreate</span><span class="o">();</span>
+        <span class="n">mServices</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">data</span><span class="o">.</span><span class="na">token</span><span class="o">,</span> <span class="n">service</span><span class="o">);</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">().</span><span class="na">serviceDoneExecuting</span><span class="o">(</span><span class="n">data</span><span class="o">.</span><span class="na">token</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">// nothing to do.</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(!</span><span class="n">mInstrumentation</span><span class="o">.</span><span class="na">onException</span><span class="o">(</span><span class="n">service</span><span class="o">,</span> <span class="n">e</span><span class="o">))</span> <span class="o">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">RuntimeException</span><span class="o">(</span>
+                    <span class="s">"Unable to create service "</span> <span class="o">+</span> <span class="n">data</span><span class="o">.</span><span class="na">info</span><span class="o">.</span><span class="na">name</span>
+                    <span class="o">+</span> <span class="s">": "</span> <span class="o">+</span> <span class="n">e</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/02/28/Service"
+                    data-title="Serivice启动机制"
+                    data-url="http://localhost:5001/2017/02/28/Service/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="
+  ContextWrapper.java
+
+
+@Override
+public ComponentName startService(Intent s... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/02/26/Proxy/" data-toggle="tooltip" data-placement="top" title="代理机制">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/02/28/Service"
+                        data-title="Serivice启动机制"
+                        data-url="http://localhost:5001/2017/02/28/Service/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
