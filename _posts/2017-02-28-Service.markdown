@@ -90,7 +90,7 @@ public ComponentName startService(IApplicationThread caller, Intent service,Stri
 * service:intent
 * mRemote:BinderProxy,AMS的代理对象
 
-![](/img/2017-02-28-Service/14881222309428.jpg)
+![](/img/2017-02-28-service/14881222309428.jpg)
 
 #### START_SERVICE_TRANSACTION
 
@@ -111,7 +111,7 @@ return true;
 * app 是调用进程在AMS中的AlicationThreadProxy
 * service:调用进程传过来的intent
 
-![](/img/2017-02-28-Service/14881227389113.jpg)
+![](/img/2017-02-28-service/14881227389113.jpg)
 
 >ActivityManagerService.java
 
@@ -122,7 +122,7 @@ public ComponentName startService(IApplicationThread caller, Intent service,Stri
 }
 ```
 
-![](/img/2017-02-28-Service/14881230897893.jpg)
+![](/img/2017-02-28-service/14881230897893.jpg)
 最终进入`ActivityServices`的`startServiceLocked`
 
 >ActiviveServices.java
@@ -211,7 +211,7 @@ int intentFlags, boolean execInFg, boolean whileRestarting){
 ```
 
 
-![](/img/2017-02-28-Service/14881254686652.jpg)
+![](/img/2017-02-28-service/14881254686652.jpg)
 
 进入app = null,最终进入mAm.startProcessLocked创建进程
 
@@ -268,7 +268,7 @@ int intentFlags, boolean execInFg, boolean whileRestarting){
 
 `startProcessLocked`创建新的进程
 
-![](/img/2017-02-28-Service/14881263805693.jpg)
+![](/img/2017-02-28-service/14881263805693.jpg)
 
 ```java
 // Start the process.  It will either succeed and return a result containing
@@ -408,11 +408,11 @@ boolean attachApplicationLocked(ProcessRecord proc, String processName) throws E
 
 在成员变量`mPendingServices`中，保存了一个`ServiceRecord`，这里通过进程uid和进程名称将它找出来，然后通过`realStartServiceLocked`函数来进一步处理。
 
-![](/img/2017-02-28-Service/14882085908272.jpg)
+![](/img/2017-02-28-service/14882085908272.jpg)
 
-![](/img/2017-02-28-Service/14882086141710.jpg)
+![](/img/2017-02-28-service/14882086141710.jpg)
 
-![](/img/2017-02-28-Service/14882086659921.jpg)
+![](/img/2017-02-28-service/14882086659921.jpg)
 
  #### SCHEDULE_CREATE_SERVICE_TRANSACTION
  
