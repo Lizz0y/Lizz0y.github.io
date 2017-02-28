@@ -6,9 +6,11 @@ author:     "Liz"
 header-img: "img/2017-02-01-binder/pic.jpeg"
 tags:
     - Android 
-    - Proxy
-    - Hook
+    - Source Code
+    - Service
 ---
+
+今天理一下Service,就从最简单的`startService(intent)`开始,将Service定义在新的进程启动。
 
 >ContextWrapper.java
 
@@ -39,7 +41,7 @@ private ComponentName startServiceCommon(Intent service, UserHandle user) {
 
 
 * `getApplicationThread()`就是`ActivityThread$ApplicationThread`
-* `resolveType`是返回`MIME` 但一般正常的app都是null
+* `resolveType`是返回`MIME` 但一般正常的app都是`null`
 * `user.getIdentifier()`调试下来还都是0
 
 #### getDefault():
@@ -86,13 +88,15 @@ public ComponentName startService(IApplicationThread caller, Intent service,Stri
 
 具体见下图调试:
 
-* caller:ApplicationThread,代表当前调用service进程的ApplicationThread,这其实就是个Binder对象,拿着它AMS就能和当前进程交互了
-* service:intent
-* mRemote:BinderProxy,AMS的代理对象
+* `caller`:`ApplicationThread`,代表当前调用`service`进程的`ApplicationThread`,这其实就是个`Binder`对象,拿着它`AMS`就能和当前进程交互了
+* `service`:`intent`
+* `mRemote`:`BinderProxy`,`AMS`的代理对象
 
 ![](/img/2017-02-28-service/14881222309428.jpg)
 
 #### START_SERVICE_TRANSACTION
+
+>ActivityManagerNative.java
 
 ```java
 data.enforceInterface(IActivityManager.descriptor);
@@ -108,8 +112,8 @@ return true;
 ```
 分析:
 
-* app 是调用进程在AMS中的AlicationThreadProxy
-* service:调用进程传过来的intent
+* `app` 是调用进程在AMS中的`AlicationThreadProxy`
+* `service`:调用进程传过来的`intent`
 
 ![](/img/2017-02-28-service/14881227389113.jpg)
 
@@ -137,7 +141,7 @@ Intent service, String resolvedType,int callingPid, int callingUid, int userId) 
 }
 ```
 
-在这个函数中,首先根据intent/uid/pid等信息获取`ServiceRecord`,然后在该record的pendingStart中加入一个StartItem表示等会要开始的Service
+在这个函数中,首先根据`intent/uid/pid`等信息获取`ServiceRecord`,然后在该`record`的`pendingStart`中加入一个`StartItem`表示等会要开始的`Service`
 
 ```java
   ComponentName startServiceInnerLocked(ServiceMap smap, Intent service,ServiceRecord r, boolean callerFg, boolean addToStarting) {
@@ -213,15 +217,15 @@ int intentFlags, boolean execInFg, boolean whileRestarting){
 
 ![](/img/2017-02-28-service/14881254686652.jpg)
 
-进入app = null,最终进入mAm.startProcessLocked创建进程
+进入`app = null`,最终进入`mAm.startProcessLocked`创建进程,创建完进程后,会在`mPendingServices`中加入`r`,代表待启动的`Service`
 
 ```java
  if ((app=mAm.startProcessLocked(procName, r.appInfo, true, intentFlags,"service", r.name, false, isolated, false)) == null)
 ```
 
-* r:ServiceRecord
-* appInfo:Service的ApplicationInfo
-* r.name是ComponentName
+* r: ServiceRecord
+* appInfo: Service的ApplicationInfo
+* r.name: ComponentName
    
     
     
@@ -264,9 +268,7 @@ int intentFlags, boolean execInFg, boolean whileRestarting){
 
 ```
 
-通过`newProcessRecordLocked`创建一个新的`ProcessRecord`,包括`applicationinfo`,`processName`,`uid`
-
-`startProcessLocked`创建新的进程
+通过`newProcessRecordLocked`创建一个新的`ProcessRecord`,包括`applicationinfo`,`processName`,`uid`,创建完`Record`后,使用`startProcessLocked`创建新的进程
 
 ![](/img/2017-02-28-service/14881263805693.jpg)
 
@@ -285,6 +287,8 @@ int intentFlags, boolean execInFg, boolean whileRestarting){
     }
             
 ```
+
+这里讲将`pid`,与`app(ProcessRecord)`放入`mPidsSelfLocked`中,后面会用到。
      
 #### 进入.Server进程:
 >ActivityThread.java
@@ -414,9 +418,18 @@ boolean attachApplicationLocked(ProcessRecord proc, String processName) throws E
 
 ![](/img/2017-02-28-service/14882086659921.jpg)
 
- #### SCHEDULE_CREATE_SERVICE_TRANSACTION
+```java
+app.thread.scheduleCreateService(r, r.serviceInfo,
+mAm.compatibilityInfoForPackageLocked(r.serviceInfo.applicationInfo),app.repProcState);
+```
+
+通过`app.thread`即ApplicationThreadProxy去进行Binder交互。
+
+ ####  SCHEDULE_CREATE_SERVICE_TRANSACTION
  
  `mRemote.transact(SCHEDULE_CREATE_SERVICE_TRANSACTION, data, null,IBinder.FLAG_ONEWAY);`
+
+>ActivityThread.java
 
 
 ```java
@@ -425,7 +438,7 @@ public final void scheduleCreateService(IBinder token,
     ServiceInfo info, CompatibilityInfo compatInfo, int processState) {
         updateProcessState(processState, false);
         CreateServiceData s = new CreateServiceData();
-        s.token = token;
+        s.token = token; //final class ServiceRecord extends Binder {
         s.info = info;
         s.compatInfo = compatInfo;
         sendMessage(H.CREATE_SERVICE, s);
@@ -470,4 +483,6 @@ private void handleCreateService(CreateServiceData data) {
     }
 }
 ```
+
+最终通过`loadClass`启动`Service`,这一步实在`Service`进程进行的,包括`onCreate`等生命周期的控制
 
