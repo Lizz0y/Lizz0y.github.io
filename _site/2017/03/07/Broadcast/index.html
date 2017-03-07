@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Broadcast广播分析 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/03/07/Broadcast/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Android" title="Android">Android</a>
+                        
+                        <a class="tag" href="/tags/#SourceCode" title="SourceCode">SourceCode</a>
+                        
+                    </div>
+                    <h1>Broadcast广播分析</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on March 7, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<h3 id="broadcast广播">BroadCast广播</h3>
+
+<p>继续分析广播。</p>
+
+<h4 id="背景知识">背景知识</h4>
+
+<p>消息传递: 其实跟观察者模式类似,一方订阅消息,当消息发布时接收处理事件。</p>
+
+<ul>
+  <li><code class="highlighter-rouge">J2EE</code>:消息驱动<code class="highlighter-rouge">Bean</code>来实现应用程序各个组件之间的消息传递</li>
+  <li><code class="highlighter-rouge">COM</code>:连接点实现消息传递</li>
+  <li><code class="highlighter-rouge">Android</code>:广播,现在更多的是Rx模式。</li>
+</ul>
+
+<p>与<code class="highlighter-rouge">startService</code>类似,广播依旧要与AMS交互。程序将<code class="highlighter-rouge">Receiver</code>注册到AMS中,当相应的<code class="highlighter-rouge">Sender</code>发出广播时,AMS通知相应的<code class="highlighter-rouge">Receiver</code>去处理事件。</p>
+
+<h4 id="源码分析">源码分析</h4>
+
+<p>有了<code class="highlighter-rouge">service</code>的铺垫,看起源码来已经可以理解很多了。</p>
+
+<p>首先看如何进行注册,在app层,依然使用AMS代理进行注册</p>
+
+<ul>
+  <li><code class="highlighter-rouge">mMainThread</code>:熟悉的<code class="highlighter-rouge">activityThread</code></li>
+  <li><code class="highlighter-rouge">filter</code>:<code class="highlighter-rouge">IntentFilter</code></li>
+  <li><code class="highlighter-rouge">rd</code>:不熟悉的对象<code class="highlighter-rouge">ReceiverDispather</code></li>
+</ul>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">return</span> <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">().</span><span class="na">registerReceiver</span><span class="o">(</span><span class="n">mMainThread</span><span class="o">.</span><span class="na">getApplicationThread</span><span class="o">(),</span> <span class="n">mBasePackageName</span><span class="o">,</span><span class="n">rd</span><span class="o">,</span> <span class="n">filter</span><span class="o">,</span> <span class="n">broadcastPermission</span><span class="o">,</span> <span class="n">userId</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<p>引入一个最关键的类<code class="highlighter-rouge">ReceiverDispather</code>。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">rd</span> <span class="o">=</span> <span class="n">mPackageInfo</span><span class="o">.</span><span class="na">getReceiverDispatcher</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">context</span><span class="o">,</span> <span class="n">scheduler</span><span class="o">,</span><span class="n">mMainThread</span><span class="o">.</span><span class="na">getInstrumentation</span><span class="o">(),</span> <span class="kc">true</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">InnerReceiver</code>是一个Binder实体对象,它负责真正的与AMS进行交互,在构造时外面包了一层<code class="highlighter-rouge">ReceiverDispatcher</code>。</p>
+
+<p>看两者的构造函数:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">ReceiverDispatcher</span><span class="o">(</span><span class="n">BroadcastReceiver</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">,</span>
+                <span class="n">Handler</span> <span class="n">activityThread</span><span class="o">,</span> <span class="n">Instrumentation</span> <span class="n">instrumentation</span><span class="o">,</span>
+                <span class="kt">boolean</span> <span class="n">registered</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">activityThread</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">NullPointerException</span><span class="o">(</span><span class="s">"Handler must not be null"</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">mIIntentReceiver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">InnerReceiver</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="o">!</span><span class="n">registered</span><span class="o">);</span>
+    <span class="n">mReceiver</span> <span class="o">=</span> <span class="n">receiver</span><span class="o">;</span>
+    <span class="n">mContext</span> <span class="o">=</span> <span class="n">context</span><span class="o">;</span>
+    <span class="n">mActivityThread</span> <span class="o">=</span> <span class="n">activityThread</span><span class="o">;</span>
+    <span class="n">mInstrumentation</span> <span class="o">=</span> <span class="n">instrumentation</span><span class="o">;</span>
+    <span class="n">mRegistered</span> <span class="o">=</span> <span class="n">registered</span><span class="o">;</span>
+    <span class="n">mLocation</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IntentReceiverLeaked</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+    <span class="n">mLocation</span><span class="o">.</span><span class="na">fillInStackTrace</span><span class="o">();</span>
+<span class="o">}</span>
+
+<span class="kd">final</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">InnerReceiver</span> <span class="kd">extends</span> <span class="n">IIntentReceiver</span><span class="o">.</span><span class="na">Stub</span> <span class="o">{</span>
+    <span class="kd">final</span> <span class="n">WeakReference</span><span class="o">&lt;</span><span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span><span class="o">&gt;</span> <span class="n">mDispatcher</span><span class="o">;</span>
+    <span class="kd">final</span> <span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span> <span class="n">mStrongRef</span><span class="o">;</span>
+    <span class="n">InnerReceiver</span><span class="o">(</span><span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span> <span class="n">rd</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">strong</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">mDispatcher</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WeakReference</span><span class="o">&lt;</span><span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span><span class="o">&gt;(</span><span class="n">rd</span><span class="o">);</span>
+        <span class="n">mStrongRef</span> <span class="o">=</span> <span class="n">strong</span> <span class="o">?</span> <span class="n">rd</span> <span class="o">:</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<p>那么<code class="highlighter-rouge">rd</code>是如何与receiver绑定的呢:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">rd</span> <span class="o">=</span> <span class="n">mPackageInfo</span><span class="o">.</span><span class="na">getReceiverDispatcher</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">context</span><span class="o">,</span> <span class="n">scheduler</span><span class="o">,</span><span class="n">mMainThread</span><span class="o">.</span><span class="na">getInstrumentation</span><span class="o">(),</span> <span class="kc">true</span><span class="o">);</span>
+</code></pre>
+</div>
+<p>这里的scheduler是mActivityThread中熟悉的handler,ReceiverDispathcer也保存了这个handler,作用后面会看到。</p>
+
+<p><img src="media/14886440981249/14888180481880.jpg" alt="" /></p>
+
+<p>在<code class="highlighter-rouge">LoadApk</code>中:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">final</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">Context</span><span class="o">,</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">BroadcastReceiver</span><span class="o">,</span> <span class="n">ReceiverDispatcher</span><span class="o">&gt;&gt;</span> <span class="n">mReceivers</span><span class="o">=</span> <span class="k">new</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">Context</span><span class="o">,</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">BroadcastReceiver</span><span class="o">,</span> <span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span><span class="o">&gt;&gt;();</span>
+
+<span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span> <span class="n">rd</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">BroadcastReceiver</span><span class="o">,</span> <span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">registered</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">map</span> <span class="o">=</span> <span class="n">mReceivers</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">context</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">rd</span> <span class="o">=</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">rd</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">rd</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ReceiverDispatcher</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="n">context</span><span class="o">,</span> <span class="n">handler</span><span class="o">,</span><span class="n">instrumentation</span><span class="o">,</span> <span class="n">registered</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">registered</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">map</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">BroadcastReceiver</span><span class="o">,</span> <span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span><span class="o">&gt;();</span>
+            <span class="n">mReceivers</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">map</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="n">rd</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+    <span class="n">rd</span><span class="o">.</span><span class="na">validate</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">handler</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+<p>在<code class="highlighter-rouge">loadapk</code>中,有一个<code class="highlighter-rouge">map</code>记录<code class="highlighter-rouge">receiver</code>与<code class="highlighter-rouge">dispather</code>的对应,而另一个map记录<code class="highlighter-rouge">context</code>与该<code class="highlighter-rouge">map</code>的对应。</p>
+
+<p><img src="media/14886440981249/14888184255170.jpg" alt="" /></p>
+
+<p>进入AMS真正注册<code class="highlighter-rouge">receiver</code>:</p>
+
+<p>在AMS中,有一个<code class="highlighter-rouge">map:IBinder-&gt;ReceiverList</code>,<code class="highlighter-rouge">IBinder</code>即前面的<code class="highlighter-rouge">IIntentReceiver</code>,<code class="highlighter-rouge">ReceiverList</code>也是一个很有趣的东西,一个<code class="highlighter-rouge">reciver</code>可以注册多个广播<code class="highlighter-rouge">filter</code>,所以<code class="highlighter-rouge">ReceiverList</code>继承于<code class="highlighter-rouge">ArrayList&lt;BroadcastFilter&gt;</code>,对应多个<code class="highlighter-rouge">IntentFilter</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">registerReceiver</span><span class="o">(</span><span class="n">sdStateReceiver</span><span class="o">,</span> <span class="n">sdCarMonitorFilter</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="cm">/**
+ * A receiver object that has registered for one or more broadcasts.
+ * The ArrayList holds BroadcastFilter objects.
+ */</span>
+<span class="kd">final</span> <span class="kd">class</span> <span class="nc">ReceiverList</span> <span class="kd">extends</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">BroadcastFilter</span><span class="o">&gt;</span>
+        <span class="kd">implements</span> <span class="n">IBinder</span><span class="o">.</span><span class="na">DeathRecipient</span> <span class="o">{</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="cm">/**
+* Keeps track of all IIntentReceivers that have been registered for
+* broadcasts.  Hash keys are the receiver IBinder, hash value is
+* a ReceiverList.
+*/</span>
+<span class="kd">final</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">,</span> <span class="n">ReceiverList</span><span class="o">&gt;</span> <span class="n">mRegisteredReceivers</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">IBinder</span><span class="o">,</span> <span class="n">ReceiverList</span><span class="o">&gt;();</span>
+              
+<span class="kd">public</span> <span class="n">Intent</span> <span class="nf">registerReceiver</span><span class="o">(</span><span class="n">IApplicationThread</span> <span class="n">caller</span><span class="o">,</span> <span class="n">String</span> <span class="n">callerPackage</span><span class="o">,</span><span class="n">IIntentReceiver</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">IntentFilter</span> <span class="n">filter</span><span class="o">,</span> <span class="n">String</span> <span class="n">permission</span><span class="o">,</span> <span class="kt">int</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kd">synchronized</span><span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">ProcessRecord</span> <span class="n">callerApp</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">caller</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">callerApp</span> <span class="o">=</span> <span class="n">getRecordForAppLocked</span><span class="o">(</span><span class="n">caller</span><span class="o">);</span>
+            <span class="o">....</span>
+            <span class="o">....</span>
+            <span class="n">ReceiverList</span> <span class="n">rl</span> <span class="o">=</span> <span class="o">(</span><span class="n">ReceiverList</span><span class="o">)</span><span class="n">mRegisteredReceivers</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">receiver</span><span class="o">.</span><span class="na">asBinder</span><span class="o">());</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">rl</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">rl</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ReceiverList</span><span class="o">(</span><span class="k">this</span><span class="o">,</span> <span class="n">callerApp</span><span class="o">,</span> <span class="n">callingPid</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span>
+                        <span class="n">userId</span><span class="o">,</span> <span class="n">receiver</span><span class="o">);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">rl</span><span class="o">.</span><span class="na">app</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">rl</span><span class="o">.</span><span class="na">app</span><span class="o">.</span><span class="na">receivers</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">rl</span><span class="o">);</span><span class="c1">//app代表ProcessRecord</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="n">receiver</span><span class="o">.</span><span class="na">asBinder</span><span class="o">().</span><span class="na">linkToDeath</span><span class="o">(</span><span class="n">rl</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="k">return</span> <span class="n">sticky</span><span class="o">;</span>
+                    <span class="o">}</span>
+                    <span class="n">rl</span><span class="o">.</span><span class="na">linkedToDeath</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                <span class="o">}</span>
+                <span class="n">mRegisteredReceivers</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">receiver</span><span class="o">.</span><span class="na">asBinder</span><span class="o">(),</span> <span class="n">rl</span><span class="o">);</span>
+            <span class="o">}</span> 
+            <span class="n">BroadcastFilter</span> <span class="n">bf</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BroadcastFilter</span><span class="o">(</span><span class="n">filter</span><span class="o">,</span> <span class="n">rl</span><span class="o">,</span> <span class="n">callerPackage</span><span class="o">,</span>
+                    <span class="n">permission</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span> <span class="n">userId</span><span class="o">);</span>
+            <span class="n">rl</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">bf</span><span class="o">);</span><span class="c1">//在arraylist中加入了该filter</span>
+            <span class="n">mReceiverResolver</span><span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="n">bf</span><span class="o">);</span>
+            <span class="o">...</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+<p><img src="media/14886440981249/14888186491306.jpg" alt="" /></p>
+
+<p>再看<code class="highlighter-rouge">sendBroadcast</code>发送广播吧</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">().</span><span class="na">broadcastIntent</span><span class="o">(</span>
+                <span class="n">mMainThread</span><span class="o">.</span><span class="na">getApplicationThread</span><span class="o">(),</span> <span class="n">intent</span><span class="o">,</span> <span class="n">resolvedType</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span>
+                <span class="n">Activity</span><span class="o">.</span><span class="na">RESULT_OK</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="n">AppOpsManager</span><span class="o">.</span><span class="na">OP_NONE</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span><span class="n">getUserId</span><span class="o">());</span>
+</code></pre>
+</div>
+
+<p>首先,通过<code class="highlighter-rouge">intentResolver</code>获取属于该<code class="highlighter-rouge">intent</code>的<code class="highlighter-rouge">BroadFilter list registeredReceivers</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">List</span> <span class="n">receivers</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">BroadcastFilter</span><span class="o">&gt;</span> <span class="n">registeredReceivers</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="c1">// Need to resolve the intent to interested receivers...</span>
+<span class="k">if</span> <span class="o">((</span><span class="n">intent</span><span class="o">.</span><span class="na">getFlags</span><span class="o">()&amp;</span><span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_RECEIVER_REGISTERED_ONLY</span><span class="o">)==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">receivers</span> <span class="o">=</span> <span class="n">collectReceiverComponents</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="n">resolvedType</span><span class="o">,</span> <span class="n">users</span><span class="o">);</span>
+<span class="o">}</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">intent</span><span class="o">.</span><span class="na">getComponent</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">registeredReceivers</span> <span class="o">=</span> <span class="n">mReceiverResolver</span><span class="o">.</span><span class="na">queryIntent</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span><span class="n">resolvedType</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">userId</span><span class="o">);</span>
+<span class="o">}</span>
+        
+<span class="kt">int</span> <span class="n">NR</span> <span class="o">=</span> <span class="n">registeredReceivers</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">registeredReceivers</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">:</span> <span class="mi">0</span><span class="o">;</span>
+<span class="k">if</span> <span class="o">(!</span><span class="n">ordered</span> <span class="o">&amp;&amp;</span> <span class="n">NR</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">// If we are not serializing this broadcast, then send the</span>
+            <span class="c1">// registered receivers separately so they don't wait for the</span>
+            <span class="c1">// components to be launched.</span>
+<span class="kd">final</span> <span class="n">BroadcastQueue</span> <span class="n">queue</span> <span class="o">=</span> <span class="n">broadcastQueueForIntent</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+<span class="n">BroadcastRecord</span> <span class="n">r</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BroadcastRecord</span><span class="o">(</span><span class="n">queue</span><span class="o">,</span> <span class="n">intent</span><span class="o">,</span> <span class="n">callerApp</span><span class="o">,</span>
+        <span class="n">callerPackage</span><span class="o">,</span> <span class="n">callingPid</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span> <span class="n">resolvedType</span><span class="o">,</span> <span class="n">requiredPermission</span><span class="o">,</span>
+                    <span class="n">appOp</span><span class="o">,</span> <span class="n">registeredReceivers</span><span class="o">,</span> <span class="n">resultTo</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">resultData</span><span class="o">,</span> <span class="n">map</span><span class="o">,</span><span class="n">ordered</span><span class="o">,</span> <span class="n">sticky</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">userId</span><span class="o">);</span>
+                    
+<span class="o">...</span>                                                                                                                                                                                                                                                                                                                                          
+<span class="kd">final</span> <span class="kt">boolean</span> <span class="n">replaced</span> <span class="o">=</span> <span class="n">replacePending</span> <span class="o">&amp;&amp;</span><span class="n">queue</span><span class="o">.</span><span class="na">replaceParallelBroadcastLocked</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(!</span><span class="n">replaced</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">queue</span><span class="o">.</span><span class="na">enqueueParallelBroadcastLocked</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+    <span class="n">queue</span><span class="o">.</span><span class="na">scheduleBroadcastsLocked</span><span class="o">();</span>
+<span class="o">}</span>
+<span class="n">registeredReceivers</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="n">NR</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<p>根据<code class="highlighter-rouge">intent</code>找到<code class="highlighter-rouge">filters</code>,传递给<code class="highlighter-rouge">handler</code>,在<code class="highlighter-rouge">handler</code>中:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">final</span> <span class="kt">void</span> <span class="nf">processNextBroadcast</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">fromMsg</span><span class="o">)</span> <span class="o">{</span>
+<span class="k">while</span> <span class="o">(</span><span class="n">mParallelBroadcasts</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">mParallelBroadcasts</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+    <span class="n">r</span><span class="o">.</span><span class="na">dispatchTime</span> <span class="o">=</span> <span class="n">SystemClock</span><span class="o">.</span><span class="na">uptimeMillis</span><span class="o">();</span>
+    <span class="n">r</span><span class="o">.</span><span class="na">dispatchClockTime</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+    <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="na">receivers</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_BROADCAST_LIGHT</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Processing parallel broadcast ["</span> <span class="o">+</span> <span class="n">mQueueName</span> <span class="o">+</span> <span class="s">"] "</span> <span class="o">+</span> <span class="n">r</span><span class="o">);</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+        <span class="n">Object</span> <span class="n">target</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="na">receivers</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG_BROADCAST</span><span class="o">)</span>  <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span>
+            <span class="s">"Delivering non-ordered on ["</span> <span class="o">+</span> <span class="n">mQueueName</span> <span class="o">+</span> <span class="s">"] to registered "</span>
+                            <span class="o">+</span> <span class="n">target</span> <span class="o">+</span> <span class="s">": "</span> <span class="o">+</span> <span class="n">r</span><span class="o">);</span>
+            <span class="n">deliverToRegisteredReceiverLocked</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="o">(</span><span class="n">BroadcastFilter</span><span class="o">)</span><span class="n">target</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+        <span class="o">}</span>
+        <span class="n">addBroadcastToHistoryLocked</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>r代表广播信息,<code class="highlighter-rouge">target</code>是广播的对象<code class="highlighter-rouge">filter</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">performReceiveLocked</span><span class="o">(</span><span class="n">filter</span><span class="o">.</span><span class="na">receiverList</span><span class="o">.</span><span class="na">app</span><span class="o">,</span> <span class="n">filter</span><span class="o">.</span><span class="na">receiverList</span><span class="o">.</span><span class="na">receiver</span><span class="o">,</span><span class="k">new</span> <span class="n">Intent</span><span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">intent</span><span class="o">),</span> <span class="n">r</span><span class="o">.</span><span class="na">resultCode</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">resultData</span><span class="o">,</span><span class="n">r</span><span class="o">.</span><span class="na">resultExtras</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">ordered</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">initialSticky</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">userId</span><span class="o">);</span>
+                    
+<span class="o">![](</span><span class="n">media</span><span class="o">/</span><span class="mi">14886440981249</span><span class="o">/</span><span class="mi">14888189716968</span><span class="o">.</span><span class="na">jpg</span><span class="o">)</span>
+                    
+<span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">performReceiveLocked</span><span class="o">(</span><span class="n">ProcessRecord</span> <span class="n">app</span><span class="o">,</span> <span class="n">IIntentReceiver</span> <span class="n">receiver</span><span class="o">,</span><span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="kt">int</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">String</span> <span class="n">data</span><span class="o">,</span> <span class="n">Bundle</span> <span class="n">extras</span><span class="o">,</span><span class="kt">boolean</span> <span class="n">ordered</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">sticky</span><span class="o">,</span> <span class="kt">int</span> <span class="n">sendingUser</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+        <span class="c1">// Send the intent to the receiver asynchronously using one-way binder calls.</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">app</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">app</span><span class="o">.</span><span class="na">thread</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">// If we have an app thread, do the call through that so it is</span>
+            <span class="c1">// correctly ordered with other one-way calls.</span>
+            <span class="n">app</span><span class="o">.</span><span class="na">thread</span><span class="o">.</span><span class="na">scheduleRegisteredReceiver</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">intent</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span>
+                    <span class="n">data</span><span class="o">,</span> <span class="n">extras</span><span class="o">,</span> <span class="n">ordered</span><span class="o">,</span> <span class="n">sticky</span><span class="o">,</span> <span class="n">sendingUser</span><span class="o">,</span> <span class="n">app</span><span class="o">.</span><span class="na">repProcState</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">receiver</span><span class="o">.</span><span class="na">performReceive</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">data</span><span class="o">,</span> <span class="n">extras</span><span class="o">,</span> <span class="n">ordered</span><span class="o">,</span>
+                    <span class="n">sticky</span><span class="o">,</span> <span class="n">sendingUser</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<p>IPC通过receiver传递给调用者:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>        <span class="c1">// This function exists to make sure all receiver dispatching is</span>
+        <span class="c1">// correctly ordered, since these are one-way calls and the binder driver</span>
+        <span class="c1">// applies transaction ordering per object for such calls.</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">scheduleRegisteredReceiver</span><span class="o">(</span><span class="n">IIntentReceiver</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span><span class="kt">int</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">String</span> <span class="n">dataStr</span><span class="o">,</span> <span class="n">Bundle</span> <span class="n">extras</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">ordered</span><span class="o">,</span><span class="kt">boolean</span> <span class="n">sticky</span><span class="o">,</span> <span class="kt">int</span> <span class="n">sendingUser</span><span class="o">,</span> <span class="kt">int</span> <span class="n">processState</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+    <span class="n">updateProcessState</span><span class="o">(</span><span class="n">processState</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+    <span class="n">receiver</span><span class="o">.</span><span class="na">performReceive</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">dataStr</span><span class="o">,</span> <span class="n">extras</span><span class="o">,</span> <span class="n">ordered</span><span class="o">,</span><span class="n">sticky</span><span class="o">,</span> <span class="n">sendingUser</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>先进入<code class="highlighter-rouge">IIntentReceiver.performReceive</code>,再抛到外层的<code class="highlighter-rouge">rd.performReceive</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">performReceive</span><span class="o">(</span><span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="kt">int</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">String</span> <span class="n">data</span><span class="o">,</span><span class="n">Bundle</span> <span class="n">extras</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">ordered</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">sticky</span><span class="o">,</span> <span class="kt">int</span> <span class="n">sendingUser</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">LoadedApk</span><span class="o">.</span><span class="na">ReceiverDispatcher</span> <span class="n">rd</span> <span class="o">=</span> <span class="n">mDispatcher</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">ActivityThread</span><span class="o">.</span><span class="na">DEBUG_BROADCAST</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">intent</span><span class="o">.</span><span class="na">getIntExtra</span><span class="o">(</span><span class="s">"seq"</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">);</span>
+        <span class="n">Slog</span><span class="o">.</span><span class="na">i</span><span class="o">(</span><span class="n">ActivityThread</span><span class="o">.</span><span class="na">TAG</span><span class="o">,</span> <span class="s">"Receiving broadcast "</span> <span class="o">+</span> <span class="n">intent</span><span class="o">.</span><span class="na">getAction</span><span class="o">()</span> <span class="o">+</span> <span class="s">" seq="</span> <span class="o">+</span> <span class="n">seq</span> <span class="o">+</span> <span class="s">" to "</span> <span class="o">+</span> <span class="o">(</span><span class="n">rd</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">rd</span><span class="o">.</span><span class="na">mReceiver</span> <span class="o">:</span> <span class="kc">null</span><span class="o">));</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">rd</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">rd</span><span class="o">.</span><span class="na">performReceive</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">data</span><span class="o">,</span> <span class="n">extras</span><span class="o">,</span><span class="n">ordered</span><span class="o">,</span> <span class="n">sticky</span><span class="o">,</span> <span class="n">sendingUser</span><span class="o">);</span>
+    <span class="o">}</span> 
+    <span class="o">...</span>
+<span class="o">}</span>
+        
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">performReceive</span><span class="o">(</span><span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="kt">int</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">String</span> <span class="n">data</span><span class="o">,</span><span class="n">Bundle</span> <span class="n">extras</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">ordered</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">sticky</span><span class="o">,</span> <span class="kt">int</span> <span class="n">sendingUser</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">ActivityThread</span><span class="o">.</span><span class="na">DEBUG_BROADCAST</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">seq</span> <span class="o">=</span> <span class="n">intent</span><span class="o">.</span><span class="na">getIntExtra</span><span class="o">(</span><span class="s">"seq"</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">);</span>
+        <span class="n">Args</span> <span class="n">args</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Args</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">data</span><span class="o">,</span> <span class="n">extras</span><span class="o">,</span> <span class="n">ordered</span><span class="o">,</span><span class="n">sticky</span><span class="o">,</span> <span class="n">sendingUser</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(!</span><span class="n">mActivityThread</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">args</span><span class="o">))</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">mRegistered</span> <span class="o">&amp;&amp;</span> <span class="n">ordered</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">IActivityManager</span> <span class="n">mgr</span> <span class="o">=</span> <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">();</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">ActivityThread</span><span class="o">.</span><span class="na">DEBUG_BROADCAST</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">i</span><span class="o">(</span><span class="n">ActivityThread</span><span class="o">.</span><span class="na">TAG</span><span class="o">,</span><span class="s">"Finishing sync broadcast to "</span> <span class="o">+</span> <span class="n">mReceiver</span><span class="o">);</span>
+                <span class="n">args</span><span class="o">.</span><span class="na">sendFinished</span><span class="o">(</span><span class="n">mgr</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="c1">//最后进入Args.run()   </span>
+<span class="kd">public</span> <span class="nf">Args</span><span class="o">(</span><span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="kt">int</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">String</span> <span class="n">resultData</span><span class="o">,</span> <span class="n">Bundle</span> <span class="n">resultExtras</span><span class="o">,</span>
+                    <span class="kt">boolean</span> <span class="n">ordered</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">sticky</span><span class="o">,</span> <span class="kt">int</span> <span class="n">sendingUser</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">(</span><span class="n">resultCode</span><span class="o">,</span> <span class="n">resultData</span><span class="o">,</span> <span class="n">resultExtras</span><span class="o">,</span><span class="n">mRegistered</span> <span class="o">?</span> <span class="n">TYPE_REGISTERED</span> <span class="o">:</span> <span class="n">TYPE_UNREGISTERED</span><span class="o">,</span><span class="n">ordered</span><span class="o">,</span> <span class="n">sticky</span><span class="o">,</span> <span class="n">mIIntentReceiver</span><span class="o">.</span><span class="na">asBinder</span><span class="o">(),</span> <span class="n">sendingUser</span><span class="o">);</span>
+    <span class="n">mCurIntent</span> <span class="o">=</span> <span class="n">intent</span><span class="o">;</span>
+    <span class="n">mOrdered</span> <span class="o">=</span> <span class="n">ordered</span><span class="o">;</span>
+<span class="o">}</span>
+            
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">BroadcastReceiver</span> <span class="n">receiver</span> <span class="o">=</span> <span class="n">mReceiver</span><span class="o">;</span>
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">ordered</span> <span class="o">=</span> <span class="n">mOrdered</span><span class="o">;</span>
+                
+        <span class="kd">final</span> <span class="n">IActivityManager</span> <span class="n">mgr</span> <span class="o">=</span> <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">Intent</span> <span class="n">intent</span> <span class="o">=</span> <span class="n">mCurIntent</span><span class="o">;</span>
+        <span class="n">mCurIntent</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">ClassLoader</span> <span class="n">cl</span> <span class="o">=</span>  <span class="n">mReceiver</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getClassLoader</span><span class="o">();</span>
+            <span class="n">intent</span><span class="o">.</span><span class="na">setExtrasClassLoader</span><span class="o">(</span><span class="n">cl</span><span class="o">);</span>
+            <span class="n">setExtrasClassLoader</span><span class="o">(</span><span class="n">cl</span><span class="o">);</span>
+            <span class="n">receiver</span><span class="o">.</span><span class="na">setPendingResult</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+            <span class="n">receiver</span><span class="o">.</span><span class="na">onReceive</span><span class="o">(</span><span class="n">mContext</span><span class="o">,</span> <span class="n">intent</span><span class="o">);</span>
+        <span class="o">}</span> 
+    <span class="o">...</span>
+    <span class="o">}</span>
+
+</code></pre>
+</div>
+<p>与<code class="highlighter-rouge">service</code>类似,先生成<code class="highlighter-rouge">mReceiver</code>,再调用<code class="highlighter-rouge">onReceive</code></p>
+
+<p>根据图做个总结:</p>
+
+<ul>
+  <li>根据<code class="highlighter-rouge">filter</code>注册<code class="highlighter-rouge">receiver</code>时,创建对应的<code class="highlighter-rouge">dispatcher</code>和<code class="highlighter-rouge">InnerReceiver</code>用作<code class="highlighter-rouge">IPC</code>通信,一个<code class="highlighter-rouge">receiver</code>对应一个<code class="highlighter-rouge">dispatcher</code>,可以对应多个<code class="highlighter-rouge">filter</code></li>
+  <li>在AMS中根据<code class="highlighter-rouge">innerReceiver</code>注册<code class="highlighter-rouge">map</code>,对应多个<code class="highlighter-rouge">Filter</code>,形成<code class="highlighter-rouge">ReceiverList</code>。即<code class="highlighter-rouge">ReceiverList</code>包含一个<code class="highlighter-rouge">receiver</code>对应的<code class="highlighter-rouge">filters</code>。</li>
+  <li>send广播时,会对该广播形成一个<code class="highlighter-rouge">record</code>代表广播信息。然后通过该intent找到多个<code class="highlighter-rouge">filter</code>,<code class="highlighter-rouge">filter</code>找到对应的<code class="highlighter-rouge">receiverList</code>,因为<code class="highlighter-rouge">list</code>中包含该<code class="highlighter-rouge">filter</code>对应的<code class="highlighter-rouge">processRecord</code>和<code class="highlighter-rouge">InnerReceiver</code></li>
+  <li>循环,通过<code class="highlighter-rouge">InnerReceiver</code>返回到<code class="highlighter-rouge">process</code>,注册的进程中,因为该<code class="highlighter-rouge">innterReceiver</code>中有相应的<code class="highlighter-rouge">BroadcastReceiver</code>,反射生成,调用<code class="highlighter-rouge">onReceive</code>即可。</li>
+</ul>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/03/07/Broadcast"
+                    data-title="Broadcast广播分析"
+                    data-url="http://localhost:5001/2017/03/07/Broadcast/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="BroadCast广播
+
+继续分析广播。
+
+背景知识
+
+消息传递: 其实跟观察者模式类似,一方订阅消息,当消息发布时接收处理事件。
+
+
+  J2EE:消息... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/02/28/Service/" data-toggle="tooltip" data-placement="top" title="Serivice启动机制">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/03/07/Broadcast"
+                        data-title="Broadcast广播分析"
+                        data-url="http://localhost:5001/2017/03/07/Broadcast/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

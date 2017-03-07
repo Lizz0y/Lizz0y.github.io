@@ -139,13 +139,45 @@
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
                 
 <div class="post-preview">
+    <a href="/2017/03/07/Broadcast/">
+        <h2 class="post-title">
+            Broadcast广播分析
+        </h2>
+        
+        <div class="post-content-preview">
+            BroadCast广播
+
+继续分析广播。
+
+背景知识
+
+消息传递: 其实跟观察者模式类似,一方订阅消息,当消息发布时接收处理事件。
+
+
+  J2EE:消息驱动Bean来实现应用程序各个组件之间的消息传递
+  COM:连接点实现消息传递
+  Android:广播,现在更多的是Rx模式。
+
+
+与startService类似,广播依旧要与AMS交互。程序将Receiver注册到AMS中,当相应的S...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Liz on March 7, 2017
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
     <a href="/2017/02/28/Service/">
         <h2 class="post-title">
             Serivice启动机制
         </h2>
         
         <div class="post-content-preview">
-            
+            今天理一下Service,就从最简单的startService(intent)开始,将Service定义在新的进程启动。
+
+
   ContextWrapper.java
 
 
@@ -156,13 +188,7 @@ public ComponentName startService(Intent service) {
 
 
 
-mBase:ContextImpl
-
-
-  ContextImpl.java
-
-
-private ComponentName st...
+mBa...
         </div>
     </a>
     <p class="post-meta">

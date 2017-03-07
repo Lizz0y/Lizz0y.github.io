@@ -134,9 +134,9 @@
                         
                         <a class="tag" href="/tags/#Android" title="Android">Android</a>
                         
-                        <a class="tag" href="/tags/#Proxy" title="Proxy">Proxy</a>
+                        <a class="tag" href="/tags/#Source Code" title="Source Code">Source Code</a>
                         
-                        <a class="tag" href="/tags/#Hook" title="Hook">Hook</a>
+                        <a class="tag" href="/tags/#Service" title="Service">Service</a>
                         
                     </div>
                     <h1>Serivice启动机制</h1>
@@ -162,7 +162,9 @@
                 col-md-10 col-md-offset-1
                 post-container">
 
-				<blockquote>
+				<p>今天理一下Service,就从最简单的<code class="highlighter-rouge">startService(intent)</code>开始,将Service定义在新的进程启动。</p>
+
+<blockquote>
   <p>ContextWrapper.java</p>
 </blockquote>
 
@@ -195,7 +197,7 @@
 
 <ul>
   <li><code class="highlighter-rouge">getApplicationThread()</code>就是<code class="highlighter-rouge">ActivityThread$ApplicationThread</code></li>
-  <li><code class="highlighter-rouge">resolveType</code>是返回<code class="highlighter-rouge">MIME</code> 但一般正常的app都是null</li>
+  <li><code class="highlighter-rouge">resolveType</code>是返回<code class="highlighter-rouge">MIME</code> 但一般正常的app都是<code class="highlighter-rouge">null</code></li>
   <li><code class="highlighter-rouge">user.getIdentifier()</code>调试下来还都是0</li>
 </ul>
 
@@ -245,14 +247,18 @@
 <p>具体见下图调试:</p>
 
 <ul>
-  <li>caller:ApplicationThread,代表当前调用service进程的ApplicationThread,这其实就是个Binder对象,拿着它AMS就能和当前进程交互了</li>
-  <li>service:intent</li>
-  <li>mRemote:BinderProxy,AMS的代理对象</li>
+  <li><code class="highlighter-rouge">caller</code>:<code class="highlighter-rouge">ApplicationThread</code>,代表当前调用<code class="highlighter-rouge">service</code>进程的<code class="highlighter-rouge">ApplicationThread</code>,这其实就是个<code class="highlighter-rouge">Binder</code>对象,拿着它<code class="highlighter-rouge">AMS</code>就能和当前进程交互了</li>
+  <li><code class="highlighter-rouge">service</code>:<code class="highlighter-rouge">intent</code></li>
+  <li><code class="highlighter-rouge">mRemote</code>:<code class="highlighter-rouge">BinderProxy</code>,<code class="highlighter-rouge">AMS</code>的代理对象</li>
 </ul>
 
-<p><img src="/img/2017-02-28-Service/14881222309428.jpg" alt="" /></p>
+<p><img src="/img/2017-02-28-service/14881222309428.jpg" alt="" /></p>
 
 <h4 id="start_service_transaction">START_SERVICE_TRANSACTION</h4>
+
+<blockquote>
+  <p>ActivityManagerNative.java</p>
+</blockquote>
 
 <div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">data</span><span class="o">.</span><span class="na">enforceInterface</span><span class="o">(</span><span class="n">IActivityManager</span><span class="o">.</span><span class="na">descriptor</span><span class="o">);</span>
 <span class="n">IBinder</span> <span class="n">b</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="na">readStrongBinder</span><span class="o">();</span>
@@ -269,11 +275,11 @@
 <p>分析:</p>
 
 <ul>
-  <li>app 是调用进程在AMS中的AlicationThreadProxy</li>
-  <li>service:调用进程传过来的intent</li>
+  <li><code class="highlighter-rouge">app</code> 是调用进程在AMS中的<code class="highlighter-rouge">AlicationThreadProxy</code></li>
+  <li><code class="highlighter-rouge">service</code>:调用进程传过来的<code class="highlighter-rouge">intent</code></li>
 </ul>
 
-<p><img src="/img/2017-02-28-Service/14881227389113.jpg" alt="" /></p>
+<p><img src="/img/2017-02-28-service/14881227389113.jpg" alt="" /></p>
 
 <blockquote>
   <p>ActivityManagerService.java</p>
@@ -286,7 +292,7 @@
 </code></pre>
 </div>
 
-<p><img src="/img/2017-02-28-Service/14881230897893.jpg" alt="" />
+<p><img src="/img/2017-02-28-service/14881230897893.jpg" alt="" />
 最终进入<code class="highlighter-rouge">ActivityServices</code>的<code class="highlighter-rouge">startServiceLocked</code></p>
 
 <blockquote>
@@ -303,7 +309,7 @@
 </code></pre>
 </div>
 
-<p>在这个函数中,首先根据intent/uid/pid等信息获取<code class="highlighter-rouge">ServiceRecord</code>,然后在该record的pendingStart中加入一个StartItem表示等会要开始的Service</p>
+<p>在这个函数中,首先根据<code class="highlighter-rouge">intent/uid/pid</code>等信息获取<code class="highlighter-rouge">ServiceRecord</code>,然后在该<code class="highlighter-rouge">record</code>的<code class="highlighter-rouge">pendingStart</code>中加入一个<code class="highlighter-rouge">StartItem</code>表示等会要开始的<code class="highlighter-rouge">Service</code></p>
 
 <div class="language-java highlighter-rouge"><pre class="highlight"><code>  <span class="n">ComponentName</span> <span class="nf">startServiceInnerLocked</span><span class="o">(</span><span class="n">ServiceMap</span> <span class="n">smap</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">service</span><span class="o">,</span><span class="n">ServiceRecord</span> <span class="n">r</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">callerFg</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">addToStarting</span><span class="o">)</span> <span class="o">{</span>
     <span class="n">String</span> <span class="n">error</span> <span class="o">=</span> <span class="n">bringUpServiceLocked</span><span class="o">(</span><span class="n">r</span><span class="o">,</span><span class="n">service</span><span class="o">.</span><span class="na">getFlags</span><span class="o">(),</span> <span class="n">callerFg</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
@@ -376,18 +382,18 @@
 </code></pre>
 </div>
 
-<p><img src="/img/2017-02-28-Service/14881254686652.jpg" alt="" /></p>
+<p><img src="/img/2017-02-28-service/14881254686652.jpg" alt="" /></p>
 
-<p>进入app = null,最终进入mAm.startProcessLocked创建进程</p>
+<p>进入<code class="highlighter-rouge">app = null</code>,最终进入<code class="highlighter-rouge">mAm.startProcessLocked</code>创建进程,创建完进程后,会在<code class="highlighter-rouge">mPendingServices</code>中加入<code class="highlighter-rouge">r</code>,代表待启动的<code class="highlighter-rouge">Service</code></p>
 
 <div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="k">if</span> <span class="o">((</span><span class="n">app</span><span class="o">=</span><span class="n">mAm</span><span class="o">.</span><span class="na">startProcessLocked</span><span class="o">(</span><span class="n">procName</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">appInfo</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="n">intentFlags</span><span class="o">,</span><span class="s">"service"</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">name</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">isolated</span><span class="o">,</span> <span class="kc">false</span><span class="o">))</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
 </code></pre>
 </div>
 
 <ul>
-  <li>r:ServiceRecord</li>
-  <li>appInfo:Service的ApplicationInfo</li>
-  <li>r.name是ComponentName</li>
+  <li>r: ServiceRecord</li>
+  <li>appInfo: Service的ApplicationInfo</li>
+  <li>r.name: ComponentName</li>
 </ul>
 
 <blockquote>
@@ -430,11 +436,9 @@
 </code></pre>
 </div>
 
-<p>通过<code class="highlighter-rouge">newProcessRecordLocked</code>创建一个新的<code class="highlighter-rouge">ProcessRecord</code>,包括<code class="highlighter-rouge">applicationinfo</code>,<code class="highlighter-rouge">processName</code>,<code class="highlighter-rouge">uid</code></p>
+<p>通过<code class="highlighter-rouge">newProcessRecordLocked</code>创建一个新的<code class="highlighter-rouge">ProcessRecord</code>,包括<code class="highlighter-rouge">applicationinfo</code>,<code class="highlighter-rouge">processName</code>,<code class="highlighter-rouge">uid</code>,创建完<code class="highlighter-rouge">Record</code>后,使用<code class="highlighter-rouge">startProcessLocked</code>创建新的进程</p>
 
-<p><code class="highlighter-rouge">startProcessLocked</code>创建新的进程</p>
-
-<p><img src="/img/2017-02-28-Service/14881263805693.jpg" alt="" /></p>
+<p><img src="/img/2017-02-28-service/14881263805693.jpg" alt="" /></p>
 
 <div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="c1">// Start the process.  It will either succeed and return a result containing</span>
 <span class="c1">// the PID of the new process, or else throw a RuntimeException.</span>
@@ -451,6 +455,8 @@
             
 </code></pre>
 </div>
+
+<p>这里讲将<code class="highlighter-rouge">pid</code>,与<code class="highlighter-rouge">app(ProcessRecord)</code>放入<code class="highlighter-rouge">mPidsSelfLocked</code>中,后面会用到。</p>
 
 <h4 id="进入server进程">进入.Server进程:</h4>
 <blockquote>
@@ -578,22 +584,33 @@
 
 <p>在成员变量<code class="highlighter-rouge">mPendingServices</code>中，保存了一个<code class="highlighter-rouge">ServiceRecord</code>，这里通过进程uid和进程名称将它找出来，然后通过<code class="highlighter-rouge">realStartServiceLocked</code>函数来进一步处理。</p>
 
-<p><img src="/img/2017-02-28-Service/14882085908272.jpg" alt="" /></p>
+<p><img src="/img/2017-02-28-service/14882085908272.jpg" alt="" /></p>
 
-<p><img src="/img/2017-02-28-Service/14882086141710.jpg" alt="" /></p>
+<p><img src="/img/2017-02-28-service/14882086141710.jpg" alt="" /></p>
 
-<p><img src="/img/2017-02-28-Service/14882086659921.jpg" alt="" /></p>
+<p><img src="/img/2017-02-28-service/14882086659921.jpg" alt="" /></p>
 
-<p>#### SCHEDULE_CREATE_SERVICE_TRANSACTION</p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">app</span><span class="o">.</span><span class="na">thread</span><span class="o">.</span><span class="na">scheduleCreateService</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">serviceInfo</span><span class="o">,</span>
+<span class="n">mAm</span><span class="o">.</span><span class="na">compatibilityInfoForPackageLocked</span><span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">serviceInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">),</span><span class="n">app</span><span class="o">.</span><span class="na">repProcState</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<p>通过<code class="highlighter-rouge">app.thread</code>即ApplicationThreadProxy去进行Binder交互。</p>
+
+<p>####  SCHEDULE_CREATE_SERVICE_TRANSACTION</p>
 
 <p><code class="highlighter-rouge">mRemote.transact(SCHEDULE_CREATE_SERVICE_TRANSACTION, data, null,IBinder.FLAG_ONEWAY);</code></p>
+
+<blockquote>
+  <p>ActivityThread.java</p>
+</blockquote>
 
 <div class="language-java highlighter-rouge"><pre class="highlight"><code>                
 <span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">scheduleCreateService</span><span class="o">(</span><span class="n">IBinder</span> <span class="n">token</span><span class="o">,</span>
     <span class="n">ServiceInfo</span> <span class="n">info</span><span class="o">,</span> <span class="n">CompatibilityInfo</span> <span class="n">compatInfo</span><span class="o">,</span> <span class="kt">int</span> <span class="n">processState</span><span class="o">)</span> <span class="o">{</span>
         <span class="n">updateProcessState</span><span class="o">(</span><span class="n">processState</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
         <span class="n">CreateServiceData</span> <span class="n">s</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CreateServiceData</span><span class="o">();</span>
-        <span class="n">s</span><span class="o">.</span><span class="na">token</span> <span class="o">=</span> <span class="n">token</span><span class="o">;</span>
+        <span class="n">s</span><span class="o">.</span><span class="na">token</span> <span class="o">=</span> <span class="n">token</span><span class="o">;</span> <span class="c1">//final class ServiceRecord extends Binder {</span>
         <span class="n">s</span><span class="o">.</span><span class="na">info</span> <span class="o">=</span> <span class="n">info</span><span class="o">;</span>
         <span class="n">s</span><span class="o">.</span><span class="na">compatInfo</span> <span class="o">=</span> <span class="n">compatInfo</span><span class="o">;</span>
         <span class="n">sendMessage</span><span class="o">(</span><span class="n">H</span><span class="o">.</span><span class="na">CREATE_SERVICE</span><span class="o">,</span> <span class="n">s</span><span class="o">);</span>
@@ -640,6 +657,8 @@
 </code></pre>
 </div>
 
+<p>最终通过<code class="highlighter-rouge">loadClass</code>启动<code class="highlighter-rouge">Service</code>,这一步实在<code class="highlighter-rouge">Service</code>进程进行的,包括<code class="highlighter-rouge">onCreate</code>等生命周期的控制</p>
+
 
 
                 <hr>
@@ -653,12 +672,10 @@
                     data-title="Serivice启动机制"
                     data-url="http://localhost:5001/2017/02/28/Service/"
                     data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
-                    data-content="
-  ContextWrapper.java
+                    data-content="今天理一下Service,就从最简单的startService(intent)开始,将Service定义在新的进程启动。
 
 
-@Override
-public ComponentName startService(Intent s... | Lizz0y's Notes " >
+  ContextWrapp... | Lizz0y's Notes " >
                     <div class="ds-share-inline">
                       <ul  class="ds-share-icons-16">
                         <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
@@ -681,6 +698,10 @@ public ComponentName startService(Intent s... | Lizz0y's Notes " >
                         <a href="/2017/02/26/Proxy/" data-toggle="tooltip" data-placement="top" title="代理机制">&larr; Previous Post</a>
                     </li>
                     
+                    
+                    <li class="next">
+                        <a href="/2017/03/07/Broadcast/" data-toggle="tooltip" data-placement="top" title="Broadcast广播分析">Next Post &rarr;</a>
+                    </li>
                     
                 </ul>
 
