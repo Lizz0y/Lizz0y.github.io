@@ -80,7 +80,7 @@ rd = mPackageInfo.getReceiverDispatcher(receiver, context, scheduler,mMainThread
 ```
 这里的scheduler是mActivityThread中熟悉的handler,ReceiverDispathcer也保存了这个handler,作用后面会看到。
 
-![](/img/2017-02-28-broadcast/14888180481880.jpg)
+![](/img/2017-03-07-broadcast/14888180481880.jpg)
 
 
 
@@ -112,7 +112,7 @@ if (rd == null) {
 ```
 在`loadapk`中,有一个`map`记录`receiver`与`dispather`的对应,而另一个map记录`context`与该`map`的对应。
 
-![](/img/2017-02-28-broadcast/14888184255170.jpg)
+![](/img/2017-03-07-broadcast/14888184255170.jpg)
 
 进入AMS真正注册`receiver`:
 
@@ -172,7 +172,7 @@ public Intent registerReceiver(IApplicationThread caller, String callerPackage,I
     }
 ```
 
-![](/img/2017-02-28-broadcast/14888186491306.jpg)
+![](/img/2017-03-07-broadcast/14888186491306.jpg)
 
 再看`sendBroadcast`发送广播吧
 
@@ -246,7 +246,7 @@ r代表广播信息,`target`是广播的对象`filter`
 performReceiveLocked(filter.receiverList.app, filter.receiverList.receiver,new Intent(r.intent), r.resultCode, r.resultData,r.resultExtras, r.ordered, r.initialSticky, r.userId);
 ```
 
-![](/img/2017-02-28-broadcast/14888189716968.jpg)
+![](/img/2017-03-07-broadcast/14888189716968.jpg)
 
 ```java
                     
