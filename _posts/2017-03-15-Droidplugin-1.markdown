@@ -25,10 +25,10 @@ tags:
 `pluginApplication`作为入口,在`onCreate`时,初始化各个`Manager`
 
 * `PluginPatchManager`:处理插件异常情况
-* `installHook`: 注册所有hook点
-* `PluginHelper`:实现ServiceConnection
-* `PluginManager`:实现ServiceConnection,带上PluginHelper这个`connection`,同时绑定`PluginManagerService`服务,该全局服务提供插件管理。
-* `PluginManagerService`:初始化`IPluginManagerImpl`binder实体对象,该对象模拟系统的`PackageManagerService`，对插件进行简单的管理服务。
+* `installHook`: 注册所有`hook`点
+* `PluginHelper`:实现`ServiceConnection`
+* `PluginManager`:实现`ServiceConnection`,带上`PluginHelper`这个`connection`,同时绑定`PluginManagerService`服务,该全局服务提供插件管理。
+* `PluginManagerService`:初始化`IPluginManagerImplbinder`实体对象,该对象模拟系统的`PackageManagerService`，对插件进行简单的管理服务。
 
 
 其实上述不了解也无所谓的,只是了解了更加清晰一点而已
@@ -78,14 +78,14 @@ PluginPackageParser parser = new PluginPackageParser(mContext, new File(apkfile)
         mHostPackageInfo = mHostContext.getPackageManager().getPackageInfo(mHostContext.getPackageName(), 0);
 ```
 
-* 根据api版本获取自定义的PackageParser,这其实挺恶心的,每出一个版本就要新写一个parser = =,然后调用parsePackage进行处理。
+* 根据`api`版本获取自定义的`PackageParser`,这其实挺恶心的,每出一个版本就要新写一个`parser` = =,然后调用`parsePackage`进行处理。
 
 ![](/img/2017-03-15-droidplugin-1/14893033591097.jpg)
 
 
 可以看到主要是对`androidManifest`进行处理,分析除了四大组件和一些基本信息。
 
-* 对前面分析出的组件进行处理,将`activity`,`ActivityInfo`,`intenetFilter`以`componentName`为`key`放入三个`cache`中
+* 对前面分析出的组件进行处理,将`activity`,`ActivityInfo`,`intentFilter`以`componentName`为`key`放入三个`cache`中
 
 ![](/img/2017-03-15-droidplugin-1/14893036084724.jpg)
 
@@ -230,7 +230,7 @@ private static void preMakeApplication(Context hostContext, ComponentInfo plugin
     } catch (Exception e) {
         Log.e(TAG, "preMakeApplication FAIL", e);
     }
-    ```
+```
 
 #### stub
 为了完美的运行插件,宿主进程需要先定义一些`stub`。
@@ -330,7 +330,7 @@ private static class startService extends ReplaceCallingPackageHookedMethodHandl
 ```
 其实也不复杂,在`startService`之前先进行`before`预处理,那就先来看看做了哪些预处理的努力:
 
-* `ServiceInfo serviceInfo = resolveService(intent);`
+`ServiceInfo serviceInfo = resolveService(intent);`
 
 ```java
 public ServiceInfo getServiceInfo(ComponentName className, int flags) throws Exception {
@@ -352,19 +352,19 @@ public ServiceInfo getServiceInfo(ComponentName className, int flags) throws Exc
 
 
 
-* `ServiceInfo proxyService = selectProxyService(intent);`
+`ServiceInfo proxyService = selectProxyService(intent);`
 
 最重要的一步。
 
-1. `runProcessGC();`
+* `runProcessGC();`
 不懂为什么要先GC一次,先放着。。
 
-2. 看正在运行的进程是否有符合条件的进程 
+* 看正在运行的进程是否有符合条件的进程 
 
 ![](/img/2017-03-15-droidplugin-1/14893076033789.jpg)
 
 
-3. 使用`stub`
+* 使用`stub`
 
 在宿主进程中,定义了无数的`activity,service`和`provider`。
 
