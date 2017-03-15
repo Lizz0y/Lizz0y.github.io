@@ -240,13 +240,9 @@ private static void preMakeApplication(Context hostContext, ComponentInfo plugin
 ![](/img/2017-03-15-droidplugin-1/14893091122357.jpg)
 
 
-如上图,预定义在`PluginP01`进程中的`ActivityStub,p01`进程,`SingleTop`的`mode`。
+如上图,预定义在`PluginP01`进程中的`ActivityStub,p01`进程,`SingleTop`的`mode`。这样在运行插件时,可以用对应的activitystub去ams中注册,然后启动时瞒天过海替换成`realActivity` 
 
-这样在运行插件时,可以用对应的activitystub去ams中注册,然后启动时瞒天过海替换成`realActivity`
-
-在前面提到的`MyActivityManagerService`启动时,会初始化`StaticProcessList`。
-
-初始化即遍历`manifest`中的四大组件,根据`process`初始化`ProcessItem`
+在前面提到的`MyActivityManagerService`启动时,会初始化`StaticProcessList`。初始化即遍历`manifest`中的四大组件,根据`process`初始化`ProcessItem`
 
 ![](/img/2017-03-15-droidplugin-1/14895015269438.jpg)
 
