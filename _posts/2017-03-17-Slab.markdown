@@ -18,7 +18,7 @@ tags:
 一般C程序员很喜欢使用`malloc`来分配内存,但会有以下缺陷:
 
 * 久而久之会使存储堆碎片化
-* 每次分配到缓冲区后都要初始化,如果释放的数据结构可以在下次分配可以大大提高效率
+* 每次分配到缓冲区后都要初始化,释放的数据结构在下次分配时又要重新初始化,性能较差
 
 而这两点使它不适合作为内核内存的分配策略,举个栗子,内核经常会创建进程销毁进程,那`task_struct`这个结构就会经常被分配销毁,如果每次都要重新`malloc`并进行初始化会比较耗时,因此`linux`引入`slab`概念。
 
@@ -71,7 +71,7 @@ tags:
 
 
 
-#### `kmem_cache_create()`
+#### kmem_cache_create()
 
 ![](/img/2017-03-17-slab/14896649630305.jpg)
 
@@ -91,7 +91,7 @@ tags:
 * `slab_t->free*objsize + slab_t->s_mem`拿到第一个空闲的对象地址
 * 更新`slab_t->free` 为下一个空闲对象`index `
 
-#### `kmem_cache_grow()`
+#### kmem_cache_grow()
 
 在`alloc_new_slab`中进入该函数:
 
@@ -99,7 +99,7 @@ tags:
 
 
 * 首先根据`gfporder`即`slab`应有的`page number`来`alloc_page`,这里分配得到`objp` 注意是缓冲区(`obj`)的`mem`
-* 然后通`·kmem_cache_slabmgmt()`建立管理信息，即确定`slab_t`结构的各个变量值
+* 然后通过`kmem_cache_slabmgmt()`建立管理信息，即确定`slab_t`结构的各个变量值
 * 通过`kmem_cache_init_objs`进行构造函数对象初始化
 
 #### `kmem_cache_free`
