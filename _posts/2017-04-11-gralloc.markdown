@@ -190,7 +190,7 @@ static int hello_device_open(const struct hw_module_t* module, const char* name,
 ```
 android硬件抽象层就是在linux驱动的基础上加了一层,因为linux是完全开源的,android不需要开源,所以驱动层负责读写硬件,具体逻辑都在抽象层中。模块ID,模块结构体,硬件接口结构体是android驱动程序必须的结构。
 
-这里，实例变量名必须为HAL_MODULE_INFO_SYM，tag也必须为HARDWARE_MODULE_TAG，这是Android硬件抽象层规范规定的。
+这里，实例变量名必须为`HAL_MODULE_INFO_SYM`，tag也必须为`HARDWARE_MODULE_TAG`，这是Android硬件抽象层规范规定的。
 
 #### 初始化
 
@@ -212,11 +212,11 @@ static inline int hello_device_open(const hw_module_t* module, struct hello_devi
 }  
 
 ```
-hardware.c中提供hw_get_module获取module,将模块加载到内存中来之后，然后调用函数dlsym来获得之前写死的HAL_MODULE_INFO_SYM所导出的符号HMI。由于这个符号指向的是一个hw_module_t结构体，因此，最后函数load就可以强制地将这个符号转换为一个hw_module_t结构体指针，并且返回给调用者。调用者获得了这个hw_module_t结构体指针之后，通过module->methods->open初始化硬件设备device,在`hello_device_open`中看到初始化了结构体,并且通过`dev->common.module = (hw_module_t*)module;`与module相互绑定,
+hardware.c中提供`hw_get_module`获取module,将模块加载到内存中来之后，然后调用函数dlsym来获得之前写死的`HAL_MODULE_INFO_SYM`所导出的符号HMI。由于这个符号指向的是一个`hw_module_t`结构体，因此，最后函数load就可以强制地将这个符号转换为一个`hw_module_t`结构体指针，并且返回给调用者。调用者获得了这个`hw_module_t`结构体指针之后，通过module->methods->open初始化硬件设备device,在`hello_device_open`中看到初始化了结构体,并且通过`dev->common.module = (hw_module_t*)module;`与module相互绑定
 
 ### gralloc模块
 
-![](/img/2017-02-28-service/14916325425310.jpg)
+![](/img/2017-04-11-gralloc/14916325425310.jpg)
 
 
 #### 理论知识
@@ -237,7 +237,7 @@ format值:
 * 通过registerBuffer将一个图形缓冲区映射到进程的地址空间
 
 
-![](/img/2017-02-28-service/14916366909661.jpg)
+![](/img/2017-04-11-gralloc/14916366909661.jpg)
 
 
 **gralloc设备负责分配图形缓冲区，gralloc模块负责注册图形缓冲区，而fb设备负责渲染图形缓冲区。**
@@ -290,6 +290,7 @@ typedef struct alloc_device_t {
 ```
 
 //帧缓冲区结构
+
 ```c
 struct private_module_t {  
     gralloc_module_t base;  
@@ -307,7 +308,7 @@ struct private_module_t {
     float ydpi; //描述设备显示屏在高度  
     float fps; //用来描述显示屏的刷新频率  
 };  
-    ```
+```
 
 只有一个gralloc模块,gralloc模块定义了打开设备的帮助函数gralloc_open。这里GRALLOC_HARDWARE_GPU0代表打开gralloc设备,在gralloc模块中，fb设备的ID值定义为GRALLOC_HARDWARE_FB0。同样用gralloc_open打开,但参数不一样open时会做条件判断
 
@@ -468,19 +469,19 @@ int (*post)(struct framebuffer_device_t* dev, buffer_handle_t buffer);
 
 ##### 缓冲区从帧分配
 
-当private_handle_t结构体hnd所描述的图形缓冲区是在系统帧缓冲区中分配的时候，即这个图形缓冲区的标志值flags的PRIV_FLAGS_FRAMEBUFFER位等于1的时候，我们是不需要将图形缓冲区的内容拷贝到系统帧缓冲区去的，因为我们将内容写入到图形缓冲区的时候，已经相当于是将内容写入到了系统帧缓冲区中去了。虽然在这种情况下，我们不需要将图形缓冲区的内容拷贝到系统帧缓冲区去(mmap)，但是我们需要告诉系统帧缓冲区设备将要渲染的图形缓冲区作为系统当前的输出图形缓冲区，这样才可以将要渲染的图形缓冲区的内容绘制到设备显示屏来。例如，假设系统帧缓冲区有2个图形缓冲区，当前是以第1个图形缓冲区作为输出图形缓冲区的，这时候如果我们需要渲染第2个图形缓冲区，那么就必须告诉系统帧绘冲区设备，将第2个图形缓冲区作为输出图形缓冲区。使用ioctl即可。
+>当private_handle_t结构体hnd所描述的图形缓冲区是在系统帧缓冲区中分配的时候，即这个图形缓冲区的标志值flags的PRIV_FLAGS_FRAMEBUFFER位等于1的时候，我们是不需要将图形缓冲区的内容拷贝到系统帧缓冲区去的，因为我们将内容写入到图形缓冲区的时候，已经相当于是将内容写入到了系统帧缓冲区中去了。虽然在这种情况下，我们不需要将图形缓冲区的内容拷贝到系统帧缓冲区去(mmap)，但是我们需要告诉系统帧缓冲区设备将要渲染的图形缓冲区作为系统当前的输出图形缓冲区，这样才可以将要渲染的图形缓冲区的内容绘制到设备显示屏来。例如，假设系统帧缓冲区有2个图形缓冲区，当前是以第1个图形缓冲区作为输出图形缓冲区的，这时候如果我们需要渲染第2个图形缓冲区，那么就必须告诉系统帧绘冲区设备，将第2个图形缓冲区作为输出图形缓冲区。使用ioctl即可。
 
 ##### 缓冲区从内存分配
 
-当private_handle_t结构体hnd所描述的图形缓冲区是在内存中分配的时候，即这个图形缓冲区的标志值flags的PRIV_FLAGS_FRAMEBUFFER位等于0的时候，我们就需要将它的内容拷贝到系统帧缓冲区中去了。这个拷贝的工作是通过调用函数memcpy来完成的。在拷贝之前，我们需要三个参数。第一个参数是要渲染的图形缓冲区的起址地址，这个地址保存在参数buffer所指向的一个private_handle_t结构体中。第二个参数是要系统帧缓冲区的基地址，这个地址保存在private_module_t结构体m的成员变量framebuffer所指向的一个private_handle_t结构体中。第三个参数是要拷贝的内容的大小，这个大小就刚好是一个屏幕像素所占据的内存的大小。屏幕高度由m->info.yres来描述，而一行屏幕像素所占用的字节数由m->finfo.line_length来描述，将这两者相乘，就可以得到一个屏幕像素所占据的内存的大小。
+>当private_handle_t结构体hnd所描述的图形缓冲区是在内存中分配的时候，即这个图形缓冲区的标志值flags的PRIV_FLAGS_FRAMEBUFFER位等于0的时候，我们就需要将它的内容拷贝到系统帧缓冲区中去了。这个拷贝的工作是通过调用函数memcpy来完成的。在拷贝之前，我们需要三个参数。第一个参数是要渲染的图形缓冲区的起址地址，这个地址保存在参数buffer所指向的一个private_handle_t结构体中。第二个参数是要系统帧缓冲区的基地址，这个地址保存在private_module_t结构体m的成员变量framebuffer所指向的一个private_handle_t结构体中。第三个参数是要拷贝的内容的大小，这个大小就刚好是一个屏幕像素所占据的内存的大小。屏幕高度由m->info.yres来描述，而一行屏幕像素所占用的字节数由m->finfo.line_length来描述，将这两者相乘，就可以得到一个屏幕像素所占据的内存的大小。
 
 
 #### SurfaceFlinger与其他进程的关系
 
 
-在Android系统中，在系统帧缓冲区中分配的图形缓冲区是在SurfaceFlinger服务中使用的，而在内存中分配的图形缓冲区既可以在SurfaceFlinger服务中使用，也可以在其它的应用程序中使用。当其它的应用程序需要使用图形缓冲区的时候，它们就会请求SurfaceFlinger服务为它们分配，因此，对于其它的应用程序来说，它们只需要将SurfaceFlinger服务返回来的图形缓冲区映射到自己的进程地址空间来使用就可以了，这就是我们之前提到的图形缓冲区的注册过程。
+在Android系统中，在系统帧缓冲区中分配的图形缓冲区是在`SurfaceFlinger`服务中使用的，而在内存中分配的图形缓冲区既可以在`SurfaceFlinger`服务中使用，也可以在其它的应用程序中使用。当其它的应用程序需要使用图形缓冲区的时候，它们就会请求`SurfaceFlinger`服务为它们分配，因此，对于其它的应用程序来说，它们只需要将`SurfaceFlinger`服务返回来的图形缓冲区映射到自己的进程地址空间来使用就可以了，这就是我们之前提到的图形缓冲区的注册过程。
 
-![](/img/2017-02-28-service/14904465693464.jpg)
+![](/img/2017-04-11-gralloc/14904465693464.jpg)
 
 
 
