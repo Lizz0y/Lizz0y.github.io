@@ -112,5 +112,5 @@ tags:
 
 ![](/img/2017-03-17-slab/14896743331730.jpg)
 
-更新三条链表,缓冲区的释放并不导致`slab`的释放,`slab`释放由`kswapd`等内核线程调用`kmem_cache_reap()`完成
+更新三条链表,缓冲区的释放并不导致`slab`的释放,`slab`释放由`kswapd`等内核线程调用`kmem_cache_reap()`完成,在释放时会释放`slab`队列中80%的`slab`,对于释放的`slab`,要以此调用其析构函数,并`free page`
 
