@@ -1,0 +1,572 @@
+---
+layout:     post
+title:      "Android4.4图像显示之gralloc驱动分析"
+date:       2017-04-11
+author:     "Liz"
+header-img: "img/2017-02-01-binder/pic.jpeg"
+tags:
+    - Linux
+    - SourceCode
+    - SurfaceFlinger
+---
+
+本来想通过看老罗的来了解一下整个UI绘制过程,但发现2.3和4.4及6.0相差还是很大的,所以就参考了很多资料分析一下4.4的源码吧
+
+这章分析图像显示最底层---驱动的实现。
+
+
+### linux内核驱动
+
+先简单介绍一下linux的内核驱动:
+
+```java
+#ifndef _HELLO_ANDROID_H_  
+#define _HELLO_ANDROID_H_  
+  
+#include <linux/cdev.h>  
+#include <linux/semaphore.h>  
+  
+#define HELLO_DEVICE_NODE_NAME  "hello"  
+#define HELLO_DEVICE_FILE_NAME  "hello"  
+#define HELLO_DEVICE_PROC_NAME  "hello"  
+#define HELLO_DEVICE_CLASS_NAME "hello"  
+  
+struct hello_android_dev {  
+    int val;  
+    struct semaphore sem;  
+    struct cdev dev;  
+};  
+  
+#endif  
+```
+
+我们可以定义一个虚拟硬件设备结构体,val为设备里的寄存器,通过对这个设备操作来读取和写入val。
+
+#### 具体操作
+
+```c
+/*传统的设备文件操作方法*/  
+static int hello_open(struct inode* inode, struct file* filp);  
+static int hello_release(struct inode* inode, struct file* filp);  
+static ssize_t hello_read(struct file* filp, char __user *buf, size_t count, loff_t* f_pos);  
+static ssize_t hello_write(struct file* filp, const char __user *buf, size_t count, loff_t* f_pos);  
+/*设备文件操作方法表*/  
+static struct file_operations hello_fops = {  
+    .owner = THIS_MODULE,  
+    .open = hello_open,  
+    .release = hello_release,  
+    .read = hello_read,  
+    .write = hello_write,   
+};  
+
+/*打开设备方法*/  
+static int hello_open(struct inode* inode, struct file* filp) {  
+    struct hello_android_dev* dev;          
+      
+    /*将自定义设备结构体保存在文件指针的私有数据域中，以便访问设备时拿来用*/  
+    dev = container_of(inode->i_cdev, struct hello_android_dev, dev);  
+    filp->private_data = dev;  
+      
+    return 0;  
+}  
+/*读取设备的寄存器val的值*/  
+static ssize_t hello_read(struct file* filp, char __user *buf, size_t count, loff_t* f_pos) {  
+    ssize_t err = 0;  
+    struct hello_android_dev* dev = filp->private_data;          
+  
+    /*同步访问*/  
+    if(down_interruptible(&(dev->sem))) {  
+        return -ERESTARTSYS;  
+    }  
+  
+    if(count < sizeof(dev->val)) {  
+        goto out;  
+    }          
+  
+    /*将寄存器val的值拷贝到用户提供的缓冲区*/  
+    if(copy_to_user(buf, &(dev->val), sizeof(dev->val))) {  
+        err = -EFAULT;  
+        goto out;  
+    }  
+  
+    err = sizeof(dev->val);  
+  
+out:  
+    up(&(dev->sem));  
+    return err;  
+}  
+```
+
+具体与驱动交互时,最熟悉的传统方式就是通过open,read等operation来操作。可以看到hello_fops就是方法表。
+
+### android硬件抽象层
+
+```c
+#ifndef ANDROID_HELLO_INTERFACE_H  
+#define ANDROID_HELLO_INTERFACE_H  
+#include <hardware/hardware.h>  
+  
+__BEGIN_DECLS  
+  
+/*定义模块ID*/  
+#define HELLO_HARDWARE_MODULE_ID "hello"  
+  
+/*硬件模块结构体*/  
+struct hello_module_t {  
+    struct hw_module_t common;  
+};  
+  
+/*硬件接口结构体*/  
+struct hello_device_t {  
+    struct hw_device_t common;  
+    int fd;  
+    int (*set_val)(struct hello_device_t* dev, int val);  
+    int (*get_val)(struct hello_device_t* dev, int* val);  
+};  
+  
+__END_DECLS  
+  
+#endif  
+
+
+#define DEVICE_NAME "/dev/hello"  
+#define MODULE_NAME "Hello"  
+#define MODULE_AUTHOR "shyluo@gmail.com"  
+  
+/*设备打开和关闭接口*/  
+static int hello_device_open(const struct hw_module_t* module, const char* name, struct hw_device_t** device);  
+static int hello_device_close(struct hw_device_t* device);  
+  
+/*设备访问接口*/  
+static int hello_set_val(struct hello_device_t* dev, int val);  
+static int hello_get_val(struct hello_device_t* dev, int* val);  
+  
+/*模块方法表*/  
+// hw_module_t结构体有一个重要的成员变量methods，它的类型为hw_module_methods_t，它用来描
+// 述一个HAL模块的操作方法列表。
+static struct hw_module_methods_t hello_module_methods = {  
+    open: hello_device_open  
+};  
+  
+/*模块实例变量*/  
+struct hello_module_t HAL_MODULE_INFO_SYM = {  
+    common: {  
+        tag: HARDWARE_MODULE_TAG,  
+        version_major: 1,  
+        version_minor: 0,  
+        id: HELLO_HARDWARE_MODULE_ID,  
+        name: MODULE_NAME,  
+        author: MODULE_AUTHOR,  
+        methods: &hello_module_methods,  
+    }  
+};  
+static int hello_device_open(const struct hw_module_t* module, const char* name, struct hw_device_t** device) {  
+    struct hello_device_t* dev;
+    dev = (struct hello_device_t*)malloc(sizeof(struct hello_device_t));  
+      
+    if(!dev) {  
+        LOGE("Hello Stub: failed to alloc space");  
+        return -EFAULT;  
+    }  
+  
+    memset(dev, 0, sizeof(struct hello_device_t));  
+    dev->common.tag = HARDWARE_DEVICE_TAG;  
+    dev->common.version = 0;  
+    dev->common.module = (hw_module_t*)module;  
+    dev->common.close = hello_device_close;  
+    dev->set_val = hello_set_val;
+    dev->get_val = hello_get_val;  
+  
+    if((dev->fd = open(DEVICE_NAME, O_RDWR)) == -1) {  
+        LOGE("Hello Stub: failed to open /dev/hello -- %s.", strerror(errno));free(dev);  
+        return -EFAULT;  
+    }  
+  
+    *device = &(dev->common);  
+    LOGI("Hello Stub: open /dev/hello successfully.");  
+  
+    return 0;  
+}  
+```
+android硬件抽象层就是在linux驱动的基础上加了一层,因为linux是完全开源的,android不需要开源,所以驱动层负责读写硬件,具体逻辑都在抽象层中。模块ID,模块结构体,硬件接口结构体是android驱动程序必须的结构。
+
+这里，实例变量名必须为HAL_MODULE_INFO_SYM，tag也必须为HARDWARE_MODULE_TAG，这是Android硬件抽象层规范规定的。
+
+#### 初始化
+
+在JNI层进行初始化:
+
+```c
+if(hw_get_module(HELLO_HARDWARE_MODULE_ID, (const struct hw_module_t**)&module) == 0) {  
+    LOGI("Hello JNI: hello Stub found.");  
+    if(hello_device_open(&(module->common), &hello_device) == 0) {  
+        LOGI("Hello JNI: hello device is open.");  
+        return 0;  
+    }  
+    LOGE("Hello JNI: failed to open hello device.");  
+    return -1;  
+}  
+
+static inline int hello_device_open(const hw_module_t* module, struct hello_device_t** device) {  
+    return module->methods->open(module, HELLO_HARDWARE_MODULE_ID, (struct hw_device_t**)device);  
+}  
+
+```
+hardware.c中提供hw_get_module获取module,将模块加载到内存中来之后，然后调用函数dlsym来获得之前写死的HAL_MODULE_INFO_SYM所导出的符号HMI。由于这个符号指向的是一个hw_module_t结构体，因此，最后函数load就可以强制地将这个符号转换为一个hw_module_t结构体指针，并且返回给调用者。调用者获得了这个hw_module_t结构体指针之后，通过module->methods->open初始化硬件设备device,在`hello_device_open`中看到初始化了结构体,并且通过`dev->common.module = (hw_module_t*)module;`与module相互绑定,
+
+### gralloc模块
+
+![](/img/2017-02-28-service/14916325425310.jpg)
+
+
+#### 理论知识
+
+一个帧缓冲区包含有多少个图形缓冲区是与它的可视分辨率以及虚拟分辨率的大小有关的。例如，如果一个帧缓冲区的可视分辨率为800 x 600，而虚拟分辨率为1600 x 600，那么这个帧缓冲区就可以包含有两个图形缓冲区。
+
+format值:
+
+* HAL_PIXEL_FORMAT_RGBA_8888、HAL_PIXEL_FORMAT_RGBX_8888或者HAL_PIXEL_FORMAT_BGRA_8888的时候，一个像素需要使用32位来表示，即4个字节
+* HAL_PIXEL_FORMAT_RGB_888的时候，一个像素需要使用24位来描述，即3个字节
+* HAL_PIXEL_FORMAT_RGB_565、HAL_PIXEL_FORMAT_RGBA_5551或者HAL_PIXEL_FORMAT_RGBA_4444的时候，一个像需要使用16位来描述，即2个字节。
+
+首先应用程序加载Gralloc模块,获得gralloc设备和fb设备。利用gralloc设备申请图形缓冲区,映射到应用程序地址空间,应用程序往里写入要绘制的画面内容,最终程序通过fb设备将缓冲区渲染到帧缓冲区即绘制到显示屏中。
+
+* 加载gralloc模块
+* 创建gralloc设备,对应图形缓冲区
+* 创建fb设备,对应帧缓冲区
+* 通过registerBuffer将一个图形缓冲区映射到进程的地址空间
+
+
+![](/img/2017-02-28-service/14916366909661.jpg)
+
+
+**gralloc设备负责分配图形缓冲区，gralloc模块负责注册图形缓冲区，而fb设备负责渲染图形缓冲区。**
+
+
+#### 基本数据结构
+
+```c 
+/**
+ * Every hardware module must have a data structure named HAL_MODULE_INFO_SYM
+ * and the fields of this data structure must begin with hw_module_t
+ * followed by module specific information.
+ */
+typedef struct gralloc_module_t {
+    struct hw_module_t common;
+    //重要！！！注册图形缓冲区，将一块图形缓冲区映射到一个进程的地址空间去
+    int (*registerBuffer)(struct gralloc_module_t const* module,
+            buffer_handle_t handle);
+    int (*unregisterBuffer)(struct gralloc_module_t const* module,
+            buffer_handle_t handle);
+    int (*lock)(struct gralloc_module_t const* module,
+            buffer_handle_t handle, int usage,
+            int l, int t, int w, int h,
+            void** vaddr);
+        
+    int (*unlock)(struct gralloc_module_t const* module,
+            buffer_handle_t handle);
+    ...
+} gralloc_module_t;
+
+
+/**
+ * Every device data structure must begin with hw_device_t
+ * followed by module specific public methods and attributes.
+ */
+
+typedef struct alloc_device_t {
+    struct hw_device_t common;
+    
+    int (*alloc)(struct alloc_device_t* dev,
+            int w, int h, int format, int usage,
+            buffer_handle_t* handle, int* stride);
+    int (*free)(struct alloc_device_t* dev,
+            buffer_handle_t handle);
+
+    void (*dump)(struct alloc_device_t *dev, char *buff, int buff_len);
+
+    void* reserved_proc[7];
+} alloc_device_t;
+```
+
+//帧缓冲区结构
+```c
+struct private_module_t {  
+    gralloc_module_t base;  
+    private_handle_t* framebuffer; //指向系统帧缓冲区的句柄  
+    uint32_t flags; //用来标志系统帧缓冲区是否支持双缓冲  
+    uint32_t numBuffers;//表示系统帧缓冲区包含有多少个图形缓冲区  
+    uint32_t bufferMask; //记录系统帧缓冲区中的图形缓冲区的使用情况  
+    pthread_mutex_t lock; //一个互斥锁，用来保护结构体private_module_t的并行访问  
+    buffer_handle_t currentBuffer; //用来描述当前正在被渲染的图形缓冲区  
+    int pmem_master;  
+    void* pmem_master_base;  
+    struct fb_var_screeninfo info; //保存设备显示屏的动态属性信息  
+    struct fb_fix_screeninfo finfo; ////保存设备显示屏的固定属性信息  
+    float xdpi; //描述设备显示屏在宽度  
+    float ydpi; //描述设备显示屏在高度  
+    float fps; //用来描述显示屏的刷新频率  
+};  
+    ```
+
+只有一个gralloc模块,gralloc模块定义了打开设备的帮助函数gralloc_open。这里GRALLOC_HARDWARE_GPU0代表打开gralloc设备,在gralloc模块中，fb设备的ID值定义为GRALLOC_HARDWARE_FB0。同样用gralloc_open打开,但参数不一样open时会做条件判断
+
+在初始化device时要初始化结构体的各种信息,open设备,通过ioctl从硬件获取一些基本信息比如帧缓冲区的信息.之后在之前提到的动态属性起到作用,用户层会设置双缓冲区,即虚拟分辨率是实际的两倍,但可能实际硬件做不到,那就返回错误
+
+>native_handle.h
+
+```c
+typedef struct  
+{  
+    int version;        /* sizeof(native_handle_t) */  
+    int numFds;         /* number of file-descriptors at &data[0] */  
+    int numInts;        /* number of ints at &data[numFds] */  
+    int data[0];        /* numFds + numInts ints */  
+} native_handle_t;  
+```
+>private_handle_t
+
+这是用来描述一块图形缓冲区的结构:
+
+* size用来描述一个图形缓冲区的大小。
+* ffset用来描述一个图形缓冲区的偏移地址。例如，当一个图形缓冲区是在一块内存中分块的时候，假设这块内存的地址为start，那么这个图形缓冲区的起始地址就为start + offset。
+* base用来描述一个图形缓冲区的实际地址，它是通过成员变量offset来计算得到的。例如，上面计算得到的start + offset的值就保存在成员变量base中。
+
+```c
+#ifdef __cplusplus  
+struct private_handle_t : public native_handle {  
+#else  
+struct private_handle_t {  
+    struct native_handle nativeHandle;  
+#endif  
+  
+    enum {  
+        PRIV_FLAGS_FRAMEBUFFER = 0x00000001  
+    };  
+  
+    // file-descriptors  
+    int     fd;  
+    // ints  
+    int     magic;  
+    int     flags;  
+    int     size;  
+    int     offset;  
+  
+    // FIXME: the attributes below should be out-of-line  
+    int     base;  
+    int     pid;  
+  
+#ifdef __cplusplus  
+    static const int sNumInts = 6;  
+    static const int sNumFds = 1;  
+    static const int sMagic = 0x3141592;  
+  
+    private_handle_t(int fd, int size, int flags) :  
+        fd(fd), magic(sMagic), flags(flags), size(size), offset(0),  
+        base(0), pid(getpid())  
+    {  
+        version = sizeof(native_handle);  
+        numInts = sNumInts;  
+        numFds = sNumFds;  
+    }  
+    ~private_handle_t() {  
+        magic = 0;  
+    }  
+  
+    static int validate(const native_handle* h) {  
+        const private_handle_t* hnd = (const private_handle_t*)h;  
+        if (!h || h->version != sizeof(native_handle) ||  
+                h->numInts != sNumInts || h->numFds != sNumFds ||  
+                hnd->magic != sMagic)  
+        {  
+            LOGE("invalid gralloc handle (at %p)", h);  
+            return -EINVAL;  
+        }  
+        return 0;  
+    }  
+#endif  
+};  
+```
+
+
+`fb设备`使用结构体`framebuffer_device_t` 来描述,描述系统帧缓冲区的信息,基本变量:
+
+* width和height分别用来描述设备显示屏的宽度和高度，它们是以像素为单位的。
+* stride用来描述设备显示屏的一行有多少个像素点。
+* xdpi和ydpi分别用来描述设备显示屏在宽度和高度上的密度，即每英寸有多少个像素点。
+* fps用来描述设备显示屏的刷新频率，它的单位是帧每秒。
+* **minSwapInterval和maxSwapInterval用来描述帧缓冲区交换前后两个图形缓冲区的最小和最大时间间隔。**
+
+#### 打开设备
+
+gralloc设备不说,在打开fb设备时,
+
+```c
+private_module_t* m = (private_module_t*)module;  
+status = mapFrameBuffer(m);  
+```
+
+通过`mapFrameBuffer(ioctl)`获得系统帧缓冲区的信息，并且将这些信息保存在参数module所描述的一个private_module_t结构体的各个成员变量中。**从前面的图我们其实知道,private_module_t其实包含了hw_module_t（首地址）。** 因此在打开过程中,也是对前面private_module_t的各个变量进行填充。还会将系统帧缓冲区映射到当前进程的地址空间来。映射后得到的地址空间使用一个private_handle_t结构体来描述。在Android系统中，Gralloc模块中的fb设备是由SurfaceFlinger服务来负责打开和管理的，而SurfaceFlinger服是运行System进程中的，因此，系统帧缓冲区实际上是映射到System进程的地址空间中的。
+
+#### 分配图形缓冲区
+
+```c
+static int gralloc_alloc(alloc_device_t* dev,  
+        int w, int h, int format, int usage,  
+        buffer_handle_t* pHandle, int* pStride){
+    if (usage & GRALLOC_USAGE_HW_FB) {  
+        err = gralloc_alloc_framebuffer(dev, size, usage, pHandle);  
+    } else {  
+        err = gralloc_alloc_buffer(dev, size, usage, pHandle);  
+    } 
+} 
+```
+可以看到它就是实现device中的alloc函数
+
+usage:代表在帧缓冲区中分配还是在内存中分配
+
+##### 帧缓冲区分配
+
+`private_handle_t* framebuffer`通过它的基址+n*bufferSize找空闲的缓冲区,构造一个新的native_handle结构返回给调用者
+
+##### 内存分配
+
+调用函数`ashmem_create_region`来创建一块匿名共享内存，接着再在这块匿名共享内存上分配一个图形缓冲区。注意，这个图形缓冲区也是使用一个private_handle_t结构体来描述的，不过这个图形缓冲区的标志值等于0，以区别于在系统帧缓冲区中分配的图形缓冲区。从匿名共享内存中分配的图形缓冲区还需要映射到进程的地址空间来，然后才可以使用，这是通过调用函数`mapBuffer`来实现的。`mapBuffer`可以理解为注册过程,
+
+```c
+int gralloc_register_buffer(gralloc_module_t const* module,  
+        buffer_handle_t handle)  
+{  
+    if (private_handle_t::validate(handle) < 0)  
+        return -EINVAL;  
+  
+    // if this handle was created in this process, then we keep it as is.  
+    int err = 0;  
+    private_handle_t* hnd = (private_handle_t*)handle;  
+    if (hnd->pid != getpid()) {  
+        void *vaddr;  
+        err = gralloc_map(module, handle, &vaddr);  
+    }  
+    return err;  
+}  
+```
+
+注册过程就是将缓冲区映射到进程地址空间,所以先需要检查当前进程是否就是请求gralloc模块分配图形缓冲区hnd的进程。如果是的话，那么当前进程在请求gralloc模块分配图形缓冲区hnd的时候，就已经将图形缓冲区hnd映射进自己的地址空间来了，即帧缓冲区分配时已经映射过了,因此，这时候就不需要重复在当前进程中注册这个图形缓冲区。但是从内存分配的还是需要注册的,看`gralloc_map`其实就是调用mmap
+
+#### 渲染过程
+
+通过post实现:
+
+```c
+int (*post)(struct framebuffer_device_t* dev, buffer_handle_t buffer);
+```
+
+ 
+用户空间的应用程序将画面内容写入到图形缓冲区中去之后，还需要将图形缓冲区渲染到系统帧缓冲区中去，这样才可以把画面绘制到设备显示屏中去。渲染图形缓冲区是由gralloc模块中的函数fb_post来实现    
+    
+
+
+##### 缓冲区从帧分配
+
+当private_handle_t结构体hnd所描述的图形缓冲区是在系统帧缓冲区中分配的时候，即这个图形缓冲区的标志值flags的PRIV_FLAGS_FRAMEBUFFER位等于1的时候，我们是不需要将图形缓冲区的内容拷贝到系统帧缓冲区去的，因为我们将内容写入到图形缓冲区的时候，已经相当于是将内容写入到了系统帧缓冲区中去了。虽然在这种情况下，我们不需要将图形缓冲区的内容拷贝到系统帧缓冲区去(mmap)，但是我们需要告诉系统帧缓冲区设备将要渲染的图形缓冲区作为系统当前的输出图形缓冲区，这样才可以将要渲染的图形缓冲区的内容绘制到设备显示屏来。例如，假设系统帧缓冲区有2个图形缓冲区，当前是以第1个图形缓冲区作为输出图形缓冲区的，这时候如果我们需要渲染第2个图形缓冲区，那么就必须告诉系统帧绘冲区设备，将第2个图形缓冲区作为输出图形缓冲区。使用ioctl即可。
+
+##### 缓冲区从内存分配
+
+当private_handle_t结构体hnd所描述的图形缓冲区是在内存中分配的时候，即这个图形缓冲区的标志值flags的PRIV_FLAGS_FRAMEBUFFER位等于0的时候，我们就需要将它的内容拷贝到系统帧缓冲区中去了。这个拷贝的工作是通过调用函数memcpy来完成的。在拷贝之前，我们需要三个参数。第一个参数是要渲染的图形缓冲区的起址地址，这个地址保存在参数buffer所指向的一个private_handle_t结构体中。第二个参数是要系统帧缓冲区的基地址，这个地址保存在private_module_t结构体m的成员变量framebuffer所指向的一个private_handle_t结构体中。第三个参数是要拷贝的内容的大小，这个大小就刚好是一个屏幕像素所占据的内存的大小。屏幕高度由m->info.yres来描述，而一行屏幕像素所占用的字节数由m->finfo.line_length来描述，将这两者相乘，就可以得到一个屏幕像素所占据的内存的大小。
+
+
+#### SurfaceFlinger与其他进程的关系
+
+
+在Android系统中，在系统帧缓冲区中分配的图形缓冲区是在SurfaceFlinger服务中使用的，而在内存中分配的图形缓冲区既可以在SurfaceFlinger服务中使用，也可以在其它的应用程序中使用。当其它的应用程序需要使用图形缓冲区的时候，它们就会请求SurfaceFlinger服务为它们分配，因此，对于其它的应用程序来说，它们只需要将SurfaceFlinger服务返回来的图形缓冲区映射到自己的进程地址空间来使用就可以了，这就是我们之前提到的图形缓冲区的注册过程。
+
+![](/img/2017-02-28-service/14904465693464.jpg)
+
+
+
+### 上层接口Allocator&Mapper
+
+```c
+GraphicBufferAllocator::GraphicBufferAllocator()
+    : mAllocDev(0)
+{
+    hw_module_t const* module;
+    int err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
+    ALOGE_IF(err, "FATAL: can't find the %s module", GRALLOC_HARDWARE_MODULE_ID);
+    if (err == 0) {
+        gralloc_open(module, &mAllocDev);
+    }
+}
+GraphicBufferMapper::GraphicBufferMapper()
+    : mAllocMod(0)
+{
+    hw_module_t const* module;
+    int err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
+    ALOGE_IF(err, "FATAL: can't find the %s module", GRALLOC_HARDWARE_MODULE_ID);
+    if (err == 0) {
+        mAllocMod = (gralloc_module_t const *)module;
+    }
+}
+```
+#### register
+
+```c
+status_t GraphicBufferMapper::registerBuffer(buffer_handle_t handle)
+{
+    ATRACE_CALL();
+    status_t err;
+
+    err = mAllocMod->registerBuffer(mAllocMod, handle);
+
+    ALOGW_IF(err, "registerBuffer(%p) failed %d (%s)",
+            handle, err, strerror(-err));
+    return err;
+}
+```
+注册图形缓冲区，实际上就是将一块图形缓冲区映射到一个进程的地址空间去
+
+
+#### alloc
+
+```c
+status_t GraphicBufferAllocator::alloc(uint32_t w, uint32_t h, PixelFormat format,
+        int usage, buffer_handle_t* handle, int32_t* stride)
+{
+    ATRACE_CALL();
+    // make sure to not allocate a N x 0 or 0 x N buffer, since this is
+    // allowed from an API stand-point allocate a 1x1 buffer instead.
+    if (!w || !h)
+        w = h = 1;
+
+    // we have a h/w allocator and h/w buffer is requested
+    status_t err; 
+    
+    err = mAllocDev->alloc(mAllocDev, w, h, format, usage, handle, stride);
+
+    ALOGW_IF(err, "alloc(%u, %u, %d, %08x, ...) failed %d (%s)",
+            w, h, format, usage, err, strerror(-err));
+    
+    if (err == NO_ERROR) {
+        Mutex::Autolock _l(sLock);
+        KeyedVector<buffer_handle_t, alloc_rec_t>& list(sAllocList);
+        int bpp = bytesPerPixel(format);
+        if (bpp < 0) {
+            // probably a HAL custom format. in any case, we don't know
+            // what its pixel size is.
+            bpp = 0;
+        }
+        alloc_rec_t rec;
+        rec.w = w;
+        rec.h = h;
+        rec.s = *stride;
+        rec.format = format;
+        rec.usage = usage;
+        rec.size = h * stride[0] * bpp;
+        list.add(*handle, rec);
+    }
+
+    return err;
+}
+```
+
+
