@@ -16,7 +16,6 @@ AQS在concurrent中是最重要的一个类,先分析一下源码。
 
 >公平锁和非公平锁，唯一的区别是在获取锁的时候是直接去获取锁，还是进入队列排队的问题
 
-其实AQS最重要的作用
 
 先看一些基本的结构:
 
@@ -33,8 +32,9 @@ static final class Node {
     static final int SIGNAL    = -1;
     static final int CONDITION = -2;
     static final int PROPAGATE = -3;
-        /**
-        SIGNAL:该节点的后继节点被blocked,所以当前节点释放锁或被取消时要唤醒后者,后面会看到几乎所有地方都会遍历两次,第一次设置SIGNAL;第二次发现时SIGNAL再进行唤醒
+        /*
+        SIGNAL:该节点的后继节点被blocked,所以当前节点释放锁或被取消时要唤醒后者,后面会看
+        到几乎所有地方都会遍历两次,第一次设置SIGNAL;第二次发现时SIGNAL再进行唤醒
         CANCELLED:该节点因为超时或中断被取消
         CONDITION:在等待条件,它只有转移后才会进入sync queue,那时它的值被设为0
         PROPAGATE:释放共享锁时需要往后传递状态
@@ -477,7 +477,7 @@ private void unparkSuccessor(Node node) {
 * 我们看到,当后继节点B被unpark后，前面`doAcquireSharedInterruptibly`中会再一次循环再把该节点B设置为头节点,然后继续释放后继节点,所以整个状态就传递开了
 * 那么前面的A呢,
 
-![](/img/2017-04-17-concurrent-abs/14921858338931.jpg)
+![](/img/2017-04-17-concurrent-abs/14921858338931.png)
 
 #### 释放
 
