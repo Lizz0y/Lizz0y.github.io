@@ -211,7 +211,7 @@ public ScheduledThreadPoolExecutor(int corePoolSize) {
 ![](/img/2017-04-27-concurrent-executor/14932594538381.jpg)
 
 
-所以,各种策略其实体现在,take的时候是否需要等待直到`getDelayed`小于0,增加任务的时候是否小于`coolPoolSize`使得可以直接往`worker`池加`worker`还是现在队列里排队。
+所以,各种策略其实体现在,take的时候是否需要等待直到`getDelayed`小于0,增加任务的时候是否小于`coolPoolSize`使得可以直接往`worker`池加`worker`还是先在队列里排队。
 
 
 
