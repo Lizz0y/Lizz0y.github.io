@@ -493,7 +493,7 @@ project.android.applicationVariants.each { variant ->
 
 遍历variants,找到各种Task。然后创建closure:
 
-```grrovy
+```java
 def dirName = variant.dirName
 nuwaDir = new File("${project.buildDir}/outputs/nuwa")
 def outputDir = new File("${nuwaDir}/${dirName}")
@@ -713,7 +713,8 @@ dex patch:
 
 `dx --dex --output=patch.jar classDir` classDir是注入字节码后的补丁目录
 
-```groovy public static dex(Project project, File classDir) {
+```java
+ public static dex(Project project, File classDir) {
         if (classDir.listFiles().size()) {
             def sdkDir
   
@@ -777,8 +778,8 @@ Transform can only be registered globally which applies them to all the variants
 ![](/img/2017-04-29-gradleAndNuwa/14934406958131.jpg)
 
 
-可以看到由transform + (contentType)[Classes | Resources] + with + [name] + for + flavor|buildType
-
+可以看到由`transform + (contentType)[Classes | Resources] + with + [name] + for + flavor|buildType
+`
 
 ##### 注册
 
