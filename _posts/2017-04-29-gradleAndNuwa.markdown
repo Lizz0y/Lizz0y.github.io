@@ -53,7 +53,7 @@ task taskA(dependsOn: taskB) {
 #### 设置Property
 
 
-![](/img/2017-04-29-gradleAndNuwa/14932981971835)
+![](/img/2017-04-29-gradleAndNuwa/14932981971835.jpg)
 
 
 ### 一些重要语法
@@ -83,13 +83,17 @@ aClosure("this is string", 100)
 
 如果闭包没定义参数的话，则隐含有一个参数，这个参数名字叫it，和this的作用类似。it代表闭包的参数。
 
+```java
+
 public static <T> List<T>each(List<T> self, Closure closure)  
-上面这个函数表示针对List的每一个元素都会调用closure做一些处理。这里的closure，就有点回调函数的感觉。但是，在使用这个each函数的时候，我们传递一个怎样的Closure进去呢？比如：  
+/**
+上面这个函数表示针对List的每一个元素都会调用closure
+做一些处理。这里的closure，就有点回调函数的感觉。但是，在使用这个each函数的时候，我们传递一个怎样的Closure进去呢？比如：  
 def iamList = [1,2,3,4,5]  //定义一个List  
 iamList.each{ //调用它的each，这段代码的格式看不懂了吧？each是个函数，圆括号去哪了？  
       println it  
-}
-
+}**/
+```
 Groovy中，当函数的最后一个参数是闭包的话，可以省略圆括号
 
   
@@ -297,9 +301,8 @@ android {
 }
 ```
 >Gradle会在generateSources阶段为flavor生成一个BuildConfig.java文件。BuildConfig类默认提供了一些常量字段，比如应用的版本名（VERSION_NAME），应用的包名（PACKAGE_NAME）等。更强大的是，开发者还可以添加自定义的一些字段。
- ![](media/14932951390840/14933646908691.jpg)
  
- ![](/img/2017-02-01-binder/bpbinder.gif)
+ ![](/img/2017-04-29-gradleAndNuwa/14933646908691.jpg)
 
  
  Gradle在构建应用时，会优先使用flavor所属dataSet中的同名资源。所以可以进行资源覆盖,例如换包名等。
@@ -771,9 +774,7 @@ Transform can only be registered globally which applies them to all the variants
 
 作用就是第三方插件在class文件转为为dex文件前操作编译好的class文件，所以只有这一步我已开始还想了半天它到底怎么指定的插入的位置的。。
 
-![](media/14932951390840/14934406958131.jpg)
-
-![](/img/2017-02-01-binder/bpbinder.gif)
+![](/img/2017-04-29-gradleAndNuwa/14934406958131.jpg)
 
 
 可以看到由transform + (contentType)[Classes | Resources] + with + [name] + for + flavor|buildType
