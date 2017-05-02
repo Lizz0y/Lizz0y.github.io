@@ -75,7 +75,7 @@ private void init() throws IOException {
                     mClassesMap.put(mName, strings);
                 } else {
                 //上图可以看到Patch-Classes代表被修改的Class
-                mClassesMap.put(name.trim().substring(0, name.length() - 8),// remove// "-Classes"strings);
+                    mClassesMap.put(name.trim().substring(0, name.length() - 8),// remove// "-Classes"strings);
                 }
             }
         }
@@ -143,9 +143,9 @@ public static void addReplaceMethod(Method src, Method dest) {
     try {
         //这里进入native层方法
         replaceMethod(src, dest);
-		   initFields(dest.getDeclaringClass());
+        initFields(dest.getDeclaringClass());
     } catch (Throwable e) {
-			Log.e(TAG, "addReplaceMethod", e);
+        Log.e(TAG, "addReplaceMethod", e);
     }
 }
 ```
@@ -175,9 +175,10 @@ extern jboolean __attribute__ ((visibility ("hidden"))) dalvik_setup(
         jclass clazz = env->FindClass("java/lang/reflect/Method");
         jClassMethod = env->GetMethodID(clazz, "getDeclaringClass","()Ljava/lang/Class;");
         return JNI_TRUE;
-    } else {
-	   return JNI_FALSE;
-	   }
+        } else {
+            return JNI_FALSE;
+        }
+    }
 }
 ```
 
