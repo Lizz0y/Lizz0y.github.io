@@ -109,11 +109,11 @@ public synchronized void fix(File file, ClassLoader classLoader,List<String> cla
             }
             clazz = dexFile.loadClass(entry, patchClassLoader);
             if (clazz != null) {
-                fixClass(clazz, classLoader);}
-		      }
-		  }
-	} catch (IOException e) {
-	   Log.e(TAG, "pacth", e);
+                fixClass(clazz, classLoader);
+            }
+        }
+    } catch (IOException e) {
+        Log.e(TAG, "pacth", e);
 	}
 }
 private void fixClass(Class<?> clazz, ClassLoader classLoader) {
