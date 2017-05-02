@@ -92,7 +92,7 @@ private static Element[] makeDexElements(ArrayList<File> files, File optimizedDi
 * `DexPathList`是`BaseDexClassLoader`的一个成员变量。
 
 
-![](/img/2017-05-02-multidex/14932823251895.png)
+![](/img/2017-05-02-multidex/14932823251895.jpg)
 
 ### MultiDex
 
@@ -910,7 +910,7 @@ public static void monkeyPatchExistingResources(Context context, String external
     if (this.realApplication != null) {
       this.realApplication.onCreate();
     }
-    ```
+```
 
 #### Server
 
@@ -1309,5 +1309,10 @@ public boolean load(){
 ![](/img/2017-05-02-multidex/14935282972784.jpg)
 
 
+
+### todo
+
+* dx :-multi-dex原理
+* instant-run之资源补丁
 
 
