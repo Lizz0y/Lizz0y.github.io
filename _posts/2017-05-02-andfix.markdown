@@ -72,22 +72,14 @@ private void init() throws IOException {
             if (name.endsWith(CLASSES)) {
                 strings = Arrays.asList(main.getValue(attrName).split(","));
                 if (name.equalsIgnoreCase(PATCH_CLASSES)) {
-                mClassesMap.put(mName, strings);
+                    mClassesMap.put(mName, strings);
                 } else {
 					//上图可以看到Patch-Classes代表被修改的Class
-					   mClassesMap.put(name.trim().substring(0, name.length() - 8),// remove// "-Classes"strings);
-				    }
+					       mClassesMap.put(name.trim().substring(0, name.length() - 8),// remove// "-Classes"strings);
+		          }
 				}
 		  }
-	} finally {
-	   if (jarFile != null) {
-	       jarFile.close();
-	   }
-	   if (inputStream != null) {
-	       inputStream.close();
-	   }
 	}
-}
 ```
 
 ##### Fix
@@ -105,47 +97,45 @@ public synchronized void fix(File file, ClassLoader classLoader,List<String> cla
         boolean saveFingerprint = true;
         ...
         final DexFile dexFile = DexFile.loadDex(file.getAbsolutePath(),
-					optfile.getAbsolutePath(), Context.MODE_PRIVATE);
-			...
-			Enumeration<String> entrys = dexFile.entries();
-			Class<?> clazz = null;
-			while (entrys.hasMoreElements()) {
-			 String entry = entrys.nextElement();
-			 if (classes != null && !classes.contains(entry)) {
-				continue;// skip, not need fix
-			 }
-			 clazz = dexFile.loadClass(entry, patchClassLoader);
-			 if (clazz != null) {
-			     fixClass(clazz, classLoader);
-			 }
-		}
+        optfile.getAbsolutePath(), Context.MODE_PRIVATE);
+        ...
+        Enumeration<String> entrys = dexFile.entries();
+        Class<?> clazz = null;
+        while (entrys.hasMoreElements()) {
+            String entry = entrys.nextElement();
+            if (classes != null && !classes.contains(entry)) {
+                continue;// skip, not need fix
+            }
+            clazz = dexFile.loadClass(entry, patchClassLoader);
+            if (clazz != null) {
+                fixClass(clazz, classLoader);}
+		      }
+		  }
 	} catch (IOException e) {
-		Log.e(TAG, "pacth", e);
+	   Log.e(TAG, "pacth", e);
 	}
 }
 private void fixClass(Class<?> clazz, ClassLoader classLoader) {
-	Method[] methods = clazz.getDeclaredMethods();
-	MethodReplace methodReplace;
-	String clz;
-	String meth;
+    Method[] methods = clazz.getDeclaredMethods();
+    MethodReplace methodReplace;
+    String clz;
+    String meth;
 		//根据注解去replaceMethod
-	for (Method method : methods) {
-		methodReplace = method.getAnnotation(MethodReplace.class);
-		if (methodReplace == null)
-			continue;
-		clz = methodReplace.clazz();
-		meth = methodReplace.method();
-		if (!isEmpty(clz) && !isEmpty(meth)) {
-			replaceMethod(classLoader, clz, meth, method);
-		}
-	}
+    for (Method method : methods) {
+        methodReplace = method.getAnnotation(MethodReplace.class);
+        if (methodReplace == null)
+            continue;
+        clz = methodReplace.clazz();
+        meth = methodReplace.method();
+        if (!isEmpty(clz) && !isEmpty(meth)) {
+            replaceMethod(classLoader, clz, meth, method);
+        }
+    }
 }
-private void replaceMethod(ClassLoader classLoader, String clz,
-			String meth, Method method) {
-	 
-	  ...
+private void replaceMethod(ClassLoader classLoader, String clz,String meth, Method method) {
+    ...
     AndFix.addReplaceMethod(src, method);
-     ...
+    ...
 }
 
 public static void addReplaceMethod(Method src, Method dest) {
@@ -172,21 +162,18 @@ extern jboolean __attribute__ ((visibility ("hidden"))) dalvik_setup(
     void* dvm_hand = dlopen("libdvm.so", RTLD_NOW);
     if (dvm_hand) {
     //拿到dvmDecodeIndirectRef函数指针
-        dvmDecodeIndirectRef_fnPtr = dvm_dlsym(dvm_hand,apilevel > 10 ?
-						"_Z20dvmDecodeIndirectRefP6ThreadP8_jobject" :
-						"dvmDecodeIndirectRef");
-			if (!dvmDecodeIndirectRef_fnPtr) {
-			 return JNI_FALSE;
-			}
+        dvmDecodeIndirectRef_fnPtr = dvm_dlsym(dvm_hand,apilevel > 10 ? "_Z20dvmDecodeIndirectRefP6ThreadP8_jobject" :"dvmDecodeIndirectRef");
+        if (!dvmDecodeIndirectRef_fnPtr) {
+            return JNI_FALSE;
+        }
 		//拿到dvmThreadSelf函数指针,用来得到当前threadId
 		dvmThreadSelf_fnPtr = dvm_dlsym(dvm_hand,apilevel > 10 ? "_Z13dvmThreadSelfv" : "dvmThreadSelf");
 		if (!dvmThreadSelf_fnPtr) {
-		  return JNI_FALSE;
+		    return JNI_FALSE;
 		}
 		jclass clazz = env->FindClass("java/lang/reflect/Method");
-		jClassMethod = env->GetMethodID(clazz, "getDeclaringClass",
-						"()Ljava/lang/Class;");
-      return JNI_TRUE;
+		jClassMethod = env->GetMethodID(clazz, "getDeclaringClass","()Ljava/lang/Class;");
+		return JNI_TRUE;
 	} else {
 	   return JNI_FALSE;
 	}
@@ -230,16 +217,10 @@ extern void __attribute__ ((visibility ("hidden"))) dalvik_replaceMethod(
 
 ```c
 void replace_5_0(JNIEnv* env, jobject src, jobject dest) {
-	art::mirror::ArtMethod* smeth =
-			(art::mirror::ArtMethod*) env->FromReflectedMethod(src);
-
-	art::mirror::ArtMethod* dmeth =
-			(art::mirror::ArtMethod*) env->FromReflectedMethod(dest);
-
-	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->class_loader_ =
-			reinterpret_cast<art::mirror::Class*>(smeth->declaring_class_)->class_loader_; //for plugin classloader
-	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->clinit_thread_id_ =
-			reinterpret_cast<art::mirror::Class*>(smeth->declaring_class_)->clinit_thread_id_;
+	art::mirror::ArtMethod* smeth = (art::mirror::ArtMethod*) env->FromReflectedMethod(src);
+	art::mirror::ArtMethod* dmeth = (art::mirror::ArtMethod*) env->FromReflectedMethod(dest);
+	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->class_loader_ = reinterpret_cast<art::mirror::Class*>(smeth->declaring_class_)->class_loader_; //for plugin classloader
+	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->clinit_thread_id_ =  reinterpret_cast<art::mirror::Class*>(smeth->declaring_class_)->clinit_thread_id_;
 	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->status_ = reinterpret_cast<art::mirror::Class*>(smeth->declaring_class_)->status_-1;
 	//for reflection invoke
 	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->super_class_ = 0;
