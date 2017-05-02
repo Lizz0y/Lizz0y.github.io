@@ -74,12 +74,13 @@ private void init() throws IOException {
                 if (name.equalsIgnoreCase(PATCH_CLASSES)) {
                     mClassesMap.put(mName, strings);
                 } else {
-					//上图可以看到Patch-Classes代表被修改的Class
-					       mClassesMap.put(name.trim().substring(0, name.length() - 8),// remove// "-Classes"strings);
-		          }
-				}
-		  }
-	}
+                //上图可以看到Patch-Classes代表被修改的Class
+                mClassesMap.put(name.trim().substring(0, name.length() - 8),// remove// "-Classes"strings);
+                }
+            }
+        }
+    }
+}s
 ```
 
 ##### Fix
@@ -166,17 +167,17 @@ extern jboolean __attribute__ ((visibility ("hidden"))) dalvik_setup(
         if (!dvmDecodeIndirectRef_fnPtr) {
             return JNI_FALSE;
         }
-		//拿到dvmThreadSelf函数指针,用来得到当前threadId
-		dvmThreadSelf_fnPtr = dvm_dlsym(dvm_hand,apilevel > 10 ? "_Z13dvmThreadSelfv" : "dvmThreadSelf");
-		if (!dvmThreadSelf_fnPtr) {
-		    return JNI_FALSE;
-		}
-		jclass clazz = env->FindClass("java/lang/reflect/Method");
-		jClassMethod = env->GetMethodID(clazz, "getDeclaringClass","()Ljava/lang/Class;");
-		return JNI_TRUE;
-	} else {
+        //拿到dvmThreadSelf函数指针,用来得到当前threadId
+        dvmThreadSelf_fnPtr = dvm_dlsym(dvm_hand,apilevel > 10 ? "_Z13dvmThreadSelfv" : "dvmThreadSelf");
+        if (!dvmThreadSelf_fnPtr) {
+            return JNI_FALSE;
+        }
+        jclass clazz = env->FindClass("java/lang/reflect/Method");
+        jClassMethod = env->GetMethodID(clazz, "getDeclaringClass","()Ljava/lang/Class;");
+        return JNI_TRUE;
+    } else {
 	   return JNI_FALSE;
-	}
+	   }
 }
 ```
 
