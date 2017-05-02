@@ -1,0 +1,591 @@
+---
+layout:     post
+title:      "Andfix分析"
+date:       2017-05-02
+author:     "Liz"
+header-img: "img/2017-02-01-binder/pic.jpeg"
+tags:
+    - 插件化
+    - 热补丁
+---
+
+今天分析一下Andfix,why,要有这么多平台。大家共同维护一个好好的爱不行吗？
+
+说到底Andfix逻辑极为简单,还是很佩服Ali的人。通过baksmali把更改的类和方法写到注解中去,然后在native层通过方法结构体的替换实现方法级别的热补丁。当然缺点很多,无法改变变量(它自己没处理),增加方法没办法等。不过,这些真的是严重bug的话都可以通过把代码写的简陋点来绕过。
+
+### java层代码
+
+Andfix所有Patch都以.apatch结尾,所有Patch的类都加了一个`MethodReplace`注解,表示被替换的类与方法。
+
+
+![](/img/2017-05-02-andfix/14936417429246.jpg)
+![](/img/2017-05-02-andfix/14936423873041.jpg)
+![](/img/2017-05-02-andfix/14936424002082.jpg)
+ 	
+```java
+public PatchManager(Context context) {
+    mContext = context;
+    mAndFixManager = new AndFixManager(mContext);
+    mPatchDir = new File(mContext.getFilesDir(), DIR);
+    mPatchs = new ConcurrentSkipListSet<Patch>();
+    mLoaders = new ConcurrentHashMap<String, ClassLoader>();
+}
+```	
+	
+```java
+public void init(String appVersion) {
+    ...
+    if (ver == null || !ver.equalsIgnoreCase(appVersion)) {
+			cleanPatch();
+			sp.edit().putString(SP_VERSION, appVersion).commit();
+    } else {
+        initPatchs();
+    }
+}
+```
+
+#### Patch
+
+```java
+public Patch(File file) throws IOException {
+    mFile = file;
+    init();
+}
+private void init() throws IOException {
+    JarFile jarFile = null;
+    InputStream inputStream = null;
+    try {
+	   jarFile = new JarFile(mFile);
+	   JarEntry entry = jarFile.getJarEntry(ENTRY_NAME);//META-INF/PATCH.MF
+		inputStream = jarFile.getInputStream(entry);
+		Manifest manifest = new Manifest(inputStream);
+		Attributes main = manifest.getMainAttributes();
+		mName = main.getValue(PATCH_NAME);
+		mTime = new Date(main.getValue(CREATED_TIME));
+		mClassesMap = new HashMap<String, List<String>>();
+		Attributes.Name attrName;
+		String name;
+		List<String> strings;
+		for (Iterator<?> it = main.keySet().iterator(); it.hasNext();) {
+			attrName = (Attributes.Name) it.next();
+			name = attrName.toString();
+			if (name.endsWith(CLASSES)) {
+				strings = Arrays.asList(main.getValue(attrName).split(","));
+				if (name.equalsIgnoreCase(PATCH_CLASSES)) {
+					mClassesMap.put(mName, strings);
+				} else {
+					//上图可以看到Patch-Classes代表被修改的Class
+					mClassesMap.put(
+								name.trim().substring(0, name.length() - 8),// remove// "-Classes"
+								strings);
+				}
+			}
+		}
+	} finally {
+		if (jarFile != null) {
+			jarFile.close();
+		}
+		if (inputStream != null) {
+			inputStream.close();
+		}
+	}
+}
+```
+
+##### Fix
+
+```java
+public synchronized void fix(File file, ClassLoader classLoader,
+	List<String> classes) {
+	if (!mSupport) {
+		return;
+	}
+	if (!mSecurityChecker.verifyApk(file)) {// security check fail
+		return;
+	}
+	try {
+		File optfile = new File(mOptDir, file.getName());
+		boolean saveFingerprint = true;
+		if (optfile.exists()) {
+				// need to verify fingerprint when the optimize file exist,
+				// prevent someone attack on jailbreak device with
+				// Vulnerability-Parasyte.
+				// btw:exaggerated android Vulnerability-Parasyte
+				// http://secauo.com/Exaggerated-Android-Vulnerability-Parasyte.html
+			if (mSecurityChecker.verifyOpt(optfile)) {
+				saveFingerprint = false;
+			} else if (!optfile.delete()) {
+				return;
+			}
+		}
+		final DexFile dexFile = DexFile.loadDex(file.getAbsolutePath(),
+					optfile.getAbsolutePath(), Context.MODE_PRIVATE);
+
+		if (saveFingerprint) {
+			mSecurityChecker.saveOptSig(optfile);
+		}
+		ClassLoader patchClassLoader = new ClassLoader(classLoader) {
+			@Override
+			protected Class<?> findClass(String className)
+						throws ClassNotFoundException {
+				Class<?> clazz = dexFile.loadClass(className, this);
+				if (clazz == null
+							&& className.startsWith("com.alipay.euler.andfix")) {
+						return Class.forName(className);// annotation’s class
+														// not found
+				}
+				if (clazz == null) {
+	           throw new ClassNotFoundException(className);
+				}
+				return clazz;
+			}
+		};
+		Enumeration<String> entrys = dexFile.entries();
+		Class<?> clazz = null;
+		while (entrys.hasMoreElements()) {
+			String entry = entrys.nextElement();
+			if (classes != null && !classes.contains(entry)) {
+				continue;// skip, not need fix
+			}
+			clazz = dexFile.loadClass(entry, patchClassLoader);
+			if (clazz != null) {
+				fixClass(clazz, classLoader);
+			}
+		}
+	} catch (IOException e) {
+		Log.e(TAG, "pacth", e);
+	}
+}
+private void fixClass(Class<?> clazz, ClassLoader classLoader) {
+	Method[] methods = clazz.getDeclaredMethods();
+	MethodReplace methodReplace;
+	String clz;
+	String meth;
+		//根据注解去replaceMethod
+	for (Method method : methods) {
+		methodReplace = method.getAnnotation(MethodReplace.class);
+		if (methodReplace == null)
+			continue;
+		clz = methodReplace.clazz();
+		meth = methodReplace.method();
+		if (!isEmpty(clz) && !isEmpty(meth)) {
+			replaceMethod(classLoader, clz, meth, method);
+		}
+	}
+}
+private void replaceMethod(ClassLoader classLoader, String clz,
+			String meth, Method method) {
+	 
+	  ...
+    AndFix.addReplaceMethod(src, method);
+     ...
+}
+
+public static void addReplaceMethod(Method src, Method dest) {
+    try {
+        //这里进入native层方法
+        replaceMethod(src, dest);
+		   initFields(dest.getDeclaringClass());
+    } catch (Throwable e) {
+			Log.e(TAG, "addReplaceMethod", e);
+    }
+}
+```
+
+### native代码
+
+#### dalvik
+
+##### setup
+
+```c
+extern jboolean __attribute__ ((visibility ("hidden"))) dalvik_setup(
+		JNIEnv* env, int apilevel) {
+	//dlopen libdvm.so库(7.0上是不是会有问题？)
+	void* dvm_hand = dlopen("libdvm.so", RTLD_NOW);
+	if (dvm_hand) {
+	   //拿到dvmDecodeIndirectRef函数指针
+		dvmDecodeIndirectRef_fnPtr = dvm_dlsym(dvm_hand,
+				apilevel > 10 ?
+						"_Z20dvmDecodeIndirectRefP6ThreadP8_jobject" :
+						"dvmDecodeIndirectRef");
+		if (!dvmDecodeIndirectRef_fnPtr) {
+			return JNI_FALSE;
+		}
+		//拿到dvmThreadSelf函数指针,用来得到当前threadId
+		dvmThreadSelf_fnPtr = dvm_dlsym(dvm_hand,
+				apilevel > 10 ? "_Z13dvmThreadSelfv" : "dvmThreadSelf");
+		if (!dvmThreadSelf_fnPtr) {
+			return JNI_FALSE;
+		}
+		jclass clazz = env->FindClass("java/lang/reflect/Method");
+		jClassMethod = env->GetMethodID(clazz, "getDeclaringClass",
+						"()Ljava/lang/Class;");
+
+		return JNI_TRUE;
+	} else {
+		return JNI_FALSE;
+	}
+}
+```
+
+##### replaceMethod
+
+```c
+extern void __attribute__ ((visibility ("hidden"))) dalvik_replaceMethod(
+		JNIEnv* env, jobject src, jobject dest) {
+	//得到destMethod的class
+	jobject clazz = env->CallObjectMethod(dest, jClassMethod);
+	//拿到class的ClassObject
+	ClassObject* clz = (ClassObject*) dvmDecodeIndirectRef_fnPtr(
+			dvmThreadSelf_fnPtr(), clazz);
+	clz->status = CLASS_INITIALIZED;
+    //获得Method结构体
+	Method* meth = (Method*) env->FromReflectedMethod(src);
+	Method* target = (Method*) env->FromReflectedMethod(dest);
+	LOGD("dalvikMethod: %s", meth->name);
+
+//	meth->clazz = target->clazz;
+//把方法设为public,然后直接替换meth
+	meth->accessFlags |= ACC_PUBLIC;
+	meth->methodIndex = target->methodIndex;
+	meth->jniArgInfo = target->jniArgInfo;
+	meth->registersSize = target->registersSize;
+	meth->outsSize = target->outsSize;
+	meth->insSize = target->insSize;
+
+	meth->prototype = target->prototype;
+	meth->insns = target->insns;
+	meth->nativeFunc = target->nativeFunc;
+}
+```
+
+##### art
+
+跟dalvik差不多,这是两个的method结构体不一样:
+
+```c
+void replace_5_0(JNIEnv* env, jobject src, jobject dest) {
+	art::mirror::ArtMethod* smeth =
+			(art::mirror::ArtMethod*) env->FromReflectedMethod(src);
+
+	art::mirror::ArtMethod* dmeth =
+			(art::mirror::ArtMethod*) env->FromReflectedMethod(dest);
+
+	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->class_loader_ =
+			reinterpret_cast<art::mirror::Class*>(smeth->declaring_class_)->class_loader_; //for plugin classloader
+	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->clinit_thread_id_ =
+			reinterpret_cast<art::mirror::Class*>(smeth->declaring_class_)->clinit_thread_id_;
+	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->status_ = reinterpret_cast<art::mirror::Class*>(smeth->declaring_class_)->status_-1;
+	//for reflection invoke
+	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->super_class_ = 0;
+
+	smeth->declaring_class_ = dmeth->declaring_class_;
+    smeth->access_flags_ = dmeth->access_flags_ | 0x0001;
+```
+
+
+### AndPatch.jar
+
+这个jar包用来生成apatch文件,很值得研究。
+
+首先会把所有patch进行合并
+```java
+MergePatch mergePatch = new MergePatch(files, name, out, keystore, password, alias, entry);
+mergePatch.doMerge();
+```
+
+```java
+File dexFile = new File(this.out, "merge.dex");
+File outFile = new File(this.out, "merge.apatch");
+mergeCode(dexFile);    
+//把.dex变成aptch 
+build(outFile, dexFile); 
+//签名
+release(this.out, dexFile, outFile);
+```
+
+```java
+private void mergeCode(File dexFile)
+    throws IOException{
+    DexBuffer dexA = null;
+    DexBuffer dexB = null;
+    File[] arrayOfFile;
+    int j = (arrayOfFile = this.patchs).length;
+    for (int i = 0; i < j; i++)
+    {
+      File file = arrayOfFile[i];
+      if ((!dexFile.exists()) && (dexA == null))
+      {
+        //拿到classes.dex并用DexBuffer包装
+        dexA = getDexFromJar(file);
+      }
+      else
+      {
+        if (dexFile.exists()) {
+          dexA = new DexBuffer(dexFile);
+        }
+        dexB = getDexFromJar(file);
+        //使用android.dx包下的Merger
+        DexMerger dexMerger = new DexMerger(dexA, dexB, 
+          CollisionPolicy.FAIL);
+        DexBuffer dexM = dexMerger.merge();
+        dexM.writeTo(dexFile);
+      }
+    }
+  }
+```
+
+```java
+protected void build(File outFile, File dexFile)
+    throws KeyStoreException, FileNotFoundException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableEntryException{
+    KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+    KeyStore.PrivateKeyEntry privateKeyEntry = null;
+    InputStream is = new FileInputStream(this.keystore);
+    keyStore.load(is, this.password.toCharArray());
+    privateKeyEntry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(this.alias, 
+      new KeyStore.PasswordProtection(this.entry.toCharArray()));
+    
+    PatchBuilder builder = new PatchBuilder(outFile, dexFile, 
+      privateKeyEntry, System.out);
+    builder.writeMeta(getMeta());
+    builder.sealPatch();
+}
+
+protected Manifest getMeta(){
+    Manifest manifest = new Manifest();
+    Attributes main = manifest.getMainAttributes();
+    main.putValue("Manifest-Version", "1.0");
+    main.putValue("Created-By", "1.0 (ApkPatch)");
+    main.putValue("Created-Time", 
+      new Date(System.currentTimeMillis()).toGMTString());
+    main.putValue("From-File", this.from.getName());
+    main.putValue("To-File", this.to.getName());
+    main.putValue("Patch-Name", this.name);
+    main.putValue("Patch-Classes", Formater.dotStringList(this.classes));
+    return manifest;
+}
+```
+
+
+#### diff
+
+关键点,使用`bakSmali`来将`smali`变成`dex`:
+
+```java
+public DiffInfo diff(File newFile, File oldFile)
+    throws IOException{
+    
+    DexBackedDexFile newDexFile = DexFileFactory.loadDexFile(newFile, 19, 
+      true);
+    DexBackedDexFile oldDexFile = DexFileFactory.loadDexFile(oldFile, 19, 
+      true);
+    
+    DiffInfo info = DiffInfo.getInstance();
+    
+    boolean contains = false;
+    for (DexBackedClassDef newClazz : newDexFile.getClasses())
+    {
+      Set<? extends DexBackedClassDef> oldclasses = oldDexFile
+        .getClasses();
+      for (DexBackedClassDef oldClazz : oldclasses) {
+        if (newClazz.equals(oldClazz))
+        {
+            //比较变量,比较方法
+          compareField(newClazz, oldClazz, info);
+          compareMethod(newClazz, oldClazz, info);
+          contains = true;
+          break;
+        }
+      }
+      if (!contains) {
+      //是新增的类
+        info.addAddedClasses(newClazz);
+      }
+    }
+    return info;
+  }
+
+//直接看代码就能明白,拿到modify & add
+
+public void compareMethod(DexBackedMethod object, Iterable<? extends DexBackedMethod> olds, DiffInfo info){
+    for (DexBackedMethod reference : olds) {
+      if (reference.equals(object))
+      {
+        if ((reference.getImplementation() == null) && 
+          (object.getImplementation() != null))
+        {
+          info.addModifiedMethods(object);
+          return;
+        }
+        if ((reference.getImplementation() != null) && 
+          (object.getImplementation() == null))
+        {
+          info.addModifiedMethods(object);
+          return;
+        }
+        if ((reference.getImplementation() == null) && 
+          (object.getImplementation() == null)) {
+          return;
+        }
+        if (!reference.getImplementation().equals(object.getImplementation()))
+        {
+          info.addModifiedMethods(object);
+          return;
+        }
+        return;
+      }
+    }
+    info.addAddedMethods(object);
+  }
+    
+public void compareField(DexBackedField object, Iterable<? extends DexBackedField> olds, DiffInfo info){
+    for (DexBackedField reference : olds) {
+      if (reference.equals(object))
+      {
+        if ((reference.getInitialValue() == null) && 
+          (object.getInitialValue() != null))
+        {
+          info.addModifiedFields(object);
+          return;
+        }
+        if ((reference.getInitialValue() != null) && 
+          (object.getInitialValue() == null))
+        {
+          info.addModifiedFields(object);
+          return;
+        }
+        if ((reference.getInitialValue() == null) && 
+          (object.getInitialValue() == null)) {
+          return;
+        }
+        if (reference.getInitialValue().compareTo(
+          object.getInitialValue()) != 0)
+        {
+          info.addModifiedFields(object);
+          return;
+        }
+        return;
+      }
+    }
+    info.addAddedFields(object);
+  }
+}
+
+//使用baksmali
+private static Set<String> buildCode(File smaliDir, File dexFile, DiffInfo info)
+    throws IOException, RecognitionException, FileNotFoundException
+  {
+    Set<String> classes = new HashSet();
+    Set<DexBackedClassDef> list = new HashSet();
+    list.addAll(info.getAddedClasses());
+    list.addAll(info.getModifiedClasses());
+    
+    baksmaliOptions options = new baksmaliOptions();
+    
+    options.deodex = false;
+    options.noParameterRegisters = false;
+    options.useLocalsDirective = true;
+    options.useSequentialLabels = true;
+    options.outputDebugInfo = true;
+    options.addCodeOffsets = false;
+    options.jobs = -1;
+    options.noAccessorComments = false;
+    options.registerInfo = 0;
+    options.ignoreErrors = false;
+    options.inlineResolver = null;
+    options.checkPackagePrivateAccess = false;
+    if (!options.noAccessorComments) {
+      options.syntheticAccessorResolver = new SyntheticAccessorResolver(
+        list);
+    }
+    ClassFileNameHandler outFileNameHandler = new ClassFileNameHandler(
+      smaliDir, ".smali");
+    ClassFileNameHandler inFileNameHandler = new ClassFileNameHandler(
+      smaliDir, ".smali");
+    DexBuilder dexBuilder = DexBuilder.makeDexBuilder();
+    for (DexBackedClassDef classDef : list)
+    {
+      String className = classDef.getType();
+      //baksmali反编译class为.smali文件
+      baksmali.disassembleClass(classDef, outFileNameHandler, options);
+      File smaliFile = inFileNameHandler.getUniqueFilenameForClass(
+        TypeGenUtil.newType(className));
+      classes.add(TypeGenUtil.newType(className)
+        .substring(1, TypeGenUtil.newType(className).length() - 1)
+        .replace('/', '.'));
+        //把smali变成dex文件
+      SmaliMod.assembleSmaliFile(smaliFile, dexBuilder, true, true);
+    }
+    dexBuilder.writeTo(new FileDataStore(dexFile));
+    
+    return classes;
+  }
+```
+ 
+ 这里有个细节,在baksmali源码中,作者加了加入注解的代码:
+ 
+```java 
+  for (Method method : directMethods){
+      if ((modifieds != null) && (modifieds.contains(method))){
+        MethodReplaceAnnotaion replaceAnnotaion = new MethodReplaceAnnotaion(
+          method.getDefiningClass(), method.getName());
+        ((DexBackedMethod)method).setMethodReplace(replaceAnnotaion);
+      }
+ }
+```
+
+##### doPatch
+```java
+public void doPatch()
+  {
+    try
+    {
+      File smaliDir = new File(this.out, "smali");
+      if (!smaliDir.exists()) {
+        smaliDir.mkdir();
+      }
+      try
+      {
+        FileUtils.cleanDirectory(smaliDir);
+      }
+      catch (IOException e)
+      {
+        throw new RuntimeException(e);
+      }
+      File dexFile = new File(this.out, "diff.dex");
+      if ((dexFile.exists()) && (!dexFile.delete())) {
+        throw new RuntimeException("diff.dex can't be removed.");
+      }
+      File outFile = new File(this.out, "diff.apatch");
+      if ((outFile.exists()) && (!outFile.delete())) {
+        throw new RuntimeException("diff.apatch can't be removed.");
+      }
+      DiffInfo info = new DexDiffer().diff(this.from, this.to);
+      
+      this.classes = buildCode(smaliDir, dexFile, info);
+      
+      build(outFile, dexFile);
+      //重命名为md5.apatch
+      release(this.out, dexFile, outFile);
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+    }
+  }
+  
+```
+
+#### todo
+
+* 分析bakSmali源码
+* 研究andFix签名机制
+* jni??
+
+
+
+
+
+
+
