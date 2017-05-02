@@ -36,8 +36,8 @@ public PatchManager(Context context) {
 public void init(String appVersion) {
     ...
     if (ver == null || !ver.equalsIgnoreCase(appVersion)) {
-			cleanPatch();
-			sp.edit().putString(SP_VERSION, appVersion).commit();
+        cleanPatch();
+        sp.edit().putString(SP_VERSION, appVersion).commit();
     } else {
         initPatchs();
     }
@@ -55,39 +55,37 @@ private void init() throws IOException {
     JarFile jarFile = null;
     InputStream inputStream = null;
     try {
-	   jarFile = new JarFile(mFile);
-	   JarEntry entry = jarFile.getJarEntry(ENTRY_NAME);//META-INF/PATCH.MF
-		inputStream = jarFile.getInputStream(entry);
-		Manifest manifest = new Manifest(inputStream);
-		Attributes main = manifest.getMainAttributes();
-		mName = main.getValue(PATCH_NAME);
-		mTime = new Date(main.getValue(CREATED_TIME));
-		mClassesMap = new HashMap<String, List<String>>();
-		Attributes.Name attrName;
-		String name;
-		List<String> strings;
-		for (Iterator<?> it = main.keySet().iterator(); it.hasNext();) {
-			attrName = (Attributes.Name) it.next();
-			name = attrName.toString();
-			if (name.endsWith(CLASSES)) {
-				strings = Arrays.asList(main.getValue(attrName).split(","));
-				if (name.equalsIgnoreCase(PATCH_CLASSES)) {
-					mClassesMap.put(mName, strings);
-				} else {
+        jarFile = new JarFile(mFile);
+        JarEntry entry = jarFile.getJarEntry(ENTRY_NAME);//META-INF/PATCH.MF
+        inputStream = jarFile.getInputStream(entry);
+        Manifest manifest = new Manifest(inputStream);
+        Attributes main = manifest.getMainAttributes();
+        mName = main.getValue(PATCH_NAME);
+        mTime = new Date(main.getValue(CREATED_TIME));
+        mClassesMap = new HashMap<String, List<String>>();
+        Attributes.Name attrName;
+        String name;
+        List<String> strings;
+        for (Iterator<?> it = main.keySet().iterator(); it.hasNext();) {
+            attrName = (Attributes.Name) it.next();
+            name = attrName.toString();
+            if (name.endsWith(CLASSES)) {
+                strings = Arrays.asList(main.getValue(attrName).split(","));
+                if (name.equalsIgnoreCase(PATCH_CLASSES)) {
+                mClassesMap.put(mName, strings);
+                } else {
 					//上图可以看到Patch-Classes代表被修改的Class
-					mClassesMap.put(
-								name.trim().substring(0, name.length() - 8),// remove// "-Classes"
-								strings);
+					   mClassesMap.put(name.trim().substring(0, name.length() - 8),// remove// "-Classes"strings);
+				    }
 				}
-			}
-		}
+		  }
 	} finally {
-		if (jarFile != null) {
-			jarFile.close();
-		}
-		if (inputStream != null) {
-			inputStream.close();
-		}
+	   if (jarFile != null) {
+	       jarFile.close();
+	   }
+	   if (inputStream != null) {
+	       inputStream.close();
+	   }
 	}
 }
 ```
@@ -95,62 +93,31 @@ private void init() throws IOException {
 ##### Fix
 
 ```java
-public synchronized void fix(File file, ClassLoader classLoader,
-	List<String> classes) {
-	if (!mSupport) {
-		return;
-	}
-	if (!mSecurityChecker.verifyApk(file)) {// security check fail
-		return;
-	}
-	try {
-		File optfile = new File(mOptDir, file.getName());
-		boolean saveFingerprint = true;
-		if (optfile.exists()) {
-				// need to verify fingerprint when the optimize file exist,
-				// prevent someone attack on jailbreak device with
-				// Vulnerability-Parasyte.
-				// btw:exaggerated android Vulnerability-Parasyte
-				// http://secauo.com/Exaggerated-Android-Vulnerability-Parasyte.html
-			if (mSecurityChecker.verifyOpt(optfile)) {
-				saveFingerprint = false;
-			} else if (!optfile.delete()) {
-				return;
-			}
-		}
-		final DexFile dexFile = DexFile.loadDex(file.getAbsolutePath(),
+public synchronized void fix(File file, ClassLoader classLoader,List<String> classes) {
+    if (!mSupport) {
+        return;
+    }
+    if (!mSecurityChecker.verifyApk(file)) {// security check fail
+        return;
+    }
+    try {
+        File optfile = new File(mOptDir, file.getName());
+        boolean saveFingerprint = true;
+        ...
+        final DexFile dexFile = DexFile.loadDex(file.getAbsolutePath(),
 					optfile.getAbsolutePath(), Context.MODE_PRIVATE);
-
-		if (saveFingerprint) {
-			mSecurityChecker.saveOptSig(optfile);
-		}
-		ClassLoader patchClassLoader = new ClassLoader(classLoader) {
-			@Override
-			protected Class<?> findClass(String className)
-						throws ClassNotFoundException {
-				Class<?> clazz = dexFile.loadClass(className, this);
-				if (clazz == null
-							&& className.startsWith("com.alipay.euler.andfix")) {
-						return Class.forName(className);// annotation’s class
-														// not found
-				}
-				if (clazz == null) {
-	           throw new ClassNotFoundException(className);
-				}
-				return clazz;
-			}
-		};
-		Enumeration<String> entrys = dexFile.entries();
-		Class<?> clazz = null;
-		while (entrys.hasMoreElements()) {
-			String entry = entrys.nextElement();
-			if (classes != null && !classes.contains(entry)) {
+			...
+			Enumeration<String> entrys = dexFile.entries();
+			Class<?> clazz = null;
+			while (entrys.hasMoreElements()) {
+			 String entry = entrys.nextElement();
+			 if (classes != null && !classes.contains(entry)) {
 				continue;// skip, not need fix
-			}
-			clazz = dexFile.loadClass(entry, patchClassLoader);
-			if (clazz != null) {
-				fixClass(clazz, classLoader);
-			}
+			 }
+			 clazz = dexFile.loadClass(entry, patchClassLoader);
+			 if (clazz != null) {
+			     fixClass(clazz, classLoader);
+			 }
 		}
 	} catch (IOException e) {
 		Log.e(TAG, "pacth", e);
@@ -201,30 +168,27 @@ public static void addReplaceMethod(Method src, Method dest) {
 ```c
 extern jboolean __attribute__ ((visibility ("hidden"))) dalvik_setup(
 		JNIEnv* env, int apilevel) {
-	//dlopen libdvm.so库(7.0上是不是会有问题？)
-	void* dvm_hand = dlopen("libdvm.so", RTLD_NOW);
-	if (dvm_hand) {
-	   //拿到dvmDecodeIndirectRef函数指针
-		dvmDecodeIndirectRef_fnPtr = dvm_dlsym(dvm_hand,
-				apilevel > 10 ?
+    //dlopen libdvm.so库(7.0上是不是会有问题？)
+    void* dvm_hand = dlopen("libdvm.so", RTLD_NOW);
+    if (dvm_hand) {
+    //拿到dvmDecodeIndirectRef函数指针
+        dvmDecodeIndirectRef_fnPtr = dvm_dlsym(dvm_hand,apilevel > 10 ?
 						"_Z20dvmDecodeIndirectRefP6ThreadP8_jobject" :
 						"dvmDecodeIndirectRef");
-		if (!dvmDecodeIndirectRef_fnPtr) {
-			return JNI_FALSE;
-		}
+			if (!dvmDecodeIndirectRef_fnPtr) {
+			 return JNI_FALSE;
+			}
 		//拿到dvmThreadSelf函数指针,用来得到当前threadId
-		dvmThreadSelf_fnPtr = dvm_dlsym(dvm_hand,
-				apilevel > 10 ? "_Z13dvmThreadSelfv" : "dvmThreadSelf");
+		dvmThreadSelf_fnPtr = dvm_dlsym(dvm_hand,apilevel > 10 ? "_Z13dvmThreadSelfv" : "dvmThreadSelf");
 		if (!dvmThreadSelf_fnPtr) {
-			return JNI_FALSE;
+		  return JNI_FALSE;
 		}
 		jclass clazz = env->FindClass("java/lang/reflect/Method");
 		jClassMethod = env->GetMethodID(clazz, "getDeclaringClass",
 						"()Ljava/lang/Class;");
-
-		return JNI_TRUE;
+      return JNI_TRUE;
 	} else {
-		return JNI_FALSE;
+	   return JNI_FALSE;
 	}
 }
 ```
@@ -281,7 +245,7 @@ void replace_5_0(JNIEnv* env, jobject src, jobject dest) {
 	reinterpret_cast<art::mirror::Class*>(dmeth->declaring_class_)->super_class_ = 0;
 
 	smeth->declaring_class_ = dmeth->declaring_class_;
-    smeth->access_flags_ = dmeth->access_flags_ | 0x0001;
+	smeth->access_flags_ = dmeth->access_flags_ | 0x0001;
 ```
 
 
