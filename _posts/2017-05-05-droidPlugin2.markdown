@@ -35,11 +35,11 @@ defaultConfig{
 
 P00代表进程0。**注意meta-data**
 
-![](/img/2017-05-05-droidPlugin2/14936293919569.jpg)
+![](/img/2017-05-05-droidplugin2/14936293919569.jpg)
 
-![](/img/2017-05-05-droidPlugin2/14936294934628.jpg)
+![](/img/2017-05-05-droidplugin2/14936294934628.jpg)
 
-![](/img/2017-05-05-droidPlugin2/14936295424604.jpg)
+![](/img/2017-05-05-droidplugin2/14936295424604.jpg)
 
 注意这里`provider`的`authorities`是`${authorityName}`,即前面`build.gradle`定义的
 
@@ -162,7 +162,7 @@ private synchronized ContentProviderClient getContentProviderClient(final String
 
 因为service与Activity不同,可以共用:
 
-```java  @Override
+```java @Override
 public void onStart(Intent intent, int startId) {
     try {
         if (intent != null) {
@@ -200,47 +200,46 @@ public int onStart(Context context, Intent intent, int flags, int startId) throw
 ##### handleCreateServiceOne
 
 关键函数，其实和weishu介绍的一样 这里是第一次创建`service`
+
 ```java
 private void handleCreateServiceOne(Context hostContext, Intent stubIntent, ServiceInfo info) throws Exception {
-        //拿到真实ResolveInfo
-        ResolveInfo resolveInfo = hostContext.getPackageManager().resolveService(stubIntent, 0);
-        ServiceInfo stubInfo = resolveInfo != null ? resolveInfo.serviceInfo : null;
-        PluginManager.getInstance().reportMyProcessName(stubInfo.processName, info.processName, info.packageName);
-        //preLoad
-        PluginProcessManager.preLoadApk(hostContext, info);
-        Object activityThread = ActivityThreadCompat.currentActivityThread();
-        //以下主要是在createService
-        IBinder fakeToken = new MyFakeIBinder();
-        Class CreateServiceData = Class.forName(ActivityThreadCompat.activityThreadClass().getName() + "$CreateServiceData");
-        Constructor init = CreateServiceData.getDeclaredConstructor();
-        if (!init.isAccessible()) {
-            init.setAccessible(true);
-        }
-        Object data = init.newInstance();
-
-        FieldUtils.writeField(data, "token", fakeToken);
-        FieldUtils.writeField(data, "info", info);
-        if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
-            FieldUtils.writeField(data, "compatInfo", CompatibilityInfoCompat.DEFAULT_COMPATIBILITY_INFO());
-        }
-
-        Method method = activityThread.getClass().getDeclaredMethod("handleCreateService", CreateServiceData);
-        if (!method.isAccessible()) {
-            method.setAccessible(true);
-        }
-        method.invoke(activityThread, data);
-        Object mService = FieldUtils.readField(activityThread, "mServices");
-        Service service = (Service) MethodUtils.invokeMethod(mService, "get", fakeToken);
-        MethodUtils.invokeMethod(mService, "remove", fakeToken);
-        mTokenServices.put(fakeToken, service);
-        mNameService.put(info.name, service);
-
-
-        if (stubInfo != null) {
-            PluginManager.getInstance().onServiceCreated(stubInfo, info);
-        }
+    //拿到真实ResolveInfo
+    ResolveInfo resolveInfo = hostContext.getPackageManager().resolveService(stubIntent, 0);
+    ServiceInfo stubInfo = resolveInfo != null ? resolveInfo.serviceInfo : null;
+    PluginManager.getInstance().reportMyProcessName(stubInfo.processName, info.processName, info.packageName);
+    //preLoad
+    PluginProcessManager.preLoadApk(hostContext, info);
+    Object activityThread = ActivityThreadCompat.currentActivityThread();
+    //以下主要是在createService
+    IBinder fakeToken = new MyFakeIBinder();
+    Class CreateServiceData = Class.forName(ActivityThreadCompat.activityThreadClass().getName() + "$CreateServiceData");
+    Constructor init = CreateServiceData.getDeclaredConstructor();
+    if (!init.isAccessible()) {
+        init.setAccessible(true);
     }
-```
+    Object data = init.newInstance();
+    FieldUtils.writeField(data, "token", fakeToken);
+    FieldUtils.writeField(data, "info", info);
+    if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
+        FieldUtils.writeField(data, "compatInfo", CompatibilityInfoCompat.DEFAULT_COMPATIBILITY_INFO());
+    }
+    Method method = activityThread.getClass().getDeclaredMethod("handleCreateService", CreateServiceData);
+    if (!method.isAccessible()) {
+        method.setAccessible(true);
+    }
+    method.invoke(activityThread, data);
+    Object mService = FieldUtils.readField(activityThread, "mServices");
+    Service service = (Service) MethodUtils.invokeMethod(mService, "get", fakeToken);
+    MethodUtils.invokeMethod(mService, "remove", fakeToken);
+    mTokenServices.put(fakeToken, service);
+    mNameService.put(info.name, service);
+
+    if (stubInfo != null) {
+         PluginManager.getInstance().onServiceCreated(stubInfo, info);
+    }
+
+}
+ ```
    
 ##### handleOnStartOne
 
@@ -313,22 +312,22 @@ permissions
 
 #### Instrumentation替换
 
-![](/img/2017-05-05-droidPlugin2/14937025759028.jpg)
+![](/img/2017-05-05-droidplugin2/14937025759028.jpg)
 #### handler替换
 
-![](/img/2017-05-05-droidPlugin2/14937025914875.jpg)
+![](/img/2017-05-05-droidplugin2/14937025914875.jpg)
 #### AMS替换
 
-![](/img/2017-05-05-droidPlugin2/14937026966584.jpg)
+![](/img/2017-05-05-droidplugin2/14937026966584.jpg)
 
-![](/img/2017-05-05-droidPlugin2/14937027793235.jpg)
+![](/img/2017-05-05-droidplugin2/14937027793235.jpg)
 #### 各类Service替换
 
 先替换getService拿到的`IBinder`
-![](/img/2017-05-05-droidPlugin2/14937095876949.jpg)
+![](/img/2017-05-05-droidplugin2/14937095876949.jpg)
 #### 再替换Ibinder.queryLocalInterface方法
 
-![](/img/2017-05-05-droidPlugin2/14937099396109.jpg)
+![](/img/2017-05-05-droidplugin2/14937099396109.jpg)
 
 ### handle
 
@@ -539,6 +538,7 @@ protected void afterInvoke(Object receiver, Method method, Object[] args, Object
 ### preLoadApk
 
 前面看到很多次了,每次新建Activity或Service等都要来一次,设置classLoader与Application等
+
 ```java
 public static void preLoadApk(Context hostContext, ComponentInfo pluginInfo) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, PackageManager.NameNotFoundException, ClassNotFoundException {
     if (pluginInfo == null && hostContext == null) {
@@ -642,7 +642,7 @@ private static void preMakeApplication(Context hostContext, ComponentInfo plugin
         Log.e(TAG, "preMakeApplication FAIL", e);
     }
 }
-    ```
+```
 
 ### MyAms
 
