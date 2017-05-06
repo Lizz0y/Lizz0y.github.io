@@ -751,10 +751,10 @@ packageInfo = PluginManager.getInstance().getPackageInfo(packageName, flags);
 
 看完全部其实对插件化已经很清楚了。
 
->Activity: 替换成stubActivity然后在handler回调中替换回来
-Service:使用一个大的Service替代,在start的时候去主动生成targetService并启动
-广播:注册静态的即可
-Provider:这部分todo,但大体概念就是替换authority
+>* Activity: 替换成stubActivity然后在handler回调中替换回来
+* Service:使用一个大的Service替代,在start的时候去主动生成targetService并启动
+* 广播:注册静态的即可
+* Provider:这部分todo,但大体概念就是替换authority
 
 
 
