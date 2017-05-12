@@ -27,7 +27,7 @@ tags:
 
 现在让我们为我们的库创建基本的目录结构吧！我们需要以下几个目录，包括`src`源目录和用来进行单元测试的`test`目录。
 
-![](/img/2017-05-12-myAngular-preface/14945186718073.jpg)
+![](/img/2017-05-12-myAngular-preface/14945193043052.jpg)
 
 ### 为Npm创建package.json
 
