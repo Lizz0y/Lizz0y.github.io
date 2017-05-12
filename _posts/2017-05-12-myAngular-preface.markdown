@@ -10,7 +10,7 @@ tags:
     - Build Your Own Angularjs
 ---
 
-开个`Build Your Own Angularjs`的翻译系列吧。个人目前熟练移动端，前端是刚入门的状态，所以有什么问题请大家多多指出。学习前端到了有点迷茫的阶段，之前android基本把一些库的源码都能很流畅的撸一遍，但直接撸前端库发现难度有点大摔，所以借着还有两个月毕业的时间，强迫自己把这本书翻译一遍，算是给自己的一个毕业礼物吧。所有代码见![github](https://github.com/Lizz0y/myAngularjs).
+开个`Build Your Own Angularjs`的翻译系列吧。个人目前熟练移动端，前端是刚入门的状态，所以有什么问题请大家多多指出。学习前端到了有点迷茫的阶段，之前android基本把一些库的源码都能很流畅的撸一遍，但直接撸前端库发现难度有点大摔，所以借着还有两个月毕业的时间，强迫自己把这本书翻译一遍，算是给自己的一个毕业礼物吧。所有代码见[github](https://github.com/Lizz0y/myAngularjs)
 
 从今天开始，我们要完成一个强大的`JavaScript`框架。我们需要建立一个工程，并配上自动化测试机制。幸运的是，现在已经有很多现成的工具供我们使用。在这节，我们使用`NPM`和`Grunt`建立一个`JavaScript`库，并使用`JSHint`进行静态分析，`Jasmine`进行单元测试。
 
