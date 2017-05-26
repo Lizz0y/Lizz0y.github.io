@@ -1,4 +1,4 @@
- ---
+---
 layout:     post
 title:      "Weex启动过程"
 date:       2017-05-23
@@ -12,6 +12,7 @@ tags:
 
 本文先分析`android sdk`中的启动过程,参考了以下文章:
 [来自郑海波的Weex Android SDK源码分析](http://www.jianshu.com/p/3160a0297345)
+
 [Weex SDK Android 源码解析](https://zhuanlan.zhihu.com/p/25326775)
 
 ### WXApplication
@@ -304,7 +305,7 @@ static boolean registerJSModule(String moduleName, ModuleFactory factory) {
   
 同样,在factory中`getMethods`:遍历查看是否有`JSMethod`和`WXModuleAnno`的注解:
 
-![](/img/2017-05-23-weex-start/14955415003014.jpg)
+![](/img/2017-05-23-weex-begin/14955415003014.jpg)
 
 ```java
 public void registerModules(final Map<String, Object> modules) {
@@ -432,7 +433,7 @@ sm.initScriptsFramework(config!=null?config.getFramework():null);
 有点乱,画个图总结一下:
 
 
-![](/img/2017-05-23-weex-start/14955511136700.jpg)
+![](/img/2017-05-23-weex-begin/14955511136700.jpg)
 
 
 
