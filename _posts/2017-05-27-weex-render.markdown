@@ -1,4 +1,4 @@
- ---
+---
 layout:     post
 title:      "Dom渲染过程"
 date:       2017-05-27
@@ -612,7 +612,7 @@ if (mDomObj.isFixed()){
 
 在这段代码中,真正设置了元素的宽高,`padding,margin`间距。
 
-```
+
 
 
 ### 总结
