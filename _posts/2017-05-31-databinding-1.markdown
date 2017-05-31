@@ -302,7 +302,7 @@ private static final CreateWeakListener CREATE_PROPERTY_LISTENER = new CreateWea
 };
 ```
 
-![](/img/2017-05-31-databinding-1/14962198889807.jpg)
+![](/img/2017-05-31-databinding-1/14962208683862.jpg)
 
 当发生变化时,`CallBackRegistry`会发出通知:
 
