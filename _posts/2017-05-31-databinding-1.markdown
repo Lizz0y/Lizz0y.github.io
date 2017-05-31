@@ -17,11 +17,12 @@ tags:
 
 对于`activity_main.xml`,会生成`ActivityMainBinding`类:
 
-`ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);`
+```java
+ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);`
+return bindToAddedViews(bindingComponent, contentView, 0, layoutId);
+```
 
-`return bindToAddedViews(bindingComponent, contentView, 0, layoutId);`
-
-对于最普通的例子而言,这里的`bindingComponent`是null,`contentView`是`android.R.id.content`,`ContentFrameLayout`,它的子`view`就是`layout`
+对于最普通的例子而言,这里的`bindingComponent`是null,`contentView`是`android.R.id.content ContentFrameLayout`,它的子`View`就是`layout`
 
 最后进入
 
@@ -86,9 +87,10 @@ protected static Object[] mapBindings(DataBindingComponent bindingComponent, Vie
     mapBindings(bindingComponent, root, bindings, includes, viewsWithIds, true);
         return bindings;
     }
-
+```
 在编译后,所有`view`(除了根)之外都会变成`binding-1`,`bidning-2`等递增的名称,因此如下代码就按此处理:
 
+```java
 private static void mapBindings(DataBindingComponent bindingComponent, View view,Object[] bindings, IncludedLayouts includes, SparseIntArray viewsWithIds,boolean isRoot) {
     final int indexInIncludes;
     final ViewDataBinding existingBinding = getBinding(view);//即view.getTag("R.id.dataBinding")拿到绑定的ViewDataBinding,这里还是null
@@ -300,7 +302,7 @@ private static final CreateWeakListener CREATE_PROPERTY_LISTENER = new CreateWea
 };
 ```
 
-![](/img/2017-05-31-databinding-1/14888180481880.jpg)
+![](/img/2017-05-31-databinding-1/14962198889807.jpg)
 
 当发生变化时,`CallBackRegistry`会发出通知:
 
