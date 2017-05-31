@@ -87,8 +87,7 @@ protected static Object[] mapBindings(DataBindingComponent bindingComponent, Vie
         return bindings;
     }
 
-
-
+在编译后,所有`view`(除了根)之外都会变成`binding-1`,`bidning-2`等递增的名称,因此如下代码就按此处理:
 
 private static void mapBindings(DataBindingComponent bindingComponent, View view,Object[] bindings, IncludedLayouts includes, SparseIntArray viewsWithIds,boolean isRoot) {
     final int indexInIncludes;
@@ -138,30 +137,7 @@ private static void mapBindings(DataBindingComponent bindingComponent, View view
         for (int i = 0; i < count; i++) {
             final View child = viewGroup.getChildAt(i);
             boolean isInclude = false;
-            if (indexInIncludes >= 0 && child.getTag() instanceof String) {
-                String childTag = (String) child.getTag();
-                if (childTag.endsWith("_0") && childTag.startsWith("layout") && childTag.indexOf('/') > 0) {
-                    int includeIndex = findIncludeIndex(childTag, minInclude,includes, indexInIncludes);
-                    if (includeIndex >= 0) {
-                        isInclude = true;
-                        minInclude = includeIndex + 1;
-                        final int index = includes.indexes[indexInIncludes][includeIndex];
-                        final int layoutId = includes.layoutIds[indexInIncludes][includeIndex];
-                        int lastMatchingIndex = findLastMatching(viewGroup, i);
-                        if (lastMatchingIndex == i) {
-                            bindings[index] = DataBindingUtil.bind(bindingComponent, child,layoutId);
-                        } else {
-                            final int includeCount =  lastMatchingIndex - i + 1;
-                            final View[] included = new View[includeCount];
-                            for (int j = 0; j < includeCount; j++) {
-                                included[j] = viewGroup.getChildAt(i + j);
-                            }
-                            bindings[index] = DataBindingUtil.bind(bindingComponent, included,layoutId);
-                            i += includeCount - 1;
-                        }
-                    }
-                }
-            }
+            ...... //与include有关,暂不分析
             if (!isInclude) {
                 mapBindings(bindingComponent, child, bindings, includes, viewsWithIds, false); //map子节点
             }
@@ -240,7 +216,7 @@ private final Runnable mRebindRunnable = new Runnable() {
 
 ##### executeBindings()
 
-进入子类执行绑定:代码不完全列出,举例即可
+这个函数可以理解成数据更新后进行刷新,进入子类执行绑定:代码不完全列出,举例即可
 
 ```java
  @Override
@@ -278,7 +254,6 @@ protected void executeBindings() {
 在编译生成的`ActivityMainBinding`中,自动会生成`set`等函数,例如:
 
 ![](/img/2017-05-31-databinding-1/14962198889807.jpg)
-
 ```java
 public boolean setVariable(int variableId, Object variable) {
     switch(variableId) {
@@ -324,6 +299,7 @@ private static final CreateWeakListener CREATE_PROPERTY_LISTENER = new CreateWea
     }
 };
 ```
+
 ![](/img/2017-05-31-databinding-1/14888180481880.jpg)
 
 当发生变化时,`CallBackRegistry`会发出通知:
@@ -350,7 +326,7 @@ public synchronized void notifyCallbacks(T sender, int arg, A arg2) {
     }
 }
 ```
-在`WeakListener`中回到属性变化的通知:
+在`WeakListener`中收到属性变化的通知:
 
 ```java
 @Override
@@ -378,6 +354,8 @@ private void handleFieldChange(int mLocalFieldId, Object object, int fieldId) {
 ```
 
 #### 点击事件
+
+存在以下两个与点击事件有关的函数:
 
 ```java
 public final void _internalCallbackOnClick(int sourceId , android.view.View callbackArg_0) {
@@ -419,9 +397,6 @@ public static class OnClickListenerImpl implements android.view.View.OnClickList
 ```
 
 对于第一种,生成`OnClickListenerImpl`,`this.value.onClickFriend(arg0);`
+
 对于第二种,`mCallback1 = new android.databinding.generated.callback.OnClickListener(this, 1);`
-
-
-
-
 
