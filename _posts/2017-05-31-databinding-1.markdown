@@ -18,7 +18,7 @@ tags:
 对于`activity_main.xml`,会生成`ActivityMainBinding`类:
 
 ```java
-ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);`
+ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 return bindToAddedViews(bindingComponent, contentView, 0, layoutId);
 ```
 
@@ -204,7 +204,7 @@ private final Runnable mRebindRunnable = new Runnable() {
             // Nested so that we don't get a lint warning in IntelliJ
             if (!mRoot.isAttachedToWindow()) {
                 mRoot.removeOnAttachStateChangeListener(ROOT_REATTACHED_LISTENER);
-                                       mRoot.addOnAttachStateChangeListener(ROOT_REATTACHED_LISTENER);
+                mRoot.addOnAttachStateChangeListener(ROOT_REATTACHED_LISTENER);
                 return;
             }
         }
@@ -398,7 +398,7 @@ public static class OnClickListenerImpl implements android.view.View.OnClickList
     android:onClick="@{() -> presenter.onSaveClick(task)}" />
 ```
 
-对于第一种,生成`OnClickListenerImpl`,`this.value.onClickFriend(arg0);`
+* 对于第一种,生成`OnClickListenerImpl`,`this.value.onClickFriend(arg0);`
 
-对于第二种,`mCallback1 = new android.databinding.generated.callback.OnClickListener(this, 1);`
+* 对于第二种,`mCallback1 = new android.databinding.generated.callback.OnClickListener(this, 1);`
 
