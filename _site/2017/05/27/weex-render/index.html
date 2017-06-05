@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Dom渲染过程 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/05/27/weex-render/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/party.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/party.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Weex" title="Weex">Weex</a>
+                        
+                        <a class="tag" href="/tags/#Js" title="Js">Js</a>
+                        
+                        <a class="tag" href="/tags/#源码分析" title="源码分析">源码分析</a>
+                        
+                    </div>
+                    <h1>Dom渲染过程</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on May 27, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>本节,我们介绍<code class="highlighter-rouge">Dom</code>的渲染过程,在主界面中进行<code class="highlighter-rouge">render</code>,先引入<code class="highlighter-rouge">.we</code>文件:</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+  <span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="nx">text</span> <span class="nx">style</span><span class="o">=</span><span class="s2">"font-size:100px;"</span><span class="o">&gt;</span><span class="nx">Hello</span> <span class="nx">World</span><span class="p">.</span><span class="o">&lt;</span><span class="sr">/text</span><span class="err">&gt;
+</span>  <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt;
+</span><span class="o">&lt;</span><span class="sr">/template</span><span class="err">&gt;
+</span></code></pre>
+</div>
+
+<p>可以看到只有一个<code class="highlighter-rouge">div</code>包裹了<code class="highlighter-rouge">text</code>。</p>
+
+<p>先介绍一下渲染的整体过程,页面最底部的框架使用<code class="highlighter-rouge">createBody</code>渲染,后续所有元素通过<code class="highlighter-rouge">addDom</code>添加绘制。</p>
+
+<h3 id="入口oncreate">入口onCreate</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">protected</span> <span class="kt">void</span> <span class="nf">onCreate</span><span class="o">(</span><span class="n">Bundle</span> <span class="n">savedInstanceState</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">.</span><span class="na">onCreate</span><span class="o">(</span><span class="n">savedInstanceState</span><span class="o">);</span>
+    <span class="n">setContentView</span><span class="o">(</span><span class="n">R</span><span class="o">.</span><span class="na">layout</span><span class="o">.</span><span class="na">activity_main</span><span class="o">);</span>
+    <span class="n">mWXSDKInstance</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WXSDKInstance</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+    <span class="n">mWXSDKInstance</span><span class="o">.</span><span class="na">registerRenderListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+    <span class="cm">/**
+     * WXSample 可以替换成自定义的字符串，针对埋点有效。
+     * template 是.we transform 后的 js文件。
+     * option 可以为空，或者通过option传入 js需要的参数。例如bundle js的地址等。
+     * jsonInitData 可以为空。
+     */</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">Object</span><span class="o">&gt;</span> <span class="n">options</span><span class="o">=</span><span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;&gt;();</span>
+    <span class="n">options</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">WXSDKInstance</span><span class="o">.</span><span class="na">BUNDLE_URL</span><span class="o">,</span><span class="s">"file://hello.js"</span><span class="o">);</span>
+    <span class="n">mWXSDKInstance</span><span class="o">.</span><span class="na">render</span><span class="o">(</span><span class="s">"WXSample"</span><span class="o">,</span> <span class="n">WXFileUtils</span><span class="o">.</span><span class="na">loadAsset</span><span class="o">(</span><span class="s">"hello.js"</span><span class="o">,</span> <span class="k">this</span><span class="o">),</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="n">WXRenderStrategy</span><span class="o">.</span><span class="na">APPEND_ASYNC</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>我们看到,每次<code class="highlighter-rouge">render</code>时都会生成一个新的<code class="highlighter-rouge">WXSDKInstance</code>,其<code class="highlighter-rouge">id</code>会递增
+在<code class="highlighter-rouge">render</code>中,主要<code class="highlighter-rouge">createInstance</code>:
+<code class="highlighter-rouge">WXSDKManager.getInstance().createInstance(this, template, renderOptions, jsonInitData);</code></p>
+
+<h4 id="createinstance">createInstance</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">createInstance</span><span class="o">(</span><span class="n">WXSDKInstance</span> <span class="n">instance</span><span class="o">,</span> <span class="n">String</span> <span class="n">code</span><span class="o">,</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">options</span><span class="o">,</span> <span class="n">String</span> <span class="n">jsonInitData</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">mWXRenderManager</span><span class="o">.</span><span class="na">registerInstance</span><span class="o">(</span><span class="n">instance</span><span class="o">);</span>
+    <span class="n">mBridgeManager</span><span class="o">.</span><span class="na">createInstance</span><span class="o">(</span><span class="n">instance</span><span class="o">.</span><span class="na">getInstanceId</span><span class="o">(),</span> <span class="n">code</span><span class="o">,</span> <span class="n">options</span><span class="o">,</span> <span class="n">jsonInitData</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>其中,在<code class="highlighter-rouge">WXRenderManager</code>中,为<code class="highlighter-rouge">instance</code>生成<code class="highlighter-rouge">WXRenderStatement</code>,后续使用它来为<code class="highlighter-rouge">instance</code>进行渲染,这是关键,一个<code class="highlighter-rouge">instance</code>对应一个<code class="highlighter-rouge">statement</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">registerInstance</span><span class="o">(</span><span class="n">WXSDKInstance</span> <span class="n">instance</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">mRegistries</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">instance</span><span class="o">.</span><span class="na">getInstanceId</span><span class="o">(),</span> <span class="k">new</span> <span class="n">WXRenderStatement</span><span class="o">(</span><span class="n">instance</span><span class="o">));</span>
+<span class="o">}</span>  
+</code></pre>
+</div>
+<p>在<code class="highlighter-rouge">WXModuleManager</code>中,为<code class="highlighter-rouge">instance</code>生成<code class="highlighter-rouge">WXDomModule</code></p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">createDomModule</span><span class="o">(</span><span class="n">WXSDKInstance</span> <span class="n">instance</span><span class="o">){</span>
+    <span class="k">if</span><span class="o">(</span><span class="n">instance</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">sDomModuleMap</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">instance</span><span class="o">.</span><span class="na">getInstanceId</span><span class="o">(),</span> <span class="k">new</span> <span class="n">WXDomModule</span><span class="o">(</span><span class="n">instance</span><span class="o">));</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h5 id="invokecreateinstance">invokeCreateInstance</h5>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">post</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="kt">long</span> <span class="n">start</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">();</span>
+        <span class="n">invokeCreateInstance</span><span class="o">(</span><span class="n">instance</span><span class="o">,</span> <span class="n">template</span><span class="o">,</span> <span class="n">options</span><span class="o">,</span> <span class="n">data</span><span class="o">);</span>
+        <span class="kd">final</span> <span class="kt">long</span> <span class="n">totalTime</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">()</span> <span class="o">-</span> <span class="n">start</span><span class="o">;</span>
+        <span class="n">WXSDKManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">postOnUiThread</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                <span class="n">instance</span><span class="o">.</span><span class="na">createInstanceFinished</span><span class="o">(</span><span class="n">totalTime</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">},</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">},</span> <span class="n">instanceId</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">WXJSObject</span> <span class="n">instanceIdObj</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WXJSObject</span><span class="o">(</span><span class="n">WXJSObject</span><span class="o">.</span><span class="na">String</span><span class="o">,</span><span class="n">instance</span><span class="o">.</span><span class="na">getInstanceId</span><span class="o">());</span>
+<span class="n">WXJSObject</span> <span class="n">instanceObj</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WXJSObject</span><span class="o">(</span><span class="n">WXJSObject</span><span class="o">.</span><span class="na">String</span><span class="o">,</span><span class="n">template</span><span class="o">);</span><span class="c1">//template是.js代码</span>
+<span class="n">WXJSObject</span> <span class="n">optionsObj</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WXJSObject</span><span class="o">(</span><span class="n">WXJSObject</span><span class="o">.</span><span class="na">JSON</span><span class="o">,</span><span class="n">options</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="s">"{}"</span><span class="o">:</span> <span class="n">WXJsonUtils</span><span class="o">.</span><span class="na">fromObjectToJSONString</span><span class="o">(</span><span class="n">options</span><span class="o">));</span>
+<span class="n">WXJSObject</span> <span class="n">dataObj</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WXJSObject</span><span class="o">(</span><span class="n">WXJSObject</span><span class="o">.</span><span class="na">JSON</span><span class="o">,</span><span class="n">data</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="s">"{}"</span> <span class="o">:</span> <span class="n">data</span><span class="o">);</span>
+<span class="n">WXJSObject</span><span class="o">[]</span> <span class="n">args</span> <span class="o">=</span> <span class="o">{</span><span class="n">instanceIdObj</span><span class="o">,</span> <span class="n">instanceObj</span><span class="o">,</span> <span class="n">optionsObj</span><span class="o">,</span><span class="n">dataObj</span><span class="o">};</span>
+<span class="n">invokeExecJS</span><span class="o">(</span><span class="n">instance</span><span class="o">.</span><span class="na">getInstanceId</span><span class="o">(),</span> <span class="kc">null</span><span class="o">,</span> <span class="n">METHOD_CREATE_INSTANCE</span><span class="o">,</span> <span class="n">args</span><span class="o">,</span><span class="kc">false</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<p>组建<code class="highlighter-rouge">args</code>后调用<code class="highlighter-rouge">js</code>的<code class="highlighter-rouge">create_instance</code>方法,通知<code class="highlighter-rouge">js</code>该<code class="highlighter-rouge">instanceid</code>对应的<code class="highlighter-rouge">instance</code>需要创建。</p>
+
+<p>到这里,我们看到<code class="highlighter-rouge">instaceId</code>对应:</p>
+
+<ul>
+  <li>WXSDKInstance</li>
+  <li>WXRenderStatement</li>
+  <li>WXDomModule</li>
+</ul>
+
+<h3 id="callnative">CallNative</h3>
+
+<p>调用<code class="highlighter-rouge">js</code>代码后<code class="highlighter-rouge">js</code>会回调<code class="highlighter-rouge">callNative</code>,具体怎么调用的之后再分析。我们现在直接跳到<code class="highlighter-rouge">callNative</code>方法分析。看到<code class="highlighter-rouge">METHOD_CREATE_INSTANCE</code>后的结果如上图，然后处理得到的<code class="highlighter-rouge">json</code>串:
+<img src="/img/2017-05-27-weex-render/14958817363775.jpg" alt="" />
+<code class="highlighter-rouge">js</code>希望回调进行<code class="highlighter-rouge">createBody</code>的操作。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">int</span> <span class="nf">callNative</span><span class="o">(</span><span class="n">String</span> <span class="n">instanceId</span><span class="o">,</span> <span class="n">String</span> <span class="n">tasks</span><span class="o">,</span> <span class="n">String</span> <span class="n">callback</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">size</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">JSONObject</span> <span class="n">task</span><span class="o">;</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">task</span> <span class="o">=</span> <span class="o">(</span><span class="n">JSONObject</span><span class="o">)</span> <span class="n">array</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">task</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">WXSDKManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">getSDKInstance</span><span class="o">(</span><span class="n">instanceId</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">Object</span> <span class="n">target</span> <span class="o">=</span> <span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">MODULE</span><span class="o">);</span>
+                    <span class="k">if</span><span class="o">(</span><span class="n">target</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+                        <span class="k">if</span><span class="o">(</span><span class="n">WXDomModule</span><span class="o">.</span><span class="na">WXDOM</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">target</span><span class="o">)){</span>
+                            <span class="n">WXDomModule</span> <span class="n">dom</span> <span class="o">=</span> <span class="n">getDomModule</span><span class="o">(</span><span class="n">instanceId</span><span class="o">);</span>
+                            <span class="n">dom</span><span class="o">.</span><span class="na">callDomMethod</span><span class="o">(</span><span class="n">task</span><span class="o">);</span>
+                        <span class="o">}</span><span class="k">else</span> <span class="o">{</span>
+                            <span class="n">WXModuleManager</span><span class="o">.</span><span class="na">callModuleMethod</span><span class="o">(</span><span class="n">instanceId</span><span class="o">,</span> <span class="o">(</span><span class="n">String</span><span class="o">)</span> <span class="n">target</span><span class="o">,(</span><span class="n">String</span><span class="o">)</span> <span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">METHOD</span><span class="o">),</span> <span class="o">(</span><span class="n">JSONArray</span><span class="o">)</span> <span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">ARGS</span><span class="o">));</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span><span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">COMPONENT</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+                     <span class="c1">//call component</span>
+                        <span class="n">WXDomModule</span> <span class="n">dom</span> <span class="o">=</span> <span class="n">getDomModule</span><span class="o">(</span><span class="n">instanceId</span><span class="o">);</span>
+                        <span class="n">dom</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">((</span><span class="n">String</span><span class="o">)</span> <span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">REF</span><span class="o">),(</span><span class="n">String</span><span class="o">)</span> <span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">METHOD</span><span class="o">),(</span><span class="n">JSONArray</span><span class="o">)</span> <span class="n">task</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">ARGS</span><span class="o">));</span>
+                    <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+                        <span class="k">throw</span> <span class="k">new</span> <span class="nf">IllegalArgumentException</span><span class="o">(</span><span class="s">"unknown callNative"</span><span class="o">);</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>   
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="n">getNextTick</span><span class="o">(</span><span class="n">instanceId</span><span class="o">,</span> <span class="n">callback</span><span class="o">);</span><span class="c1">//关键16ms</span>
+    <span class="k">return</span> <span class="n">IWXBridge</span><span class="o">.</span><span class="na">INSTANCE_RENDERING</span><span class="o">;</span>
+</code></pre>
+</div>
+
+<p>我们以<code class="highlighter-rouge">createInstance</code>的<code class="highlighter-rouge">callNative</code>参数为例:
+<img src="/img/2017-05-27-weex-render/14955424281733.jpg" alt="" />
+在<code class="highlighter-rouge">callDomMethod</code>中,会解析<code class="highlighter-rouge">method</code>与<code class="highlighter-rouge">args</code>,根据<code class="highlighter-rouge">method</code>调用相应的方法,例如这里为<code class="highlighter-rouge">createBody</code>,构造<code class="highlighter-rouge">Message</code>,发送给<code class="highlighter-rouge">WXDomhandler</code>。然后送入<code class="highlighter-rouge">WXDomManager</code>中处理</p>
+
+<p><img src="/img/2017-05-27-weex-render/14956387019442.jpg" alt="" /></p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">createBody</span><span class="o">(</span><span class="n">String</span> <span class="n">instanceId</span><span class="o">,</span> <span class="n">JSONObject</span> <span class="n">element</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">throwIfNotDomThread</span><span class="o">();</span>
+    <span class="n">WXDomStatement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">WXDomStatement</span><span class="o">(</span><span class="n">instanceId</span><span class="o">,</span> <span class="n">mWXRenderManager</span><span class="o">);</span>
+    <span class="n">mDomRegistries</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">instanceId</span><span class="o">,</span> <span class="n">statement</span><span class="o">);</span><span class="c1">//important,存储了instanceId与statement的关系,在statement中有 mRegistry,它存储dom</span>
+    <span class="n">statement</span><span class="o">.</span><span class="na">createBody</span><span class="o">(</span><span class="n">element</span><span class="o">);</span>
+ <span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="adddominternal">addDomInternal</h4>
+
+<p>比较复杂的函数，单独分析一下:这个函数在<code class="highlighter-rouge">createBody</code>与<code class="highlighter-rouge">addDom</code>时都会用到,以<code class="highlighter-rouge">root</code>作为判断标准。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">addDomInternal</span><span class="o">(</span><span class="n">JSONObject</span> <span class="n">dom</span><span class="o">,</span><span class="kt">boolean</span> <span class="n">isRoot</span><span class="o">,</span> <span class="n">String</span> <span class="n">parentRef</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">index</span><span class="o">){</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">mDestroy</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">WXSDKInstance</span> <span class="n">instance</span> <span class="o">=</span> <span class="n">WXSDKManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">getSDKInstance</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">instance</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="c1">//判断是否为root</span>
+    <span class="n">WXErrorCode</span> <span class="n">errCode</span> <span class="o">=</span> <span class="n">isRoot</span> <span class="o">?</span> <span class="n">WXErrorCode</span><span class="o">.</span><span class="na">WX_ERR_DOM_CREATEBODY</span> <span class="o">:</span> <span class="n">WXErrorCode</span><span class="o">.</span><span class="na">WX_ERR_DOM_ADDELEMENT</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">dom</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">instance</span><span class="o">.</span><span class="na">commitUTStab</span><span class="o">(</span><span class="n">IWXUserTrackAdapter</span><span class="o">.</span><span class="na">DOM_MODULE</span><span class="o">,</span> <span class="n">errCode</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="c1">//only non-root has parent.</span>
+    <span class="n">WXDomObject</span> <span class="n">parent</span><span class="o">;</span>
+    <span class="n">WXDomObject</span> <span class="n">domObject</span> <span class="o">=</span> <span class="n">WXDomObject</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="n">dom</span><span class="o">,</span><span class="n">instance</span><span class="o">);</span>
+</code></pre>
+</div>
+<h5 id="wxdomobjectparse">WXDomObject.parse</h5>
+
+<p><code class="highlighter-rouge">parse</code>主要处理<code class="highlighter-rouge">json</code>字符串。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">String</span> <span class="n">type</span> <span class="o">=</span> <span class="o">(</span><span class="n">String</span><span class="o">)</span> <span class="n">json</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">TYPE</span><span class="o">);</span><span class="c1">//得到type,此处为`div`</span>
+<span class="n">WXDomObject</span> <span class="n">domObject</span> <span class="o">=</span> <span class="n">WXDomObjectFactory</span><span class="o">.</span><span class="na">newInstance</span><span class="o">(</span><span class="n">type</span><span class="o">);</span>
+<span class="n">domObject</span><span class="o">.</span><span class="na">parseFromJson</span><span class="o">(</span><span class="n">json</span><span class="o">);</span>
+<span class="n">Object</span> <span class="n">children</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">CHILDREN</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">children</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">children</span> <span class="k">instanceof</span> <span class="n">JSONArray</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">JSONArray</span> <span class="n">childrenArray</span> <span class="o">=</span> <span class="o">(</span><span class="n">JSONArray</span><span class="o">)</span> <span class="n">children</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="n">childrenArray</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">count</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">domObject</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">parse</span><span class="o">(</span><span class="n">childrenArray</span><span class="o">.</span><span class="na">getJSONObject</span><span class="o">(</span><span class="n">i</span><span class="o">),</span><span class="n">wxsdkInstance</span><span class="o">),-</span><span class="mi">1</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>在<code class="highlighter-rouge">WXDomObjectFactory.newInstance</code>中:利用反射创建<code class="highlighter-rouge">WXDomObject</code>，对应的对象是根据之前注册的<code class="highlighter-rouge">registerDomObject</code>来创建的.</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="o">(</span><span class="n">WXDomObject</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">isAssignableFrom</span><span class="o">(</span><span class="n">clazz</span><span class="o">))</span> <span class="o">{</span>
+    <span class="n">WXDomObject</span> <span class="n">domObject</span> <span class="o">=</span> <span class="n">clazz</span><span class="o">.</span><span class="na">getConstructor</span><span class="o">().</span><span class="na">newInstance</span><span class="o">();</span>
+    <span class="k">return</span> <span class="n">domObject</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>然后<code class="highlighter-rouge">parseJson</code>,主要处理:</p>
+
+<ul>
+  <li>type</li>
+  <li>ref</li>
+  <li>style</li>
+  <li>attr</li>
+  <li>event</li>
+</ul>
+
+<p>最后递归处理子节点。</p>
+
+<h4 id="继续adddom">继续addDom</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="o">(</span><span class="n">isRoot</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">WXDomObject</span><span class="o">.</span><span class="na">prepareRoot</span><span class="o">(</span><span class="n">domObject</span><span class="o">,</span>
+<span class="n">WXViewUtils</span><span class="o">.</span><span class="na">getWebPxByWidth</span><span class="o">(</span><span class="n">WXViewUtils</span><span class="o">.</span><span class="na">getWeexHeight</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">),</span><span class="n">WXSDKManager</span><span class="o">.</span><span class="na">getInstanceViewPortWidth</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">)),</span>
+<span class="n">WXViewUtils</span><span class="o">.</span><span class="na">getWebPxByWidth</span><span class="o">(</span><span class="n">WXViewUtils</span><span class="o">.</span><span class="na">getWeexWidth</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">),</span><span class="n">WXSDKManager</span><span class="o">.</span><span class="na">getInstanceViewPortWidth</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">)));</span>
+<span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">((</span><span class="n">parent</span> <span class="o">=</span> <span class="n">mRegistry</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">parentRef</span><span class="o">))</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">instance</span><span class="o">.</span><span class="na">commitUTStab</span><span class="o">(</span><span class="n">IWXUserTrackAdapter</span><span class="o">.</span><span class="na">DOM_MODULE</span><span class="o">,</span> <span class="n">errCode</span><span class="o">);</span>
+      <span class="k">return</span><span class="o">;</span>
+<span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+      <span class="c1">//non-root and parent exist</span>
+      <span class="n">parent</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">domObject</span><span class="o">,</span> <span class="n">index</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>如果是<code class="highlighter-rouge">root</code>,那就要进入<code class="highlighter-rouge">prepareRoot</code>:主要增加一些属性，比如背景色，宽高度等。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">prepareRoot</span><span class="o">(</span><span class="n">WXDomObject</span> <span class="n">domObj</span><span class="o">,</span><span class="kt">float</span> <span class="n">defaultHeight</span><span class="o">,</span><span class="kt">float</span> <span class="n">defaultWidth</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">domObj</span><span class="o">.</span><span class="na">mRef</span> <span class="o">=</span> <span class="n">WXDomObject</span><span class="o">.</span><span class="na">ROOT</span><span class="o">;</span>
+    <span class="n">WXStyle</span> <span class="n">domStyles</span> <span class="o">=</span> <span class="n">domObj</span><span class="o">.</span><span class="na">getStyles</span><span class="o">();</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">style</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;&gt;(</span><span class="mi">5</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">domStyles</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">Name</span><span class="o">.</span><span class="na">FLEX_DIRECTION</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">style</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">Name</span><span class="o">.</span><span class="na">FLEX_DIRECTION</span><span class="o">,</span> <span class="s">"column"</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">domStyles</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">Name</span><span class="o">.</span><span class="na">BACKGROUND_COLOR</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">style</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">Name</span><span class="o">.</span><span class="na">BACKGROUND_COLOR</span><span class="o">,</span> <span class="s">"#ffffff"</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">style</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">Name</span><span class="o">.</span><span class="na">DEFAULT_WIDTH</span><span class="o">,</span> <span class="n">defaultWidth</span><span class="o">);</span>
+    <span class="n">style</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">Constants</span><span class="o">.</span><span class="na">Name</span><span class="o">.</span><span class="na">DEFAULT_HEIGHT</span><span class="o">,</span> <span class="n">defaultHeight</span><span class="o">);</span>
+    <span class="n">domObj</span><span class="o">.</span><span class="na">updateStyle</span><span class="o">(</span><span class="n">style</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+<p>在<code class="highlighter-rouge">updateStyle</code>中更新style,同时将该节点的<code class="highlighter-rouge">LayoutState</code>设为<code class="highlighter-rouge">dirty</code></p>
+
+<p>如果不是<code class="highlighter-rouge">root</code>且有<code class="highlighter-rouge">parent</code>,进入<code class="highlighter-rouge">parent.add</code>加入到<code class="highlighter-rouge">parent</code>的<code class="highlighter-rouge">children</code>数组中</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>    <span class="n">domObject</span><span class="o">.</span><span class="na">traverseTree</span><span class="o">(</span><span class="n">mAddDOMConsumer</span><span class="o">,</span><span class="n">ApplyStyleConsumer</span><span class="o">.</span><span class="na">getInstance</span><span class="o">());</span>
+
+    <span class="c1">//Create component in dom thread</span>
+    <span class="n">WXComponent</span> <span class="n">component</span> <span class="o">=</span> <span class="n">isRoot</span> <span class="o">?</span><span class="n">mWXRenderManager</span><span class="o">.</span><span class="na">createBodyOnDomThread</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">,</span> <span class="n">domObject</span><span class="o">)</span> <span class="o">:</span><span class="n">mWXRenderManager</span><span class="o">.</span><span class="na">createComponentOnDomThread</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">,</span> <span class="n">domObject</span><span class="o">,</span> <span class="n">parentRef</span><span class="o">,</span> <span class="n">index</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h5 id="traversetree">traverseTree</h5>
+
+<p><code class="highlighter-rouge">traverseTree</code>会被调用很多次,会遍历以该节点为根的子树:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>  <span class="cm">/** package **/</span> <span class="kt">void</span> <span class="nf">traverseTree</span><span class="o">(</span><span class="n">Consumer</span><span class="o">...</span><span class="na">consumers</span><span class="o">){</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">consumers</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span><span class="o">;</span>
+<span class="o">}</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">Consumer</span> <span class="nl">consumer:</span><span class="n">consumers</span><span class="o">){</span>
+    <span class="n">consumer</span><span class="o">.</span><span class="na">accept</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+<span class="o">}</span>
+<span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="n">childCount</span><span class="o">();</span>
+    <span class="n">WXDomObject</span> <span class="n">child</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">count</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">child</span> <span class="o">=</span> <span class="n">getChild</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+        <span class="n">child</span><span class="o">.</span><span class="na">traverseTree</span><span class="o">(</span><span class="n">consumers</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>有两个<code class="highlighter-rouge">consumer</code>:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">AddDOMConsumer</span> <span class="kd">implements</span> <span class="n">WXDomObject</span><span class="o">.</span><span class="na">Consumer</span> <span class="o">{</span>
+    <span class="kd">final</span> <span class="n">ConcurrentHashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">WXDomObject</span><span class="o">&gt;</span> <span class="n">mRegistry</span><span class="o">;</span>
+    <span class="n">AddDOMConsumer</span><span class="o">(</span><span class="n">ConcurrentHashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">WXDomObject</span><span class="o">&gt;</span> <span class="n">r</span><span class="o">){</span>
+        <span class="n">mRegistry</span> <span class="o">=</span> <span class="n">r</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">WXDomObject</span> <span class="n">dom</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">//register dom</span>
+        <span class="n">dom</span><span class="o">.</span><span class="na">young</span><span class="o">();</span>
+        <span class="n">mRegistry</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">dom</span><span class="o">.</span><span class="na">getRef</span><span class="o">(),</span> <span class="n">dom</span><span class="o">);</span>
+        <span class="c1">//find fixed node</span>
+        <span class="n">WXDomObject</span> <span class="n">rootDom</span> <span class="o">=</span> <span class="n">mRegistry</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">WXDomObject</span><span class="o">.</span><span class="na">ROOT</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">rootDom</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">dom</span><span class="o">.</span><span class="na">isFixed</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">rootDom</span><span class="o">.</span><span class="na">add2FixedDomList</span><span class="o">(</span><span class="n">dom</span><span class="o">.</span><span class="na">getRef</span><span class="o">());</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+<p>将该<code class="highlighter-rouge">domObject</code>设为<code class="highlighter-rouge">young</code>,同时看它的<code class="highlighter-rouge">root</code>节点是否固定。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">static</span> <span class="kd">class</span> <span class="nc">ApplyStyleConsumer</span> <span class="kd">implements</span> <span class="n">WXDomObject</span><span class="o">.</span><span class="na">Consumer</span> <span class="o">{</span>
+    <span class="kd">static</span> <span class="n">ApplyStyleConsumer</span> <span class="n">sInstance</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="n">ApplyStyleConsumer</span> <span class="nf">getInstance</span><span class="o">(){</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">sInstance</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
+            <span class="n">sInstance</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ApplyStyleConsumer</span><span class="o">();</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">sInstance</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="kd">private</span> <span class="nf">ApplyStyleConsumer</span><span class="o">(){};</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">WXDomObject</span> <span class="n">dom</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">WXStyle</span> <span class="n">style</span> <span class="o">=</span> <span class="n">dom</span><span class="o">.</span><span class="na">getStyles</span><span class="o">();</span>
+        <span class="cm">/** merge default styles **/</span>
+        <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">defaults</span> <span class="o">=</span> <span class="n">dom</span><span class="o">.</span><span class="na">getDefaultStyle</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">defaults</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">for</span> <span class="o">(</span><span class="n">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">entry</span> <span class="o">:</span> <span class="n">defaults</span><span class="o">.</span><span class="na">entrySet</span><span class="o">())</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(!</span><span class="n">style</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getKey</span><span class="o">()))</span> <span class="o">{</span>
+                <span class="n">style</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">());</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">dom</span><span class="o">.</span><span class="na">getStyles</span><span class="o">().</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">dom</span><span class="o">.</span><span class="na">applyStyleToNode</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>然后开始<code class="highlighter-rouge">applyStyle</code>:
+<img src="/img/2017-05-27-weex-render/14956401025727.jpg" alt="" />
+反正就是为<code class="highlighter-rouge">cssStyle</code>的一系列属性赋值</p>
+
+<h5 id="createbodyondomthread">createBodyOnDomThread</h5>
+
+<p>然后正式<code class="highlighter-rouge">createBody</code>:进入<code class="highlighter-rouge">renderManager</code></p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="n">WXComponent</span> <span class="nf">createBodyOnDomThread</span><span class="o">(</span><span class="n">String</span> <span class="n">instanceId</span><span class="o">,</span> <span class="n">WXDomObject</span> <span class="n">domObject</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">WXRenderStatement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">mRegistries</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">instanceId</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">statement</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">statement</span><span class="o">.</span><span class="na">createBodyOnDomThread</span><span class="o">(</span><span class="n">domObject</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>主要创建<code class="highlighter-rouge">ComponentTree</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="n">WXComponent</span> <span class="nf">generateComponentTree</span><span class="o">(</span><span class="n">WXDomObject</span> <span class="n">dom</span><span class="o">,</span> <span class="n">WXVContainer</span> <span class="n">parent</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">dom</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">WXComponent</span> <span class="n">component</span> <span class="o">=</span> <span class="n">WXComponentFactory</span><span class="o">.</span><span class="na">newInstance</span><span class="o">(</span><span class="n">mWXSDKInstance</span><span class="o">,</span> <span class="n">dom</span><span class="o">,</span><span class="n">parent</span><span class="o">);</span>
+    <span class="n">mRegistry</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">dom</span><span class="o">.</span><span class="na">getRef</span><span class="o">(),</span> <span class="n">component</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">component</span> <span class="k">instanceof</span> <span class="n">WXVContainer</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">WXVContainer</span> <span class="n">parentC</span> <span class="o">=</span> <span class="o">(</span><span class="n">WXVContainer</span><span class="o">)</span> <span class="n">component</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="n">dom</span><span class="o">.</span><span class="na">childCount</span><span class="o">();</span>
+        <span class="n">WXDomObject</span> <span class="n">child</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">count</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">child</span> <span class="o">=</span> <span class="n">dom</span><span class="o">.</span><span class="na">getChild</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">child</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">parentC</span><span class="o">.</span><span class="na">addChild</span><span class="o">(</span><span class="n">generateComponentTree</span><span class="o">(</span><span class="n">child</span><span class="o">,</span> <span class="n">parentC</span><span class="o">));</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">component</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>在<code class="highlighter-rouge">WXComponentFactory</code>中根据<code class="highlighter-rouge">dom</code>创建<code class="highlighter-rouge">WXComponent</code>,</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">IFComponentHolder</span> <span class="n">holder</span> <span class="o">=</span> <span class="n">WXComponentRegistry</span><span class="o">.</span><span class="na">getComponent</span><span class="o">(</span><span class="n">node</span><span class="o">.</span><span class="na">getType</span><span class="o">());</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">holder</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">holder</span> <span class="o">=</span> <span class="n">WXComponentRegistry</span><span class="o">.</span><span class="na">getComponent</span><span class="o">(</span><span class="n">WXBasicComponentType</span><span class="o">.</span><span class="na">CONTAINER</span><span class="o">);</span><span class="c1">//之前注册Component中的sTypeComponentMap</span>
+      <span class="k">if</span><span class="o">(</span><span class="n">holder</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">WXRuntimeException</span><span class="o">(</span><span class="s">"Container component not found."</span><span class="o">);</span>
+      <span class="o">}</span>
+<span class="o">}</span>
+<span class="k">return</span> <span class="n">holder</span><span class="o">.</span><span class="na">createInstance</span><span class="o">(</span><span class="n">instance</span><span class="o">,</span> <span class="n">node</span><span class="o">,</span> <span class="n">parent</span><span class="o">);</span>
+    
+</code></pre>
+</div>
+
+<p>这里的<code class="highlighter-rouge">Holder</code>是之前注册时生成的,<code class="highlighter-rouge">SimpleComponentHolder</code>中:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kd">synchronized</span> <span class="n">WXComponent</span> <span class="nf">createInstance</span><span class="o">(</span><span class="n">WXSDKInstance</span> <span class="n">instance</span><span class="o">,</span> <span class="n">WXDomObject</span> <span class="n">node</span><span class="o">,</span> <span class="n">WXVContainer</span> <span class="n">parent</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IllegalAccessException</span><span class="o">,</span> <span class="n">InvocationTargetException</span><span class="o">,</span> <span class="n">InstantiationException</span> <span class="o">{</span>
+    <span class="n">WXComponent</span> <span class="n">component</span> <span class="o">=</span> <span class="n">mCreator</span><span class="o">.</span><span class="na">createInstance</span><span class="o">(</span><span class="n">instance</span><span class="o">,</span><span class="n">node</span><span class="o">,</span><span class="n">parent</span><span class="o">);</span>
+    <span class="n">component</span><span class="o">.</span><span class="na">bindHolder</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">component</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>在生成<code class="highlighter-rouge">ComponentTree</code>时会对子节点递归生成。</p>
+
+<h4 id="继续addinternal">继续addInternal</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">AddDomInfo</span> <span class="n">addDomInfo</span> <span class="o">=</span> <span class="k">new</span> <span class="n">AddDomInfo</span><span class="o">();</span>
+<span class="n">addDomInfo</span><span class="o">.</span><span class="na">component</span> <span class="o">=</span> <span class="n">component</span><span class="o">;</span>
+<span class="n">mAddDom</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">domObject</span><span class="o">.</span><span class="na">getRef</span><span class="o">(),</span> <span class="n">addDomInfo</span><span class="o">);</span>
+<span class="n">IWXRenderTask</span> <span class="n">task</span> <span class="o">=</span> <span class="n">isRoot</span> <span class="o">?</span> <span class="k">new</span> <span class="n">CreateBodyTask</span><span class="o">(</span><span class="n">component</span><span class="o">)</span> <span class="o">:</span> <span class="k">new</span> <span class="n">AddDOMTask</span><span class="o">(</span><span class="n">component</span><span class="o">,</span> <span class="n">parentRef</span><span class="o">,</span> <span class="n">index</span><span class="o">);</span>
+<span class="n">mNormalTasks</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">task</span><span class="o">);</span>
+<span class="n">addAnimationForDomTree</span><span class="o">(</span><span class="n">domObject</span><span class="o">);</span>
+<span class="n">mDirty</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</code></pre>
+</div>
+
+<p>将这个将要被渲染的<code class="highlighter-rouge">Component</code>封装到<code class="highlighter-rouge">CreateBodyTask</code>中,即<code class="highlighter-rouge">renderTask</code>。到这里还没在做准备工作,并没有开始真正渲染真是心累。</p>
+
+<h3 id="adddom">addDom</h3>
+
+<p>对于一个页面,真正要显示元素需要通过<code class="highlighter-rouge">AddDom</code>来添加节点。例如这里的<code class="highlighter-rouge">text</code>节点。可以看到,它和<code class="highlighter-rouge">root</code>的<code class="highlighter-rouge">instanceId</code>为同一个,<code class="highlighter-rouge">parent</code>是<code class="highlighter-rouge">root</code></p>
+
+<p><img src="/img/2017-05-27-weex-render/14956410291875.jpg" alt="" /></p>
+
+<h4 id="createbodytask">createBodyTask</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">createBody</span><span class="o">(</span><span class="n">WXComponent</span> <span class="n">component</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">component</span><span class="o">.</span><span class="na">createView</span><span class="o">();</span>
+    <span class="n">component</span><span class="o">.</span><span class="na">applyLayoutAndEvent</span><span class="o">(</span><span class="n">component</span><span class="o">);</span>
+    <span class="n">component</span><span class="o">.</span><span class="na">bindData</span><span class="o">(</span><span class="n">component</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">component</span> <span class="k">instanceof</span> <span class="n">WXScroller</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">WXScroller</span> <span class="n">scroller</span> <span class="o">=</span> <span class="o">(</span><span class="n">WXScroller</span><span class="o">)</span> <span class="n">component</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">scroller</span><span class="o">.</span><span class="na">getInnerView</span><span class="o">()</span> <span class="k">instanceof</span> <span class="n">ScrollView</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">mWXSDKInstance</span><span class="o">.</span><span class="na">setRootScrollView</span><span class="o">((</span><span class="n">ScrollView</span><span class="o">)</span> <span class="n">scroller</span><span class="o">.</span><span class="na">getInnerView</span><span class="o">());</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="n">mWXSDKInstance</span><span class="o">.</span><span class="na">onRootCreated</span><span class="o">(</span><span class="n">component</span><span class="o">);</span><span class="c1">//mRenderContainer.addView(root.getHostView());</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">mWXSDKInstance</span><span class="o">.</span><span class="na">getRenderStrategy</span><span class="o">()</span> <span class="o">!=</span> <span class="n">WXRenderStrategy</span><span class="o">.</span><span class="na">APPEND_ONCE</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">mWXSDKInstance</span><span class="o">.</span><span class="na">onCreateFinish</span><span class="o">();</span><span class="c1">//mRenderListener.onViewCreated(WXSDKInstance.this, wxView);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h5 id="createview">createView</h5>
+
+<p>创建<code class="highlighter-rouge">host</code>,例如<code class="highlighter-rouge">WXTextView</code>等</p>
+
+<h5 id="applylayoutandevent">applyLayoutAndEvent</h5>
+
+<ul>
+  <li>setLayout(component.getDomObject());</li>
+  <li>setPadding(component.getDomObject().getPadding(), component.getDomObject().getBorder());</li>
+  <li>addEvents();</li>
+</ul>
+
+<h5 id="binddata">bindData</h5>
+
+<ul>
+  <li>updateProperties(component.getDomObject().getStyles());</li>
+  <li>updateProperties(component.getDomObject().getAttrs());</li>
+  <li>updateExtra(component.getDomObject().getExtra());</li>
+</ul>
+
+<h3 id="刷新">刷新</h3>
+
+<p>在<code class="highlighter-rouge">weex</code>中,使用16ms的刷新机制去进行UI渲染</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="o">(!</span><span class="n">mHasBatch</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">mHasBatch</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>    <span class="n">mWXDomManager</span><span class="o">.</span><span class="na">sendEmptyMessageDelayed</span><span class="o">(</span><span class="n">WXDomHandler</span><span class="o">.</span><span class="na">MsgType</span><span class="o">.</span><span class="na">WX_DOM_BATCH</span><span class="o">,</span> <span class="n">DELAY_TIME</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">DELAY_TIME</code>为16ms</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">batch</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">throwIfNotDomThread</span><span class="o">();</span>
+    <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Entry</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">WXDomStatement</span><span class="o">&gt;&gt;</span> <span class="n">iterator</span> <span class="o">=</span> <span class="n">mDomRegistries</span><span class="o">.</span><span class="na">entrySet</span><span class="o">().</span><span class="na">iterator</span><span class="o">();</span>
+    <span class="k">while</span> <span class="o">(</span><span class="n">iterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">iterator</span><span class="o">.</span><span class="na">next</span><span class="o">().</span><span class="na">getValue</span><span class="o">().</span><span class="na">batch</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h3 id="layout">layout</h3>
+
+<p>在layout中真正渲染,使用<code class="highlighter-rouge">WXDomStatement</code>,与<code class="highlighter-rouge">instanceId</code>绑定。又是一个难啃的函数,继续分段研究:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="kt">void</span> <span class="nf">layout</span><span class="o">(</span><span class="n">WXDomObject</span> <span class="n">rootDom</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">rootDom</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="n">rebuildingFixedDomTree</span><span class="o">(</span><span class="n">rootDom</span><span class="o">);</span>
+    <span class="n">rootDom</span><span class="o">.</span><span class="na">traverseTree</span><span class="o">(</span> <span class="k">new</span> <span class="n">WXDomObject</span><span class="o">.</span><span class="na">Consumer</span><span class="o">()</span> <span class="o">{</span>
+        <span class="nd">@Override</span>
+        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">WXDomObject</span> <span class="n">dom</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(!</span><span class="n">dom</span><span class="o">.</span><span class="na">hasUpdate</span><span class="o">()</span> <span class="o">||</span> <span class="n">mDestroy</span><span class="o">)</span> <span class="o">{</span> <span class="c1">//在hasUpdate中看是否dirty或hasNewLayout,因为前面设置为dirty,所以结果为true</span>
+                <span class="k">return</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">dom</span><span class="o">.</span><span class="na">layoutBefore</span><span class="o">();</span><span class="c1">//每个domObject有自己的特性，比如text会设置一下内容</span>
+        <span class="o">}</span>
+    <span class="o">});</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">rootDom</span><span class="o">.</span><span class="na">calculateLayout</span><span class="o">(</span><span class="n">mLayoutContext</span><span class="o">);</span>
+</code></pre>
+</div>
+<p>使用<code class="highlighter-rouge">CSS Layout</code>进行<code class="highlighter-rouge">layoutNode</code>,对一系列属性例如<code class="highlighter-rouge">width,height</code>进行赋值</p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">calculateLayout</span><span class="o">(</span><span class="n">CSSLayoutContext</span> <span class="n">layoutContext</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">csslayout</span><span class="o">.</span><span class="na">resetResult</span><span class="o">();</span>
+    <span class="n">LayoutEngine</span><span class="o">.</span><span class="na">layoutNode</span><span class="o">(</span><span class="n">layoutContext</span><span class="o">,</span> <span class="k">this</span><span class="o">,</span> <span class="n">CSSConstants</span><span class="o">.</span><span class="na">UNDEFINED</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>结束后,进行<code class="highlighter-rouge">layoutAfter</code>收尾工作</p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">rootDom</span><span class="o">.</span><span class="na">traverseTree</span><span class="o">(</span> <span class="k">new</span> <span class="n">WXDomObject</span><span class="o">.</span><span class="na">Consumer</span><span class="o">()</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">accept</span><span class="o">(</span><span class="n">WXDomObject</span> <span class="n">dom</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(!</span><span class="n">dom</span><span class="o">.</span><span class="na">hasUpdate</span><span class="o">()</span> <span class="o">||</span> <span class="n">mDestroy</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="n">dom</span><span class="o">.</span><span class="na">layoutAfter</span><span class="o">();</span>
+      <span class="o">}</span>
+<span class="o">});</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">rootDom.traverseTree(new ApplyUpdateConsumer());</code></p>
+
+<p>然后真正更新属性,</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="o">(</span><span class="n">dom</span><span class="o">.</span><span class="na">hasUpdate</span><span class="o">())</span> <span class="o">{</span>
+    <span class="n">dom</span><span class="o">.</span><span class="na">markUpdateSeen</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">dom</span><span class="o">.</span><span class="na">isYoung</span><span class="o">())</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">WXDomObject</span> <span class="n">copy</span> <span class="o">=</span> <span class="n">dom</span><span class="o">.</span><span class="na">clone</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">copy</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="n">mNormalTasks</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="k">new</span> <span class="n">IWXRenderTask</span><span class="o">()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">execute</span><span class="o">()</span> <span class="o">{</span>
+                <span class="n">mWXRenderManager</span><span class="o">.</span><span class="na">setLayout</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">,</span> <span class="n">copy</span><span class="o">.</span><span class="na">getRef</span><span class="o">(),</span> <span class="n">copy</span><span class="o">);</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">copy</span><span class="o">.</span><span class="na">getExtra</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">mWXRenderManager</span><span class="o">.</span><span class="na">setExtra</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">,</span> <span class="n">copy</span><span class="o">.</span><span class="na">getRef</span><span class="o">(),</span> <span class="n">copy</span><span class="o">.</span><span class="na">getExtra</span><span class="o">());</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">weex</code>考虑的还是比较多的,首先看该节点是否需要更新,因为前面在更新属性的时候已经标记节点是脏的了，所以需要更新,然后<code class="highlighter-rouge">markUpdateSeen</code>,说明已经确认这个更新了。然后只有在<code class="highlighter-rouge">dom</code>不是<code class="highlighter-rouge">young</code>的时候才会去真正<code class="highlighter-rouge">setLayout</code>，那接下来就会发现什么时候不再年轻了:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>    <span class="n">updateDomObj</span><span class="o">();</span>
+    <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="n">mNormalTasks</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">count</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">mDestroy</span><span class="o">;</span> <span class="o">++</span><span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">mWXRenderManager</span><span class="o">.</span><span class="na">runOnThread</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">,</span> <span class="n">mNormalTasks</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<p>对于普通的节点,<code class="highlighter-rouge">updateDomObj</code>即更新为<code class="highlighter-rouge">old</code>…</p>
+
+<p>至于为什么需要<code class="highlighter-rouge">ApplyUpdate</code>,一开始我也百思不得其解:</p>
+
+<blockquote>
+  <p>为什么需要这个步骤？正常情况下在renderTask中对Component View setLayout就可以了，但是这要基于一个前提，那就是所有的 Dom 节点都已经被注册到 mRegistry 中了，只有这样最后 CSSLayout 计算出来的才是正确的。 由于 batch 驱动的不确定性（有可能分好几帧），非常有可能在本次 Layout 过程中 Dom 数量是不完整的，导致 CSSLayout 计算的结果肯定是不完整的。因此需要每次batch 重新计算完整 dom 树的时候把之前节点 Layout 再更新一遍，并且此时的节点必为 old（上一帧被标为old）</p>
+</blockquote>
+
+<p>其实我们看到,<code class="highlighter-rouge">ApplyUpdate</code>做的和后面的<code class="highlighter-rouge">createBody</code>等一样,都是设置<code class="highlighter-rouge">layout</code>和属性等等,但是因为每次<code class="highlighter-rouge">batch</code>时整个<code class="highlighter-rouge">dom</code>树不一定完整,所以需要在第二次<code class="highlighter-rouge">batch</code>时更新,这也是为什么只有在<code class="highlighter-rouge">old</code>的时候才会走<code class="highlighter-rouge">setLayout</code></p>
+
+<h4 id="applyupdate">ApplyUpdate</h4>
+
+<p>还记得在前面<code class="highlighter-rouge">ApplyUpdateConsumer</code>中我们加入队列的<code class="highlighter-rouge">execute</code>么:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">execute</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">mWXRenderManager</span><span class="o">.</span><span class="na">setLayout</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">,</span> <span class="n">copy</span><span class="o">.</span><span class="na">getRef</span><span class="o">(),</span> <span class="n">copy</span><span class="o">);</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">copy</span><span class="o">.</span><span class="na">getExtra</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">mWXRenderManager</span><span class="o">.</span><span class="na">setExtra</span><span class="o">(</span><span class="n">mInstanceId</span><span class="o">,</span> <span class="n">copy</span><span class="o">.</span><span class="na">getRef</span><span class="o">(),</span> <span class="n">copy</span><span class="o">.</span><span class="na">getExtra</span><span class="o">());</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">component.setLayout(domObject);</code></p>
+
+<p>可以看到,<code class="highlighter-rouge">component</code>其实与<code class="highlighter-rouge">domObject</code>是绑定的:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="c1">//fixed style</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">mDomObj</span><span class="o">.</span><span class="na">isFixed</span><span class="o">()){</span>    
+    <span class="n">setFixedHostLayoutParams</span><span class="o">(</span><span class="n">mHost</span><span class="o">,</span><span class="n">realWidth</span><span class="o">,</span><span class="n">realHeight</span><span class="o">,</span><span class="n">realLeft</span><span class="o">,</span><span class="n">realRight</span><span class="o">,</span><span class="n">realTop</span><span class="o">,</span><span class="n">realBottom</span><span class="o">);</span>
+<span class="o">}</span><span class="k">else</span> <span class="o">{</span>
+    <span class="n">setHostLayoutParams</span><span class="o">(</span><span class="n">mHost</span><span class="o">,</span> <span class="n">realWidth</span><span class="o">,</span> <span class="n">realHeight</span><span class="o">,</span> <span class="n">realLeft</span><span class="o">,</span> <span class="n">realRight</span><span class="o">,</span> <span class="n">realTop</span><span class="o">,</span> <span class="n">realBottom</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>在这段代码中,真正设置了元素的宽高,<code class="highlighter-rouge">padding,margin</code>间距。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>在Weex中,主要有两种操作:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">createBody</code>: 创建一个页面的根节点</li>
+  <li><code class="highlighter-rouge">addDom</code>: 增加根节点下的所有节点</li>
+</ul>
+
+<p>对<code class="highlighter-rouge">dom</code>节点的属性进行解析后得到<code class="highlighter-rouge">dom</code>树的结构,<code class="highlighter-rouge">updateStyle</code>更新到最新的<code class="highlighter-rouge">style</code>,标记节点为<code class="highlighter-rouge">dirty</code>。利用<code class="highlighter-rouge">AddDOMConsumer</code>标记节点为<code class="highlighter-rouge">young</code>,使用<code class="highlighter-rouge">ApplyStyleConsumer</code>对属性进行赋值。最后通过<code class="highlighter-rouge">Task</code>真正渲染<code class="highlighter-rouge">UI</code>,创建<code class="highlighter-rouge">native view</code>并加入层次中后,进行<code class="highlighter-rouge">layout</code>,更新属性增加点击事件等。</p>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/05/27/weex-render"
+                    data-title="Dom渲染过程"
+                    data-url="http://localhost:5001/2017/05/27/weex-render/"
+                    data-images="http://localhost:5001/img/party.jpg"
+                    data-content="本节,我们介绍Dom的渲染过程,在主界面中进行render,先引入.we文件:
+
+&lt;template&gt;
+  &lt;div&gt;
+    &... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/05/23/weex-start/" data-toggle="tooltip" data-placement="top" title="Weex启动过程">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/05/31/databinding-1/" data-toggle="tooltip" data-placement="top" title="dataBinding--应用层运行">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/05/27/weex-render"
+                        data-title="Dom渲染过程"
+                        data-url="http://localhost:5001/2017/05/27/weex-render/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

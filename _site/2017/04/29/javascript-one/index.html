@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>JavaScript学习一 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/04/29/javascript-one/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#JavaScript" title="JavaScript">JavaScript</a>
+                        
+                    </div>
+                    <h1>JavaScript学习一</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on April 29, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>移动端狗发现大前端才是未来的方向,所以学习一下Js。其实个人很讨厌Js,很久以前也学过发现毫无兴趣,感觉非常没有逻辑(不要打我),但都开始改RN了还是先巩固一下基础吧&gt; &lt;</p>
+
+<h3 id="对象">对象</h3>
+
+<p>在Js中,对象是属性的集合。</p>
+
+<div class="language-javascript highlighter-rouge"><pre class="highlight"><code><span class="c1">//||可以填充默认值</span>
+<span class="kd">var</span> <span class="nx">middle</span> <span class="o">=</span> <span class="nx">a</span><span class="p">[</span><span class="s2">"xx"</span><span class="p">]</span><span class="o">||</span><span class="s2">"unknown"</span>
+</code></pre>
+</div>
+
+<h4 id="原型">原型</h4>
+
+<p><a href="http://www.cnblogs.com/wangfupeng1988/p/3977987.html">这个系列讲的太好了,哭泣</a></p>
+
+<p><strong>对象都是通过函数创建的,函数也是对象</strong></p>
+
+<p>每个对象都有一个隐藏的属性——<code class="highlighter-rouge">“__proto__”</code>，这个属性引用了创建这个对象的函数的<code class="highlighter-rouge">prototype</code>。即：<code class="highlighter-rouge">fn.__proto__ === Fn.prototype</code></p>
+
+<div class="language-javascript highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">Fn</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="s1">'王福朋'</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">year</span> <span class="o">=</span> <span class="mi">1988</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">var</span> <span class="nx">fn1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Fn</span><span class="p">();</span>
+</code></pre>
+</div>
+
+<blockquote>
+  <p>Object和Array都是函数</p>
+</blockquote>
+
+<p><img src="/img/2017-04-29-javascript-one/14934546630375.png" alt="" /></p>
+
+<p>每个函数都有一个属性叫做prototype</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">Fn</span><span class="p">()</span> <span class="p">{</span> 
+    <span class="nx">Fn</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="s1">'王福朋'</span><span class="p">;</span>
+    <span class="nx">Fn</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getYear</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="mi">1988</span><span class="p">;</span>
+    <span class="p">};</span>
+    <span class="kd">var</span> <span class="nx">fn</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Fn</span><span class="p">();</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">fn</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">fn</span><span class="p">.</span><span class="nx">getYear</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><img src="/img/2017-04-29-javascript-one/14921573274630.png" alt="" /></p>
+
+<ul>
+  <li>自定义函数的prototype也是对象,其的__proto__指向的就是Object.prototype。</li>
+  <li>Object.prototype确实一个特例——它的__proto__指向的是null</li>
+  <li>函数是被Function创建的</li>
+  <li>函数Foo.__proto__指向Function.prototype，Object.__proto__指向Function.prototype,Function也是一个函数，函数是一种对象，也有__proto__属性。既然是函数，那么它一定是被Function创建。所以——Function是被自身创建的。所以它的__proto__指向了自身的Prototype。</li>
+</ul>
+
+<p>总结一下,函数的__proto__ = Function.prototype</p>
+
+<p>prototype也是对象,其__proto__ = Object.prototype</p>
+
+<blockquote>
+  <p>Instanceof运算符的第一个变量是一个对象，暂时称为A；第二个变量一般是一个函数，暂时称为B。
+Instanceof的判断队则是：沿着A的__proto__这条线来找，同时沿着B的prototype这条线来找，如果两条线能找到同一个引用，即同一个对象，那么就返回true。如果找到终点还未重合，则返回false。</p>
+</blockquote>
+
+<blockquote>
+  <p>访问一个对象的属性时，先在基本属性中查找，如果没有，再沿着__proto__这条链向上找，这就是原型链。使用<code class="highlighter-rouge">hasOwnProperty</code>可以只在自己的基本属性中找</p>
+</blockquote>
+
+<h4 id="执行上下文">执行上下文</h4>
+
+<h5 id="准备工作">准备工作</h5>
+
+<ul>
+  <li>变量、函数表达式——变量声明，默认赋值为undefined；</li>
+  <li>this——赋值；</li>
+  <li>函数声明——赋值；</li>
+</ul>
+
+<p>这三种数据的准备情况我们称之为“执行上下文”或者“执行上下文环境”。</p>
+
+<p><img src="/img/2017-04-29-javascript-one/14934560033963.png" alt="" /></p>
+
+<blockquote>
+  <p>javascript在执行一个代码段之前，都会进行这些“准备工作”来生成执行上下文。这个“代码段”其实分三种情况——全局代码，函数体，eval代码。</p>
+</blockquote>
+
+<p><img src="/img/2017-04-29-javascript-one/14934680400123.jpg" alt="" /></p>
+
+<h5 id="this">this</h5>
+
+<p><a href="http://www.cnblogs.com/wangfupeng1988/p/3988422.html">直接看这个吧</a></p>
+
+<h5 id="作用域">作用域</h5>
+
+<p>javascript除了全局作用域之外，只有函数可以创建的作用域。
+自由变量: 在A作用域中使用的变量x，却没有在A作用域中声明（即在其他作用域中声明的），对于A作用域来说，x就是一个自由变量。</p>
+
+<p>要到创建这个函数的那个作用域中取值——是“创建”</p>
+
+<p>假设a是自由量</p>
+
+<ul>
+  <li>现在当前作用域查找a，如果有则获取并结束。如果没有则继续；</li>
+  <li>如果当前作用域是全局作用域，则证明a未定义，结束；否则继续；</li>
+  <li>不是全局作用域，那就是函数作用域）将创建该函数的作用域作为当前作用域；</li>
+</ul>
+
+<p>Js缺少块级作用域,所以应该在顶部声明所有变量。</p>
+
+<p>函数内部声明变量的时候，一定要使用var命令。如果不用的话，你实际上声明了一个全局变量！</p>
+
+<p><img src="/img/2017-04-29-javascript-one/14934665457550.jpg" alt="" />
+<img src="/img/2017-04-29-javascript-one/14934669219870.jpg" alt="" /></p>
+
+<p>因为没看到第二个scope赋值我差点又要怀疑人生了,其实因为第二个scope的作用域是整个function,但执行到var前还没有被赋值所以是undefined,看过前面推荐的系列就很容易懂了</p>
+
+<h5 id="闭包">闭包</h5>
+
+<p>函数作为返回值，函数作为参数传递。闭包中,有些情况下，函数调用完成之后，其执行上下文环境不会接着被销毁。</p>
+
+<p><img src="/img/2017-04-29-javascript-one/14934627858999.png" alt="" /></p>
+
+<p>出于种种原因，我们有时候需要得到函数内的局部变量。但是，前面已经说过了，正常情况下，这是办不到的，只有通过变通方法才能实现。</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">f1</span><span class="p">(){</span>
+<span class="err">　　　</span><span class="kd">var</span> <span class="nx">n</span><span class="o">=</span><span class="mi">999</span><span class="p">;</span>
+<span class="err">　　　</span><span class="kd">function</span> <span class="nx">f2</span><span class="p">(){</span>
+<span class="err">　　　　　</span><span class="nx">alert</span><span class="p">(</span><span class="nx">n</span><span class="p">);</span> 
+<span class="err">　　　</span><span class="p">}</span>
+<span class="err">　　　</span><span class="k">return</span> <span class="nx">f2</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">var</span> <span class="nx">result</span><span class="o">=</span><span class="nx">f1</span><span class="p">();</span>
+<span class="nx">result</span><span class="p">();</span> <span class="c1">// 999</span>
+</code></pre>
+</div>
+
+<p>这里f2就是闭包,闭包就是能够读取其他函数内部变量的函数。
+它的最大用处有两个，一个是前面提到的可以读取函数内部的变量，另一个就是让这些变量的值始终保持在内存中。</p>
+
+<p>来一个很恶心的for循环例子:</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">box</span><span class="p">(){</span>
+    <span class="kd">var</span> <span class="nx">arr</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="nx">i</span><span class="o">&lt;</span><span class="mi">5</span><span class="p">;</span><span class="nx">i</span><span class="o">++</span><span class="p">){</span>
+        <span class="nx">arr</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">i</span><span class="p">;</span>        
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">arr</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nx">alert</span><span class="p">(</span><span class="nx">box</span><span class="p">())</span>   
+</code></pre>
+</div>
+
+<p>输出[4，4，4，4，4] QAQ</p>
+
+<p><a href="https://www.zhihu.com/question/33468703">知乎这个解释很强</a></p>
+
+<p><img src="/img/2017-04-29-javascript-one/14934645101371.png" alt="" /></p>
+
+<p>改造后:</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="nx">arr</span><span class="o">=</span><span class="p">[];</span><span class="nx">i</span><span class="o">&lt;=</span><span class="mi">3</span><span class="p">;</span><span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">arr</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span>
+			<span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">){</span>
+				<span class="k">return</span> <span class="kd">function</span><span class="p">(){</span>
+					<span class="nx">alert</span><span class="p">(</span><span class="nx">i</span><span class="p">);</span>
+				<span class="p">}</span>
+			<span class="p">})(</span><span class="nx">i</span><span class="p">)</span>
+		<span class="p">);</span>
+	<span class="p">}</span>
+</code></pre>
+</div>
+
+<p><img src="/img/2017-04-29-javascript-one/14934646959028.png" alt="" /></p>
+
+<p><img src="/img/2017-04-29-javascript-one/14934651332269.jpg" alt="" /></p>
+
+<h5 id="array--object">Array &amp; Object</h5>
+
+<p>Array和Object都是函数。</p>
+
+<h5 id="私有变量">私有变量</h5>
+
+<p>任何在函数中定义的变量，都可以认为是私有变量，因为不能在函数的外部访问这些变量。私有变量包括函数的参数、局部变量和函数内定义的其他函数。</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">car</span><span class="p">(){</span> 
+      <span class="kd">var</span> <span class="nx">wheel</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span><span class="c1">//私有变量 </span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">wheel</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span><span class="c1">//公有变量 </span>
+ <span class="p">}</span> 
+<span class="kd">var</span> <span class="nx">car1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">car</span><span class="p">();</span> 
+<span class="nx">alert</span><span class="p">(</span><span class="nx">car1</span><span class="p">.</span><span class="nx">wheel</span><span class="p">);</span><span class="err">结果：</span><span class="mi">4</span>
+</code></pre>
+</div>
+
+<p>访问私有变量用闭包吧:</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">car</span><span class="p">(){</span> 
+    <span class="kd">var</span> <span class="nx">wheel</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span><span class="c1">//私有变量 </span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">wheel</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span><span class="c1">//公有变量 </span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">getPrivateVal</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span> 
+        <span class="k">return</span> <span class="nx">wheel</span><span class="p">;</span> 
+    <span class="p">}</span> 
+<span class="p">}</span> 
+<span class="kd">var</span> <span class="nx">car1</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">car</span><span class="p">();</span> 
+<span class="nx">alert</span><span class="p">(</span><span class="nx">car1</span><span class="p">.</span><span class="nx">getPrivateVal</span><span class="p">());</span><span class="err">结果：</span><span class="mi">3</span> 
+</code></pre>
+</div>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/04/29/javascript-one"
+                    data-title="JavaScript学习一"
+                    data-url="http://localhost:5001/2017/04/29/javascript-one/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="移动端狗发现大前端才是未来的方向,所以学习一下Js。其实个人很讨厌Js,很久以前也学过发现毫无兴趣,感觉非常没有逻辑(不要打我),但都开始改RN了还是先巩... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/04/28/gradleAndNuwa/" data-toggle="tooltip" data-placement="top" title="Gradle实战与Nuwa顺带分析">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/05/02/andfix/" data-toggle="tooltip" data-placement="top" title="Andfix分析">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/04/29/javascript-one"
+                        data-title="JavaScript学习一"
+                        data-url="http://localhost:5001/2017/04/29/javascript-one/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

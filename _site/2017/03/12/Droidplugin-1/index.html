@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>DroidPlugin(一) - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/03/12/Droidplugin-1/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Android" title="Android">Android</a>
+                        
+                        <a class="tag" href="/tags/#插件" title="插件">插件</a>
+                        
+                        <a class="tag" href="/tags/#DroidPlugin" title="DroidPlugin">DroidPlugin</a>
+                        
+                    </div>
+                    <h1>DroidPlugin(一)</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on March 12, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>目前的市场让我觉得应该静下心研究一下插件,热补丁等热门的东西,虽然<code class="highlighter-rouge">apple</code>刚宣布禁止<code class="highlighter-rouge">JPatch</code>等,但<code class="highlighter-rouge">android</code>还是如此自由浪漫。</p>
+
+<p>对于插件,该阶段的目标是<code class="highlighter-rouge">DroidPlugin</code>,下阶段是<code class="highlighter-rouge">small</code>,共勉。</p>
+
+<p><code class="highlighter-rouge">DroidPlugin</code>把<code class="highlighter-rouge">weishu</code>的文章都看了一遍,受益匪浅。</p>
+
+<p>本篇先讲个大体框架,细节后续补充</p>
+
+<h4 id="基本框架">基本框架</h4>
+
+<p>以官方<code class="highlighter-rouge">demo</code>介绍一下整体框架。</p>
+
+<p><code class="highlighter-rouge">pluginApplication</code>作为入口,在<code class="highlighter-rouge">onCreate</code>时,初始化各个<code class="highlighter-rouge">Manager</code></p>
+
+<ul>
+  <li><code class="highlighter-rouge">PluginPatchManager</code>:处理插件异常情况</li>
+  <li><code class="highlighter-rouge">installHook</code>: 注册所有<code class="highlighter-rouge">hook</code>点</li>
+  <li><code class="highlighter-rouge">PluginHelper</code>:实现<code class="highlighter-rouge">ServiceConnection</code></li>
+  <li><code class="highlighter-rouge">PluginManager</code>:实现<code class="highlighter-rouge">ServiceConnection</code>,带上<code class="highlighter-rouge">PluginHelper</code>这个<code class="highlighter-rouge">connection</code>,同时绑定<code class="highlighter-rouge">PluginManagerService</code>服务,该全局服务提供插件管理。</li>
+  <li><code class="highlighter-rouge">PluginManagerService</code>:初始化<code class="highlighter-rouge">IPluginManagerImplbinder</code>实体对象,该对象模拟系统的<code class="highlighter-rouge">PackageManagerService</code>，对插件进行简单的管理服务。</li>
+</ul>
+
+<p>其实上述不了解也无所谓的,只是了解了更加清晰一点而已</p>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14893024502061.jpg" alt="" /></p>
+
+<h5 id="插件注册启动">插件注册启动</h5>
+
+<p><code class="highlighter-rouge">在IPluginManagerImpl</code>中进行<code class="highlighter-rouge">install</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PluginPackageParser</span> <span class="n">parser</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PluginPackageParser</span><span class="o">(</span><span class="n">mContext</span><span class="o">,</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="n">apkfile</span><span class="o">));</span>
+<span class="n">parser</span><span class="o">.</span><span class="na">collectCertificates</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+<span class="n">PackageInfo</span> <span class="n">pkgInfo</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="na">getPackageInfo</span><span class="o">(</span><span class="n">PackageManager</span><span class="o">.</span><span class="na">GET_PERMISSIONS</span> <span class="o">|</span> <span class="n">PackageManager</span><span class="o">.</span><span class="na">GET_SIGNATURES</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">pkgInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">pkgInfo</span><span class="o">.</span><span class="na">requestedPermissions</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">pkgInfo</span><span class="o">.</span><span class="na">requestedPermissions</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">requestedPermission</span> <span class="o">:</span><span class="n">pkgInfo</span><span class="o">.</span><span class="na">requestedPermissions</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">boolean</span> <span class="n">b</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="na">getPermissionInfo</span><span class="o">(</span><span class="n">requestedPermission</span><span class="o">,</span> <span class="mi">0</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NameNotFoundException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">mHostRequestedPermission</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">requestedPermission</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">b</span><span class="o">{</span>
+        <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"No Permission %s"</span><span class="o">,</span> <span class="n">requestedPermission</span><span class="o">);</span>
+        <span class="k">new</span> <span class="nf">File</span><span class="o">(</span><span class="n">apkfile</span><span class="o">).</span><span class="na">delete</span><span class="o">();</span>
+        <span class="k">return</span> <span class="n">PluginManager</span><span class="o">.</span><span class="na">INSTALL_FAILED_NO_REQUESTEDPERMISSION</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>关键代码:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PluginPackageParser</span> <span class="n">parser</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PluginPackageParser</span><span class="o">(</span><span class="n">mContext</span><span class="o">,</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="n">apkfile</span><span class="o">));</span>
+</code></pre>
+</div>
+
+<p>一步步分析:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="kd">public</span> <span class="nf">PluginPackageParser</span><span class="o">(</span><span class="n">Context</span> <span class="n">hostContext</span><span class="o">,</span> <span class="n">File</span> <span class="n">pluginFile</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">mHostContext</span> <span class="o">=</span> <span class="n">hostContext</span><span class="o">;</span>
+        <span class="n">mPluginFile</span> <span class="o">=</span> <span class="n">pluginFile</span><span class="o">;</span>
+        <span class="n">mParser</span> <span class="o">=</span> <span class="n">PackageParser</span><span class="o">.</span><span class="na">newPluginParser</span><span class="o">(</span><span class="n">hostContext</span><span class="o">);</span>
+        <span class="n">mParser</span><span class="o">.</span><span class="na">parsePackage</span><span class="o">(</span><span class="n">pluginFile</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+        <span class="n">mPackageName</span> <span class="o">=</span> <span class="n">mParser</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">();</span>
+        <span class="n">mHostPackageInfo</span> <span class="o">=</span> <span class="n">mHostContext</span><span class="o">.</span><span class="na">getPackageManager</span><span class="o">().</span><span class="na">getPackageInfo</span><span class="o">(</span><span class="n">mHostContext</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">(),</span> <span class="mi">0</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<ul>
+  <li>根据<code class="highlighter-rouge">api</code>版本获取自定义的<code class="highlighter-rouge">PackageParser</code>,这其实挺恶心的,每出一个版本就要新写一个<code class="highlighter-rouge">parser</code> = =,然后调用<code class="highlighter-rouge">parsePackage</code>进行处理。</li>
+</ul>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14893033591097.jpg" alt="" /></p>
+
+<p>可以看到主要是对<code class="highlighter-rouge">androidManifest</code>进行处理,分析除了四大组件和一些基本信息。</p>
+
+<ul>
+  <li>对前面分析出的组件进行处理,将<code class="highlighter-rouge">activity</code>,<code class="highlighter-rouge">ActivityInfo</code>,<code class="highlighter-rouge">intentFilter</code>以<code class="highlighter-rouge">componentName</code>为<code class="highlighter-rouge">key</code>放入三个<code class="highlighter-rouge">cache</code>中</li>
+</ul>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14893036084724.jpg" alt="" /></p>
+
+<p>其余<code class="highlighter-rouge">service</code>,<code class="highlighter-rouge">provider</code>,<code class="highlighter-rouge">broadcast</code>同理。</p>
+
+<p>还附加了<code class="highlighter-rouge">mPermissionsObjCache,mPermissionsGroupCache,mRequestedPermissionsCache</code> 这个具体干啥还不清楚。。。。</p>
+
+<p>回到最初的<code class="highlighter-rouge">install</code>:</p>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14893039437996.jpg" alt="" /></p>
+
+<p>这个主要是看插件申请的<code class="highlighter-rouge">Permmission</code>是否在宿主<code class="highlighter-rouge">permission</code>范围内,如果超过了就要抛异常啦</p>
+
+<p>总结:</p>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14893027914542.jpg" alt="" /></p>
+
+<h4 id="替换loadedapk">替换LoadedApk</h4>
+<p>这是因为<code class="highlighter-rouge">classLoader</code>加载<code class="highlighter-rouge">class</code>时,如果是宿主的<code class="highlighter-rouge">classLoader</code>是找不到插件类的</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">ActivityClientRecord</span> <span class="n">r</span> <span class="o">=</span> <span class="o">(</span><span class="n">ActivityClientRecord</span><span class="o">)</span><span class="n">msg</span><span class="o">.</span><span class="na">obj</span><span class="o">;</span>
+<span class="n">r</span><span class="o">.</span><span class="na">packageInfo</span> <span class="o">=</span> <span class="n">getPackageInfoNoCheck</span><span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">activityInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">compatInfo</span><span class="o">);</span>
+<span class="n">handleLaunchActivity</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+<span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">ClassLoader</span> <span class="n">cl</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="na">packageInfo</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">();</span>
+</code></pre>
+</div>
+
+<p>所以我们要替换<code class="highlighter-rouge">r.packageInfo</code>,干脆直接替换<code class="highlighter-rouge">packageInfo</code>吧。。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">WeakReference</span><span class="o">&lt;</span><span class="n">LoadedApk</span><span class="o">&gt;</span> <span class="n">ref</span><span class="o">;</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">includeCode</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">mPackages</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">aInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>老样子,直接替换<code class="highlighter-rouge">mPackage</code>这个<code class="highlighter-rouge">map</code>吧</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">preLoadApk</span><span class="o">(</span><span class="n">Context</span> <span class="n">hostContext</span><span class="o">,</span> <span class="n">ComponentInfo</span> <span class="n">pluginInfo</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">NoSuchMethodException</span><span class="o">,</span> <span class="n">IllegalAccessException</span><span class="o">,</span> <span class="n">InvocationTargetException</span><span class="o">,</span> <span class="n">PackageManager</span><span class="o">.</span><span class="na">NameNotFoundException</span><span class="o">,</span> <span class="n">ClassNotFoundException</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">pluginInfo</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">hostContext</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">pluginInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">getPluginContext</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="cm">/*添加插件的LoadedApk对象到ActivityThread.mPackages*/</span>
+
+    <span class="kt">boolean</span> <span class="n">found</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">sPluginLoadedApkCache</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Object</span> <span class="n">object</span> <span class="o">=</span> <span class="n">ActivityThreadCompat</span><span class="o">.</span><span class="na">currentActivityThread</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">object</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Object</span> <span class="n">mPackagesObj</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">object</span><span class="o">,</span> <span class="s">"mPackages"</span><span class="o">);</span>
+            <span class="n">Object</span> <span class="n">containsKeyObj</span> <span class="o">=</span> <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">mPackagesObj</span><span class="o">,</span> <span class="s">"containsKey"</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+            <span class="c1">//如果不包括packageName这个LoadedApk</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">containsKeyObj</span> <span class="k">instanceof</span> <span class="n">Boolean</span> <span class="o">&amp;&amp;</span> <span class="o">!(</span><span class="n">Boolean</span><span class="o">)</span> <span class="n">containsKeyObj</span><span class="o">)</span> <span class="o">{</span>
+                <span class="kd">final</span> <span class="n">Object</span> <span class="n">loadedApk</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">VERSION</span><span class="o">.</span><span class="na">SDK_INT</span> <span class="o">&gt;=</span> <span class="n">VERSION_CODES</span><span class="o">.</span><span class="na">HONEYCOMB</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">loadedApk</span> <span class="o">=</span> <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">object</span><span class="o">,</span> <span class="s">"getPackageInfoNoCheck"</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">,</span> <span class="n">CompatibilityInfoCompat</span><span class="o">.</span><span class="na">DEFAULT_COMPATIBILITY_INFO</span><span class="o">());</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">loadedApk</span> <span class="o">=</span> <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">object</span><span class="o">,</span> <span class="s">"getPackageInfoNoCheck"</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="n">sPluginLoadedApkCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">loadedApk</span><span class="o">);</span>
+            <span class="cm">/*添加ClassLoader LoadedApk.mClassLoader*/</span>
+                <span class="n">String</span> <span class="n">optimizedDirectory</span> <span class="o">=</span> <span class="n">PluginDirHelper</span><span class="o">.</span><span class="na">getPluginDalvikCacheDir</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+                <span class="n">String</span> <span class="n">libraryPath</span> <span class="o">=</span> <span class="n">PluginDirHelper</span><span class="o">.</span><span class="na">getPluginNativeLibraryDir</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+                <span class="n">String</span> <span class="n">apk</span> <span class="o">=</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">.</span><span class="na">publicSourceDir</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">apk</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">.</span><span class="na">publicSourceDir</span> <span class="o">=</span> <span class="n">PluginDirHelper</span><span class="o">.</span><span class="na">getPluginApkFile</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+                    <span class="n">apk</span> <span class="o">=</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">.</span><span class="na">publicSourceDir</span><span class="o">;</span>
+                <span class="o">}</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">apk</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="c1">//new 一个classLoader</span>
+                    <span class="n">ClassLoader</span> <span class="n">classloader</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="n">classloader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PluginClassLoader</span><span class="o">(</span><span class="n">apk</span><span class="o">,</span> <span class="n">optimizedDirectory</span><span class="o">,</span> <span class="n">libraryPath</span><span class="o">,</span> <span class="n">hostContext</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">().</span><span class="na">getParent</span><span class="o">());</span>
+                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                <span class="o">}</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">classloader</span><span class="o">==</span><span class="kc">null</span><span class="o">){</span>
+                    <span class="n">PluginDirHelper</span><span class="o">.</span><span class="na">cleanOptimizedDirectory</span><span class="o">(</span><span class="n">optimizedDirectory</span><span class="o">);</span>
+                    <span class="n">classloader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PluginClassLoader</span><span class="o">(</span><span class="n">apk</span><span class="o">,</span> <span class="n">optimizedDirectory</span><span class="o">,</span> <span class="n">libraryPath</span><span class="o">,</span> <span class="n">hostContext</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">().</span><span class="na">getParent</span><span class="o">());</span>
+                <span class="o">}</span>
+                <span class="c1">//loadedApk.mClassLoader = new classLoader</span>
+                <span class="kd">synchronized</span> <span class="o">(</span><span class="n">loadedApk</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeDeclaredField</span><span class="o">(</span><span class="n">loadedApk</span><span class="o">,</span> <span class="s">"mClassLoader"</span><span class="o">,</span> <span class="n">classloader</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="n">sPluginClassLoaderCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">classloader</span><span class="o">);</span>
+                <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">setContextClassLoader</span><span class="o">(</span><span class="n">classloader</span><span class="o">);</span>
+                <span class="n">found</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+            <span class="o">}</span>
+                <span class="n">ProcessCompat</span><span class="o">.</span><span class="na">setArgV0</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">found</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">PluginProcessManager</span><span class="o">.</span><span class="na">preMakeApplication</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="c1">//这里还不是很懂,待定分析</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">preMakeApplication</span><span class="o">(</span><span class="n">Context</span> <span class="n">hostContext</span><span class="o">,</span> <span class="n">ComponentInfo</span> <span class="n">pluginInfo</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">Object</span> <span class="n">loadedApk</span> <span class="o">=</span> <span class="n">sPluginLoadedApkCache</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">loadedApk</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Object</span> <span class="n">mApplication</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">loadedApk</span><span class="o">,</span> <span class="s">"mApplication"</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">mApplication</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">return</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">Looper</span><span class="o">.</span><span class="na">getMainLooper</span><span class="o">()</span> <span class="o">!=</span> <span class="n">Looper</span><span class="o">.</span><span class="na">myLooper</span><span class="o">())</span> <span class="o">{</span>
+                <span class="kd">final</span> <span class="n">Object</span> <span class="n">lock</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
+                <span class="n">mExec</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+                <span class="n">sHandle</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+                    <span class="nd">@Override</span>
+                    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                        <span class="k">try</span> <span class="o">{</span>
+                            <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">loadedApk</span><span class="o">,</span> <span class="s">"makeApplication"</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">ActivityThreadCompat</span><span class="o">.</span><span class="na">getInstrumentation</span><span class="o">());</span>
+                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"preMakeApplication FAIL"</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+                        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+                            <span class="n">mExec</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+                            <span class="kd">synchronized</span> <span class="o">(</span><span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+                                <span class="n">lock</span><span class="o">.</span><span class="na">notifyAll</span><span class="o">();</span>
+                            <span class="o">}</span>
+                        <span class="o">}</span>
+                     <span class="o">}</span>
+                <span class="o">});</span>
+                <span class="k">if</span> <span class="o">(!</span><span class="n">mExec</span><span class="o">.</span><span class="na">get</span><span class="o">())</span> <span class="o">{</span>
+                    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="k">try</span> <span class="o">{</span>
+                            <span class="n">lock</span><span class="o">.</span><span class="na">wait</span><span class="o">();</span>
+                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+             <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">loadedApk</span><span class="o">,</span> <span class="s">"makeApplication"</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">ActivityThreadCompat</span><span class="o">.</span><span class="na">getInstrumentation</span><span class="o">());</span>
+        <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"preMakeApplication FAIL"</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="stub">stub</h4>
+<p>为了完美的运行插件,宿主进程需要先定义一些<code class="highlighter-rouge">stub</code>。
+什么是<code class="highlighter-rouge">stub</code>:
+以activity为例,因为之前提过四大组件都需要在<code class="highlighter-rouge">manifest</code>中注册,但我们事先又不知道插件会用什么组件,所以为了瞒天过海,我们先在宿主进程中定义超多组件,</p>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14893091122357.jpg" alt="" /></p>
+
+<p>如上图,预定义在<code class="highlighter-rouge">PluginP01</code>进程中的<code class="highlighter-rouge">ActivityStub,p01</code>进程,<code class="highlighter-rouge">SingleTop</code>的<code class="highlighter-rouge">mode</code>。这样在运行插件时,可以用对应的activitystub去ams中注册,然后启动时瞒天过海替换成<code class="highlighter-rouge">realActivity</code></p>
+
+<p>在前面提到的<code class="highlighter-rouge">MyActivityManagerService</code>启动时,会初始化<code class="highlighter-rouge">StaticProcessList</code>。初始化即遍历<code class="highlighter-rouge">manifest</code>中的四大组件,根据<code class="highlighter-rouge">process</code>初始化<code class="highlighter-rouge">ProcessItem</code></p>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14895015269438.jpg" alt="" /></p>
+
+<p>注意的是,为了不把宿主的activity加入,作者在<code class="highlighter-rouge">stub activity</code>中加入了<code class="highlighter-rouge">meta-data</code>做为标记:
+<code class="highlighter-rouge">List&lt;ResolveInfo&gt; activities = pm.queryIntentActivities(intent, PackageManager.GET_META_DATA);</code></p>
+
+<h4 id="iactivitymanagerhook">IActivityManagerHook</h4>
+
+<p>插件中最关键的一个<code class="highlighter-rouge">hook</code>。</p>
+
+<p>Hook不多说了,和之前<a href="http://lizz0y.me/2017/02/26/Proxy/">代理机制</a>原理一样,使用动态代理进行hook。</p>
+
+<p><code class="highlighter-rouge">DroidPlugin</code>对接口的每一个方法都定义了一个handler</p>
+<h5 id="oninstall">onInstall</h5>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">Class</span> <span class="n">cls</span> <span class="o">=</span> <span class="n">ActivityManagerNativeCompat</span><span class="o">.</span><span class="na">Class</span><span class="o">();</span>
+<span class="n">Object</span> <span class="n">obj</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readStaticField</span><span class="o">(</span><span class="n">cls</span><span class="o">,</span> <span class="s">"gDefault"</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">obj</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">ActivityManagerNativeCompat</span><span class="o">.</span><span class="na">getDefault</span><span class="o">();</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readStaticField</span><span class="o">(</span><span class="n">cls</span><span class="o">,</span> <span class="s">"gDefault"</span><span class="o">);</span>
+<span class="o">}</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">IActivityManagerCompat</span><span class="o">.</span><span class="na">isIActivityManager</span><span class="o">(</span><span class="n">obj</span><span class="o">))</span> <span class="o">{</span>
+    <span class="n">setOldObj</span><span class="o">(</span><span class="n">obj</span><span class="o">);</span>
+    <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">objClass</span> <span class="o">=</span> <span class="n">mOldObj</span><span class="o">.</span><span class="na">getClass</span><span class="o">();</span>
+    <span class="n">List</span><span class="o">&lt;</span><span class="n">Class</span><span class="o">&lt;?&gt;&gt;</span> <span class="n">interfaces</span> <span class="o">=</span> <span class="n">Utils</span><span class="o">.</span><span class="na">getAllInterfaces</span><span class="o">(</span><span class="n">objClass</span><span class="o">);</span>
+    <span class="n">Class</span><span class="o">[]</span> <span class="n">ifs</span> <span class="o">=</span> <span class="n">interfaces</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">interfaces</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">interfaces</span><span class="o">.</span><span class="na">toArray</span><span class="o">(</span><span class="k">new</span> <span class="n">Class</span><span class="o">[</span><span class="n">interfaces</span><span class="o">.</span><span class="na">size</span><span class="o">()])</span> <span class="o">:</span> <span class="k">new</span> <span class="n">Class</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+    <span class="n">Object</span> <span class="n">proxiedActivityManager</span> <span class="o">=</span> <span class="n">MyProxy</span><span class="o">.</span><span class="na">newProxyInstance</span><span class="o">(</span><span class="n">objClass</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">(),</span> <span class="n">ifs</span><span class="o">,</span> <span class="k">this</span><span class="o">);</span>
+    <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeStaticField</span><span class="o">(</span><span class="n">cls</span><span class="o">,</span> <span class="s">"gDefault"</span><span class="o">,</span> <span class="n">proxiedActivityManager</span><span class="o">);</span>
+    <span class="n">Log</span><span class="o">.</span><span class="na">i</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Install ActivityManager Hook 1 old=%s,new=%s"</span><span class="o">,</span> <span class="n">mOldObj</span><span class="o">,</span> <span class="n">proxiedActivityManager</span><span class="o">);</span>
+</code></pre>
+</div>
+<p>分两步,<code class="highlighter-rouge">android</code>源码中旧的<code class="highlighter-rouge">sdk</code>中<code class="highlighter-rouge">IActivityManager</code>直接通过<code class="highlighter-rouge">gDefault</code>就能拿到;在高版本<code class="highlighter-rouge">sdk</code>
+中保存在<code class="highlighter-rouge">Singleton</code>中,所以要做个判断</p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">SingletonCompat</span><span class="o">.</span><span class="na">isSingleton</span><span class="o">(</span><span class="n">obj</span><span class="o">))</span> <span class="o">{</span>
+    <span class="n">Object</span> <span class="n">obj1</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">obj</span><span class="o">,</span> <span class="s">"mInstance"</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">obj1</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">SingletonCompat</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">obj</span><span class="o">);</span>
+        <span class="n">obj1</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">obj</span><span class="o">,</span> <span class="s">"mInstance"</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<h5 id="startservice">startService</h5>
+
+<p>这时候过去分析源码的好处就出来了,怒摔！</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">startService</span> <span class="kd">extends</span> <span class="n">ReplaceCallingPackageHookedMethodHandler</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="nf">startService</span><span class="o">(</span><span class="n">Context</span> <span class="n">hostContext</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">(</span><span class="n">hostContext</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="n">ServiceInfo</span> <span class="n">info</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">beforeInvoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+            <span class="c1">//API 2.3, 15, 16</span>
+        <span class="cm">/*    public ComponentName startService(IApplicationThread caller, Intent service,
+            String resolvedType) throws RemoteException;*/</span>
+
+            <span class="c1">//API 17, 18, 19, 21</span>
+        <span class="cm">/*public ComponentName startService(IApplicationThread caller, Intent service,
+            String resolvedType, int userId) throws RemoteException;*/</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">replaceFirstServiceIntentOfArgs</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kd">super</span><span class="o">.</span><span class="na">beforeInvoke</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">method</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">afterInvoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">,</span> <span class="n">Object</span> <span class="n">invokeResult</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span><span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">invokeResult</span> <span class="k">instanceof</span> <span class="n">ComponentName</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">info</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">setFakedResult</span><span class="o">(</span><span class="k">new</span> <span class="n">ComponentName</span><span class="o">(</span><span class="n">info</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">info</span><span class="o">.</span><span class="na">name</span><span class="o">));</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="kd">super</span><span class="o">.</span><span class="na">afterInvoke</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">method</span><span class="o">,</span> <span class="n">args</span><span class="o">,</span> <span class="n">invokeResult</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+<p>其实也不复杂,在<code class="highlighter-rouge">startService</code>之前先进行<code class="highlighter-rouge">before</code>预处理,那就先来看看做了哪些预处理的努力:</p>
+
+<p><code class="highlighter-rouge">ServiceInfo serviceInfo = resolveService(intent);</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="n">ServiceInfo</span> <span class="nf">getServiceInfo</span><span class="o">(</span><span class="n">ComponentName</span> <span class="n">className</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Object</span> <span class="n">data</span><span class="o">;</span>
+    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mServiceObjCache</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">mServiceObjCache</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">className</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">data</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">ServiceInfo</span> <span class="n">serviceInfo</span> <span class="o">=</span> <span class="n">mParser</span><span class="o">.</span><span class="na">generateServiceInfo</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="n">flags</span><span class="o">);</span>
+        <span class="n">fixApplicationInfo</span><span class="o">(</span><span class="n">serviceInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">serviceInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">serviceInfo</span><span class="o">.</span><span class="na">processName</span> <span class="o">=</span> <span class="n">serviceInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">;}</span>
+        <span class="k">return</span> <span class="n">serviceInfo</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+<p>从前面<code class="highlighter-rouge">parse</code>时填入的<code class="highlighter-rouge">Cache</code>中取出<code class="highlighter-rouge">ServiceInfo</code></p>
+
+<p><code class="highlighter-rouge">ServiceInfo proxyService = selectProxyService(intent);</code></p>
+
+<p>最重要的一步。</p>
+
+<ul>
+  <li>
+    <p><code class="highlighter-rouge">runProcessGC();</code>
+不懂为什么要先GC一次,先放着。。</p>
+  </li>
+  <li>
+    <p>看正在运行的进程是否有符合条件的进程</p>
+  </li>
+</ul>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14893076033789.jpg" alt="" /></p>
+
+<ul>
+  <li>使用<code class="highlighter-rouge">stub</code></li>
+</ul>
+
+<p>在宿主进程中,定义了无数的<code class="highlighter-rouge">activity,service</code>和<code class="highlighter-rouge">provider</code>。</p>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14893087825153.jpg" alt="" /></p>
+
+<ul>
+  <li>遍历Process,即<code class="highlighter-rouge">:PluginP04...</code></li>
+  <li>如果进程正在运行,并且没有任何插件包,则查找未被占用的<code class="highlighter-rouge">stubinfo</code>,并设置该<code class="highlighter-rouge">processItem</code>的<code class="highlighter-rouge">targetProcess</code>为<code class="highlighter-rouge">targetInfo.processName</code></li>
+  <li>如果进程正在运行，并且有插件包了,若已有插件与<code class="highlighter-rouge">target</code>的<code class="highlighter-rouge">process</code>相同,并且<code class="highlighter-rouge">checkSignatures</code>通过,则返回可以在当前插件进程运行。</li>
+</ul>
+
+<p>检查<code class="highlighter-rouge">signature</code>应该是看是不是同一个<code class="highlighter-rouge">app</code>吧。。。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">pkg</span> <span class="o">:</span> <span class="n">item</span><span class="o">.</span><span class="na">pkgs</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">checkSignatures</span><span class="o">(</span><span class="n">packageName</span><span class="o">,</span> <span class="n">pkg</span><span class="o">)</span> <span class="o">==</span> <span class="n">PackageManager</span><span class="o">.</span><span class="na">SIGNATURE_MATCH</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">signed</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="k">break</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">signed</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<ul>
+  <li>替换<code class="highlighter-rouge">intent</code></li>
+</ul>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">newIntent</span><span class="o">.</span><span class="na">setAction</span><span class="o">(</span><span class="n">proxyService</span><span class="o">.</span><span class="na">name</span> <span class="o">+</span> <span class="k">new</span> <span class="n">Random</span><span class="o">().</span><span class="na">nextInt</span><span class="o">());</span>            
+<span class="n">newIntent</span><span class="o">.</span><span class="na">setClassName</span><span class="o">(</span><span class="n">proxyService</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">proxyService</span><span class="o">.</span><span class="na">name</span><span class="o">);</span>
+<span class="n">newIntent</span><span class="o">.</span><span class="na">putExtra</span><span class="o">(</span><span class="n">Env</span><span class="o">.</span><span class="na">EXTRA_TARGET_INTENT</span><span class="o">,</span> <span class="n">intent</span><span class="o">);</span>
+<span class="n">newIntent</span><span class="o">.</span><span class="na">setFlags</span><span class="o">(</span><span class="n">intent</span><span class="o">.</span><span class="na">getFlags</span><span class="o">());</span>
+<span class="n">args</span><span class="o">[</span><span class="n">intentOfArgIndex</span><span class="o">]</span> <span class="o">=</span> <span class="n">newIntent</span><span class="o">;</span>
+</code></pre>
+</div>
+
+<p>将原<code class="highlighter-rouge">intent</code>放入<code class="highlighter-rouge">EXTRA_TARGET_INTENT中</code>,方便后续替换回来</p>
+
+<h4 id="返璞归真">返璞归真</h4>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14895033224570.jpg" alt="" /></p>
+
+<p><img src="/img/2017-03-15-droidplugin-1/14895034440931.jpg" alt="" /></p>
+
+<p>如果<code class="highlighter-rouge">service == null,handleCreateServiceOne</code>
+否则直接<code class="highlighter-rouge">handleOnStartOne</code></p>
+
+<h5 id="handlecreateserviceone关键函数"><code class="highlighter-rouge">handleCreateServiceOne</code>关键函数</h5>
+
+<p>在源码中,在<code class="highlighter-rouge">handleMessage</code>这一步<code class="highlighter-rouge">createService</code>时:</p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">final</span> <span class="kt">void</span> <span class="nf">scheduleCreateService</span><span class="o">(</span><span class="n">IBinder</span> <span class="n">token</span><span class="o">,</span>
+                <span class="n">ServiceInfo</span> <span class="n">info</span><span class="o">,</span> <span class="n">CompatibilityInfo</span> <span class="n">compatInfo</span><span class="o">,</span> <span class="kt">int</span> <span class="n">processState</span><span class="o">){</span>
+    <span class="n">updateProcessState</span><span class="o">(</span><span class="n">processState</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span>
+    <span class="n">CreateServiceData</span> <span class="n">s</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CreateServiceData</span><span class="o">();</span>
+    <span class="n">s</span><span class="o">.</span><span class="na">token</span> <span class="o">=</span> <span class="n">token</span><span class="o">;</span>
+    <span class="n">s</span><span class="o">.</span><span class="na">info</span> <span class="o">=</span> <span class="n">info</span><span class="o">;</span>
+    <span class="n">s</span><span class="o">.</span><span class="na">compatInfo</span> <span class="o">=</span> <span class="n">compatInfo</span><span class="o">;</span>
+    <span class="n">sendMessage</span><span class="o">(</span><span class="n">H</span><span class="o">.</span><span class="na">CREATE_SERVICE</span><span class="o">,</span> <span class="n">s</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>所以在替换回去时我们也要这么<code class="highlighter-rouge">create</code>,利用反射生成<code class="highlighter-rouge">service</code>,注意要先<code class="highlighter-rouge">preLoadApk</code>替换<code class="highlighter-rouge">LoadedApk</code>,最后因为源码中将生成的<code class="highlighter-rouge">service</code>放在了<code class="highlighter-rouge">mServices</code>中,所以我们可以读取出来拿到service
+<img src="/img/2017-03-15-droidplugin-1/14895035598358.jpg" alt="" /></p>
+
+<p>最后加入<code class="highlighter-rouge">runningProcess</code>中:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">addServiceInfo</span><span class="o">(</span><span class="kt">int</span> <span class="n">pid</span><span class="o">,</span> <span class="kt">int</span> <span class="n">uid</span><span class="o">,</span> <span class="n">ServiceInfo</span> <span class="n">stubInfo</span><span class="o">,</span> <span class="n">ServiceInfo</span> <span class="n">targetInfo</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">ProcessItem</span> <span class="n">item</span> <span class="o">=</span> <span class="n">items</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">pid</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">targetInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">targetInfo</span><span class="o">.</span><span class="na">processName</span> <span class="o">=</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">item</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ProcessItem</span><span class="o">();</span>
+        <span class="n">item</span><span class="o">.</span><span class="na">pid</span> <span class="o">=</span> <span class="n">pid</span><span class="o">;</span>
+        <span class="n">item</span><span class="o">.</span><span class="na">uid</span> <span class="o">=</span> <span class="n">uid</span><span class="o">;</span>
+        <span class="n">items</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">pid</span><span class="o">,</span> <span class="n">item</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">item</span><span class="o">.</span><span class="na">stubProcessName</span> <span class="o">=</span> <span class="n">stubInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">item</span><span class="o">.</span><span class="na">pkgs</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">targetInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">item</span><span class="o">.</span><span class="na">pkgs</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">targetInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">item</span><span class="o">.</span><span class="na">targetProcessName</span> <span class="o">=</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">;</span>
+    <span class="n">item</span><span class="o">.</span><span class="na">addServiceInfo</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">name</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h3 id="总结">总结</h3>
+
+<p>总结一下</p>
+
+<ul>
+  <li>全局使用动态代理作<code class="highlighter-rouge">hook</code></li>
+  <li><code class="highlighter-rouge">hook</code>了<code class="highlighter-rouge">AMS</code>来对四大组件进行插件化</li>
+  <li>预先注册多个组件和进程,采用替身的方式解决<code class="highlighter-rouge">security</code>检查</li>
+  <li>使用替换<code class="highlighter-rouge">LoadedApk</code>来解决<code class="highlighter-rouge">classLoader</code>加载插件问题</li>
+</ul>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/03/12/Droidplugin-1"
+                    data-title="DroidPlugin(一)"
+                    data-url="http://localhost:5001/2017/03/12/Droidplugin-1/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="目前的市场让我觉得应该静下心研究一下插件,热补丁等热门的东西,虽然apple刚宣布禁止JPatch等,但android还是如此自由浪漫。
+
+对于插件,该阶... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/03/12/Linux-memory-1/" data-toggle="tooltip" data-placement="top" title="存储管理(一)">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/03/17/Intent-bug/" data-toggle="tooltip" data-placement="top" title="intent传递对象之蜜汁错误">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/03/12/Droidplugin-1"
+                        data-title="DroidPlugin(一)"
+                        data-url="http://localhost:5001/2017/03/12/Droidplugin-1/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

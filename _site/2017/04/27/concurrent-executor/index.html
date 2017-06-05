@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Future总结 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/04/27/concurrent-executor/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Java" title="Java">Java</a>
+                        
+                        <a class="tag" href="/tags/#Concurrent" title="Concurrent">Concurrent</a>
+                        
+                    </div>
+                    <h1>Future总结</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on April 27, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>首先分析一下<code class="highlighter-rouge">ScheduleThreadPoolExecutor</code>:</p>
+
+<h3 id="schedulefuture">ScheduleFuture</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">ScheduledFuture</span><span class="o">&lt;</span><span class="n">V</span><span class="o">&gt;</span> <span class="kd">extends</span> <span class="n">Delayed</span><span class="o">,</span> <span class="n">Future</span><span class="o">&lt;</span><span class="n">V</span><span class="o">&gt;</span> <span class="o">{</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h3 id="schedulethreadpoolexecutor">ScheduleThreadPoolExecutor</h3>
+
+<p>ScheduledThreadPoolExecutor的功能主要有两点：在固定的时间点执行（也可以认为是延迟执行），重复执行。入口多个,包括<code class="highlighter-rouge">execute</code>,<code class="highlighter-rouge">schedule</code>等等。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">execute</span><span class="o">(</span><span class="n">Runnable</span> <span class="n">command</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">schedule</span><span class="o">(</span><span class="n">command</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">NANOSECONDS</span><span class="o">);</span>
+<span class="o">}</span>
+ <span class="kd">public</span> <span class="n">ScheduledFuture</span><span class="o">&lt;?&gt;</span> <span class="n">schedule</span><span class="o">(</span><span class="n">Runnable</span> <span class="n">command</span><span class="o">,</span>
+                                       <span class="kt">long</span> <span class="n">delay</span><span class="o">,</span>
+                                       <span class="n">TimeUnit</span> <span class="n">unit</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">command</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">unit</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">NullPointerException</span><span class="o">();</span>
+    <span class="n">RunnableScheduledFuture</span><span class="o">&lt;?&gt;</span> <span class="n">t</span> <span class="o">=</span> <span class="n">decorateTask</span><span class="o">(</span><span class="n">command</span><span class="o">,</span>
+            <span class="k">new</span> <span class="n">ScheduledFutureTask</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">&gt;(</span><span class="n">command</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span>
+                                          <span class="n">triggerTime</span><span class="o">(</span><span class="n">delay</span><span class="o">,</span> <span class="n">unit</span><span class="o">)));</span>
+    <span class="n">delayedExecute</span><span class="o">(</span><span class="n">t</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">t</span><span class="o">;</span>
+<span class="o">}</span>
+    
+</code></pre>
+</div>
+<blockquote>
+  <p>把任务包装成RunnableScheduledFuture对象，然后调用delayedExecute来实现延迟执行。任务包装类继承自ThreadPoolExecutor的包装类RunnableFuture，同时实现ScheduledFuture接口使包装类具有了延迟执行和重复执行这些功能以匹配ScheduledThreadPoolExecutor。</p>
+</blockquote>
+
+<h4 id="scheduledfuturetask">ScheduledFutureTask</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">class</span> <span class="nc">ScheduledFutureTask</span><span class="o">&lt;</span><span class="n">V</span><span class="o">&gt;</span>
+            <span class="kd">extends</span> <span class="n">FutureTask</span><span class="o">&lt;</span><span class="n">V</span><span class="o">&gt;</span> <span class="kd">implements</span> <span class="n">RunnableScheduledFuture</span><span class="o">&lt;</span><span class="n">V</span><span class="o">&gt;</span> <span class="o">{</span>
+        <span class="cm">/** 距离任务开始执行的时间，纳秒为单位 */</span>
+        <span class="kd">private</span> <span class="kt">long</span> <span class="n">time</span><span class="o">;</span>
+
+        <span class="cm">/**
+         * 重复执行任务的间隔，即每隔多少时间执行一次任务
+         */</span>
+        <span class="kd">private</span> <span class="kd">final</span> <span class="kt">long</span> <span class="n">period</span><span class="o">;</span>
+<span class="cm">/**
+         * Overrides FutureTask version so as to reset/requeue if periodic.
+         */</span>
+        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+            <span class="kt">boolean</span> <span class="n">periodic</span> <span class="o">=</span> <span class="n">isPeriodic</span><span class="o">();</span>
+            <span class="k">if</span> <span class="o">(!</span><span class="n">canRunInCurrentRunState</span><span class="o">(</span><span class="n">periodic</span><span class="o">))</span>
+                <span class="n">cancel</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+            <span class="k">else</span> <span class="nf">if</span> <span class="o">(!</span><span class="n">periodic</span><span class="o">)</span>
+            <span class="c1">//不是周期的,直接跑吧</span>
+                <span class="n">ScheduledFutureTask</span><span class="o">.</span><span class="na">super</span><span class="o">.</span><span class="na">run</span><span class="o">();</span>
+            <span class="c1">// 对于需要重复执行的任务，则执行一次，然后reset</span>
+            <span class="c1">// 更新一下下次执行的时间，调用reExecutePeriodic更新任务在执行队列的</span>
+            <span class="c1">// 位置（其实就是添加到队列的末尾</span>
+            <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">ScheduledFutureTask</span><span class="o">.</span><span class="na">super</span><span class="o">.</span><span class="na">runAndReset</span><span class="o">())</span> <span class="o">{</span>
+                <span class="n">setNextRunTime</span><span class="o">();</span>
+                <span class="n">reExecutePeriodic</span><span class="o">(</span><span class="n">outerTask</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+<span class="o">}</span>
+    <span class="cm">/**
+     * 1.RUNNING返回true
+     * 2.SHUTDOWN看标志位,翻译一下就知道了,就是字面意思
+     */</span>
+    <span class="kt">boolean</span> <span class="nf">canRunInCurrentRunState</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">periodic</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="nf">isRunningOrShutdown</span><span class="o">(</span><span class="n">periodic</span> <span class="o">?</span>
+                                   <span class="n">continueExistingPeriodicTasksAfterShutdown</span> <span class="o">:</span>
+                                   <span class="n">executeExistingDelayedTasksAfterShutdown</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="delayexecute">DelayExecute</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>
+<span class="kd">public</span> <span class="nf">ScheduledThreadPoolExecutor</span><span class="o">(</span><span class="kt">int</span> <span class="n">corePoolSize</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kd">super</span><span class="o">(</span><span class="n">corePoolSize</span><span class="o">,</span> <span class="n">Integer</span><span class="o">.</span><span class="na">MAX_VALUE</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">NANOSECONDS</span><span class="o">,</span>
+            <span class="k">new</span> <span class="nf">DelayedWorkQueue</span><span class="o">());</span>
+<span class="o">}</span>
+    
+ <span class="kd">private</span> <span class="kt">void</span> <span class="nf">delayedExecute</span><span class="o">(</span><span class="n">RunnableScheduledFuture</span><span class="o">&lt;?&gt;</span> <span class="n">task</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">isShutdown</span><span class="o">())</span>
+            <span class="n">reject</span><span class="o">(</span><span class="n">task</span><span class="o">);</span>
+        <span class="k">else</span> <span class="o">{</span>
+    
+            <span class="kd">super</span><span class="o">.</span><span class="na">getQueue</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">task</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">isShutdown</span><span class="o">()</span> <span class="o">&amp;&amp;</span>
+                <span class="o">!</span><span class="n">canRunInCurrentRunState</span><span class="o">(</span><span class="n">task</span><span class="o">.</span><span class="na">isPeriodic</span><span class="o">())</span> <span class="o">&amp;&amp;</span>
+                <span class="n">remove</span><span class="o">(</span><span class="n">task</span><span class="o">))</span>
+                <span class="n">task</span><span class="o">.</span><span class="na">cancel</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+            <span class="k">else</span>
+            <span class="c1">//至少加入一个worker去runWorker执行task</span>
+                <span class="n">ensurePrestart</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+</code></pre>
+</div>
+<p>我们可以看到,构造函数中是<code class="highlighter-rouge">DelayedWorkQueue</code>,而不是普通的<code class="highlighter-rouge">BlockQueue</code>,还要注意与之前提到过得<code class="highlighter-rouge">DelayedQueue</code>做区别。</p>
+
+<h5 id="delayedworkqueue">DelayedWorkQueue</h5>
+
+<p>主要看一下offer函数</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">offer</span><span class="o">(</span><span class="n">Runnable</span> <span class="n">x</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">x</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">NullPointerException</span><span class="o">();</span>
+            <span class="n">RunnableScheduledFuture</span> <span class="n">e</span> <span class="o">=</span> <span class="o">(</span><span class="n">RunnableScheduledFuture</span><span class="o">)</span><span class="n">x</span><span class="o">;</span>
+            <span class="kd">final</span> <span class="n">ReentrantLock</span> <span class="n">lock</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">lock</span><span class="o">;</span>
+            <span class="n">lock</span><span class="o">.</span><span class="na">lock</span><span class="o">();</span>
+            <span class="k">try</span> <span class="o">{</span>
+                <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">size</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">&gt;=</span> <span class="n">queue</span><span class="o">.</span><span class="na">length</span><span class="o">)</span>
+                    <span class="n">grow</span><span class="o">();</span>
+                <span class="n">size</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">queue</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">e</span><span class="o">;</span>
+                    <span class="n">setIndex</span><span class="o">(</span><span class="n">e</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">siftUp</span><span class="o">(</span><span class="n">i</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">queue</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">==</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="c1">// 因为有元素新添加了，第一个等待的线程可以结束等待了，因此这里</span>
+                    <span class="c1">// 删除第一个等待线程</span>
+                    <span class="n">leader</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                    <span class="n">available</span><span class="o">.</span><span class="na">signal</span><span class="o">();</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+                <span class="n">lock</span><span class="o">.</span><span class="na">unlock</span><span class="o">();</span>
+            <span class="o">}</span>
+            <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="c1">//重写compareTo,可以看到比较的都是time,也就是下次执行的时间</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">Delayed</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">other</span> <span class="o">==</span> <span class="k">this</span><span class="o">)</span> <span class="c1">// compare zero ONLY if same object</span>
+                <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">other</span> <span class="k">instanceof</span> <span class="n">ScheduledFutureTask</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">ScheduledFutureTask</span><span class="o">&lt;?&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="o">(</span><span class="n">ScheduledFutureTask</span><span class="o">&lt;?&gt;)</span><span class="n">other</span><span class="o">;</span>
+                <span class="kt">long</span> <span class="n">diff</span> <span class="o">=</span> <span class="n">time</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="na">time</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">diff</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="o">)</span>
+                    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+                <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">diff</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span>
+                    <span class="k">return</span> <span class="mi">1</span><span class="o">;</span>
+                <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">sequenceNumber</span> <span class="o">&lt;</span> <span class="n">x</span><span class="o">.</span><span class="na">sequenceNumber</span><span class="o">)</span>
+                    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+                <span class="k">else</span>
+                    <span class="k">return</span> <span class="mi">1</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="kt">long</span> <span class="n">d</span> <span class="o">=</span> <span class="o">(</span><span class="n">getDelay</span><span class="o">(</span><span class="n">TimeUnit</span><span class="o">.</span><span class="na">NANOSECONDS</span><span class="o">)</span> <span class="o">-</span>
+                      <span class="n">other</span><span class="o">.</span><span class="na">getDelay</span><span class="o">(</span><span class="n">TimeUnit</span><span class="o">.</span><span class="na">NANOSECONDS</span><span class="o">));</span>
+            <span class="k">return</span> <span class="o">(</span><span class="n">d</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="o">((</span><span class="n">d</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">?</span> <span class="o">-</span><span class="mi">1</span> <span class="o">:</span> <span class="mi">1</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="kd">public</span> <span class="n">RunnableScheduledFuture</span> <span class="nf">take</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+            <span class="kd">final</span> <span class="n">ReentrantLock</span> <span class="n">lock</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">lock</span><span class="o">;</span>
+            <span class="n">lock</span><span class="o">.</span><span class="na">lockInterruptibly</span><span class="o">();</span>
+            <span class="k">try</span> <span class="o">{</span>
+                <span class="k">for</span> <span class="o">(;;)</span> <span class="o">{</span>
+                    <span class="n">RunnableScheduledFuture</span> <span class="n">first</span> <span class="o">=</span> <span class="n">queue</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">first</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+                        <span class="n">available</span><span class="o">.</span><span class="na">await</span><span class="o">();</span>
+                    <span class="k">else</span> <span class="o">{</span>
+                        <span class="kt">long</span> <span class="n">delay</span> <span class="o">=</span> <span class="n">first</span><span class="o">.</span><span class="na">getDelay</span><span class="o">(</span><span class="n">TimeUnit</span><span class="o">.</span><span class="na">NANOSECONDS</span><span class="o">);</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">delay</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="o">)</span>
+                            <span class="k">return</span> <span class="nf">finishPoll</span><span class="o">(</span><span class="n">first</span><span class="o">);</span>
+                        <span class="k">else</span> <span class="nf">if</span> <span class="o">(</span><span class="n">leader</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+                            <span class="n">available</span><span class="o">.</span><span class="na">await</span><span class="o">();</span>
+                        <span class="k">else</span> <span class="o">{</span>
+                            <span class="n">Thread</span> <span class="n">thisThread</span> <span class="o">=</span> <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">();</span>
+                            <span class="n">leader</span> <span class="o">=</span> <span class="n">thisThread</span><span class="o">;</span>
+                            <span class="k">try</span> <span class="o">{</span>
+                                <span class="n">available</span><span class="o">.</span><span class="na">awaitNanos</span><span class="o">(</span><span class="n">delay</span><span class="o">);</span>
+                            <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+                                <span class="k">if</span> <span class="o">(</span><span class="n">leader</span> <span class="o">==</span> <span class="n">thisThread</span><span class="o">)</span>
+                                    <span class="n">leader</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                            <span class="o">}</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">leader</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">queue</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+                    <span class="n">available</span><span class="o">.</span><span class="na">signal</span><span class="o">();</span>
+                <span class="n">lock</span><span class="o">.</span><span class="na">unlock</span><span class="o">();</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="总结">总结</h4>
+
+<p>所以看到因为继承于<code class="highlighter-rouge">ThreadPoolExecutor</code>,整体只是变成了<code class="highlighter-rouge">DelayedWorkerQueue</code>,如果是周期性的,执行完就加入到队列中并设置<code class="highlighter-rouge">delay</code>是<code class="highlighter-rouge">time</code>,当<code class="highlighter-rouge">worker</code>去取时发现<code class="highlighter-rouge">delay</code>还大于0就<code class="highlighter-rouge">wait</code></p>
+
+<h3 id="线程池总结">线程池总结</h3>
+
+<p><img src="/img/2017-04-27-concurrent-executor/14932594538381.jpg" alt="" /></p>
+
+<p>所以,各种策略其实体现在,take的时候是否需要等待直到<code class="highlighter-rouge">getDelayed</code>小于0,增加任务的时候是否小于<code class="highlighter-rouge">coolPoolSize</code>使得可以直接往<code class="highlighter-rouge">worker</code>池加<code class="highlighter-rouge">worker</code>还是先在队列里排队。</p>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/04/27/concurrent-executor"
+                    data-title="Future总结"
+                    data-url="http://localhost:5001/2017/04/27/concurrent-executor/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="首先分析一下ScheduleThreadPoolExecutor:
+
+ScheduleFuture
+
+public interface Scheduled... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/04/19/concurrent-lock/" data-toggle="tooltip" data-placement="top" title="Locks">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/04/28/gradleAndNuwa/" data-toggle="tooltip" data-placement="top" title="Gradle实战与Nuwa顺带分析">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/04/27/concurrent-executor"
+                        data-title="Future总结"
+                        data-url="http://localhost:5001/2017/04/27/concurrent-executor/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

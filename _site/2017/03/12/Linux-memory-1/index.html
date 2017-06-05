@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>存储管理(一) - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/03/12/Linux-memory-1/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Linux" title="Linux">Linux</a>
+                        
+                        <a class="tag" href="/tags/#SourceCode" title="SourceCode">SourceCode</a>
+                        
+                        <a class="tag" href="/tags/#Memory" title="Memory">Memory</a>
+                        
+                    </div>
+                    <h1>存储管理(一)</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on March 12, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>从这篇开始<code class="highlighter-rouge">linux</code>分析之旅,每周70页,看的是毛的书,但还是强推
+<img src="/img/2017-03-12-linux-memory-1/14892981842773.jpg" alt="" /></p>
+
+<p>里面的图总结的非常精彩,共勉。</p>
+
+<h4 id="具体映射过程">具体映射过程:</h4>
+
+<p><code class="highlighter-rouge">i386 cpu</code>使用代码段寄存器CS来作为段式映射的段选择码,根据<code class="highlighter-rouge">CS</code>的<code class="highlighter-rouge">bit2</code>来选择<code class="highlighter-rouge">GDT</code>还是<code class="highlighter-rouge">LDT</code>作为段描述表,但其实在<code class="highlighter-rouge">linux</code>中,每个段的基址都是0,所以虚地址到线性地址的映射保持不变,即:段映射屁用也没有。</p>
+
+<p>页式映射:
+<img src="/img/2017-03-12-linux-memory-1/14892888189387.jpg" alt="" />
+<img src="/img/2017-03-12-linux-memory-1/14892922877772.jpg" alt="" /></p>
+
+<p>系统空间在物理内存是从最低的地址开始,而在虚存空间占据最高的1G字节,因此对于内核而言,内存映射是简单的线性映射,<code class="highlighter-rouge">0xC000000</code>就是偏移量,即:
+虚拟地址 = 实际地址 + <code class="highlighter-rouge">0xc000000</code></p>
+
+<h5 id="pte_entry">pte_entry</h5>
+
+<p>pte在32位系统上长4个字节,但是作为指针他只有高20位有用。同时,所有物理页面都是4K字节边界对齐,所以PTE<strong>作为指针</strong>低12位一定是0,但全写0真是浪费空间,所以低12位linux将其用于页面的状态信息与访问权限。</p>
+
+<p>定义<code class="highlighter-rouge">pgprot_t</code>与低12位对应</p>
+
+<p>内核中有一个<code class="highlighter-rouge">mem_map</code>的全局量,指向<code class="highlighter-rouge">page</code>数据结构,<code class="highlighter-rouge">page</code>即物理页面,因此<code class="highlighter-rouge">mem_map</code>就是全局物理页面的集合。而<code class="highlighter-rouge">pte</code>的指针部分就是该集合中的<code class="highlighter-rouge">index</code></p>
+
+<h4 id="zone">zone</h4>
+
+<p><img src="/img/2017-03-12-linux-memory-1/14892932710944.jpg" alt="" /></p>
+
+<p>传统<code class="highlighter-rouge">CPU</code>的整个物理空间都是均匀一致的,<code class="highlighter-rouge">cpu</code>访问任何一个地址的时间都相同，称为<code class="highlighter-rouge">UMA</code>。但在<code class="highlighter-rouge">NUMA</code>中，为非均质存储结构,对某个特定的<code class="highlighter-rouge">CPU</code>访问自己模块的存储器速度是最快的。</p>
+
+<p>在<code class="highlighter-rouge">UMA</code>结构中,仓库中的物理页面会被划分为多个管理区(其实就三个,<code class="highlighter-rouge">ZONE_DMA</code>,<code class="highlighter-rouge">ZONE_HIGHMEM</code>,<code class="highlighter-rouge">ZONE_NORMAL</code>)为了以后分配内存方便,在管理区结构中会有一个队列来保存一些连续的物理页面,连续长度为2,4,8,16…</p>
+
+<p>在<code class="highlighter-rouge">NUMA</code>结构中,引入新的代表存储节点的<code class="highlighter-rouge">pglist_data</code>即<code class="highlighter-rouge">pg_data_t</code>结构,具体层次如下图:</p>
+
+<p><img src="/img/2017-03-12-linux-memory-1/14892968057308.jpg" alt="" /></p>
+
+<p><img src="/img/2017-03-12-linux-memory-1/14892932354465.jpg" alt="" /></p>
+
+<p><a href="linux source code在线阅读"><code class="highlighter-rouge">http://lxr.free-electrons.com/source/include/linux/mmzone.h?v=2.4.37#L32</code></a></p>
+
+<p>觉得这个网址很好看,以后打算linux源码都直接截图分析了。</p>
+
+<p><img src="/img/2017-03-12-linux-memory-1/14892970550078.jpg" alt="" /></p>
+
+<p><code class="highlighter-rouge">node_zonelists</code>代表该节点的分配策略,在分配页面时会进行策略指定。</p>
+
+<h4 id="vm_area_struct">vm_area_struct</h4>
+
+<p>一个很重要的虚存结构,代表离散的虚存区间,大名鼎鼎的<code class="highlighter-rouge">vma</code>
+<img src="/img/2017-03-12-linux-memory-1/14892973217245.jpg" alt="" /></p>
+
+<ul>
+  <li><code class="highlighter-rouge">vm_start</code> 起始地址</li>
+  <li><code class="highlighter-rouge">vm_end</code> 结束地址</li>
+  <li><code class="highlighter-rouge">vm_rb</code> 红黑树节点,增加搜索速度</li>
+  <li><code class="highlighter-rouge">vm_mm</code> 指向<code class="highlighter-rouge">mm_struct</code>的指针,这是一个虚存最上层的数据结构,代表整个虚拟内存</li>
+</ul>
+
+<p>一个进程只有一个<code class="highlighter-rouge">mm_struct</code>,但后者可能被多个进程共享,如<code class="highlighter-rouge">vfork()</code>或<code class="highlighter-rouge">clone()</code>,子进程可以和父进程共享</p>
+
+<h4 id="页面的生命周期">页面的生命周期</h4>
+
+<p>之前一直对物理页面,盘上页面等概念有些模糊,这里先列一些关键点:</p>
+
+<ul>
+  <li>页面表项<code class="highlighter-rouge">PTE</code>为空,代表虚拟内存还没有和<strong>物理地址</strong>建立映射关系</li>
+  <li>当建立映射关系后,如果物理页面在内存中,则<code class="highlighter-rouge">PTE</code>指向该物理页面,如果不在内存中,说明该物理页面已经被换出到盘上或者文件中,则<code class="highlighter-rouge">PTE</code>指向一个特殊的代表盘或文件的数据结构</li>
+  <li>盘上一直有物理页面,当虚存需要用到时,会新建一个内存物理页面,然后将盘上的内容写入该内存物理页面。</li>
+  <li>当内存不够时,内存物理页面会重新写回到盘上物理页面,同时销毁自己,但如果不<code class="highlighter-rouge">dirty</code>，就是说内存物理页面没被进程写过,那不重写也无所谓。</li>
+</ul>
+
+<p>以上都是一些简单的概念,但能防止自己混乱= =</p>
+
+<h5 id="缺页异常">缺页异常</h5>
+
+<p>当虚存要用到物理地址时,发现还没有建立映射或者物理页面不在内存中时,就会发生缺页异常。</p>
+
+<p>首先通过<code class="highlighter-rouge">find_vma</code>找到<strong>结束地址大于给定地址的</strong>第一个区间。
+<img src="/img/2017-03-12-linux-memory-1/14892992143851.jpg" alt="" /></p>
+
+<p><img src="/img/2017-03-12-linux-memory-1/14892997004993.jpg" alt="" /></p>
+
+<p><code class="highlighter-rouge">brk</code>空洞指上图堆栈与代码之间的大空洞,映射空洞指由于区间销毁或建立映射时跳过了一块地址留下的空洞。</p>
+
+<p>如果是第二种空洞,会发出一个信号,当系统从中断返回时会检查当前进程有无悬而未决的信号,有的话就会进行处理,此场景就会发出<code class="highlighter-rouge">segment fault</code>的提示。</p>
+
+<h5 id="堆栈扩展">堆栈扩展</h5>
+
+<p><code class="highlighter-rouge">expand_vm_area(stack)</code></p>
+
+<p>再来看上图的第一种空洞,即如果是堆栈不够需要扩展时,大体走以下两步:</p>
+
+<ul>
+  <li>将前面提到的<code class="highlighter-rouge">vm_area_struct</code>数据结构的 <code class="highlighter-rouge">start</code> 扩充一下 栈是从上往下的</li>
+  <li>通过<code class="highlighter-rouge">handle_mm_fault</code>建立新扩展页面对物理内存的映射</li>
+</ul>
+
+<p><img src="/img/2017-03-12-linux-memory-1/14893001768777.jpg" alt="" /></p>
+
+<p><code class="highlighter-rouge">pmd</code>指向的页面表可能不存在,需要先分配:
+<img src="/img/2017-03-12-linux-memory-1/14893004916169.jpg" alt="" /></p>
+
+<p>通过<code class="highlighter-rouge">handle_pte_fault</code>对页面进行分配。</p>
+
+<p><img src="/img/2017-03-12-linux-memory-1/14893215630252.jpg" alt="" /></p>
+
+<p><code class="highlighter-rouge">mk_pte(ZERO_PAGE(addr))</code>代表映射的物理页面永远是只读的同一个物理内存页面,只有可写的页面才会为其通过<code class="highlighter-rouge">alloc_page()</code>分配独立的物理内存。</p>
+
+<blockquote>
+  <p>当<code class="highlighter-rouge">CPU</code>从一次页面错异常处理返回用户空间时,会先重新执行中途夭折的命令。但中断和<code class="highlighter-rouge">trap</code>会执行下一条命令。因此缺页时,会执行夭折的命令。</p>
+</blockquote>
+
+<h5 id="页面周转">页面周转</h5>
+
+<p>前面说过,如果pte指向的物理页面不在内存中,则指向另一个数据结构:<code class="highlighter-rouge">swap_entry_t</code></p>
+
+<p><code class="highlighter-rouge">swap_info_struct</code>代表盘或文件</p>
+
+<p><img src="/img/2017-03-12-linux-memory-1/14893226222930.jpg" alt="" /></p>
+
+<p><code class="highlighter-rouge">offset</code>代表盘上偏移,<code class="highlighter-rouge">type</code>其实代表第几个盘。。
+<img src="/img/2017-03-12-linux-memory-1/14893220774979.jpg" alt="" /></p>
+
+<ul>
+  <li><code class="highlighter-rouge">lowest_bit,highest_bit</code>:文件哪部分用于页面交换</li>
+  <li><code class="highlighter-rouge">swap_map</code>:数组的每一个整数代表盘上的一个物理页面</li>
+</ul>
+
+<p>为了防止页面抖动,页面的周期可分为换出与释放。即不立即释放准备换出的页面,而是将其page结构留在一个不活跃队列中,如果经过一段时间后还没有被访问,则需要最后退役了。</p>
+
+<p>当新创建页面时,会将<code class="highlighter-rouge">page</code>链入<code class="highlighter-rouge">clean</code>队列,<code class="highlighter-rouge">active</code>队列与一些<code class="highlighter-rouge">hash</code>队列中。</p>
+
+<p>再来看看页面的分配 这是一个艰苦卓绝的过程:
+<img src="/img/2017-03-12-linux-memory-1/14893235460744.jpg" alt="" /></p>
+
+<ul>
+  <li><code class="highlighter-rouge">gfp_mask</code>:分配策略</li>
+  <li><code class="highlighter-rouge">order</code>:页面大小 <code class="highlighter-rouge">1&lt;&lt;order</code></li>
+</ul>
+
+<p>在NUMA结构中,首先通过<code class="highlighter-rouge">NODE_DATA(numa_node_id())</code>找到距离当前<code class="highlighter-rouge">cpu</code>最近的<code class="highlighter-rouge">pg_data_t</code>结构,然后根据策略进行分配。</p>
+
+<ul>
+  <li>看<code class="highlighter-rouge">zone</code>中空闲页面大于<code class="highlighter-rouge">watermark</code>,则可以从<code class="highlighter-rouge">z</code>中<code class="highlighter-rouge">rmqueue</code>分配一个页面。
+<img src="/img/2017-03-12-linux-memory-1/14893244789255.jpg" alt="" /></li>
+</ul>
+
+<p>没有分配成功,则尝试唤醒kswapd内核线程
+<img src="/img/2017-03-12-linux-memory-1/14893248387443.jpg" alt="" /></p>
+
+<p>还是没有分配成功,降低水位要求,如下图,从<code class="highlighter-rouge">low-&gt;min-&gt;0</code>
+<img src="/img/2017-03-12-linux-memory-1/14893250674286.jpg" alt="" /></p>
+
+<p>通过<code class="highlighter-rouge">balance_classzone</code>后,再次尝试分配,还不成功就可以GG了。这个<code class="highlighter-rouge">balance_classzone</code>也不重要,暂且先忽略。(其实是没看懂orz)
+<img src="/img/2017-03-12-linux-memory-1/14893254330209.jpg" alt="" /></p>
+
+<p>最后分析<code class="highlighter-rouge">rmqueue</code>,很有意思的一个函数。
+<img src="/img/2017-03-12-linux-memory-1/14893258306356.jpg" alt="" /></p>
+
+<p>首先,通过<code class="highlighter-rouge">list_entry</code>取下一个<code class="highlighter-rouge">page</code>结构,然后将它从队列中删除。这时候取下来的<code class="highlighter-rouge">page</code>大小一定是≥<code class="highlighter-rouge">order</code>,所以还要通过<code class="highlighter-rouge">expand</code>进行弥补。
+<img src="/img/2017-03-12-linux-memory-1/14893260809151.jpg" alt="" /></p>
+
+<p>在<code class="highlighter-rouge">expand</code>中,将<code class="highlighter-rouge">page</code>大小按/2进行缩小,知道与<code class="highlighter-rouge">order</code>相同。并且缩小的另一半要重新加回到应有的队列中去。
+<img src="/img/2017-03-12-linux-memory-1/14893262932531.jpg" alt="" /></p>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/03/12/Linux-memory-1"
+                    data-title="存储管理(一)"
+                    data-url="http://localhost:5001/2017/03/12/Linux-memory-1/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="从这篇开始linux分析之旅,每周70页,看的是毛的书,但还是强推
+
+
+里面的图总结的非常精彩,共勉。
+
+具体映射过程:
+
+i386 cpu使用代码段寄存... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/03/07/Broadcast/" data-toggle="tooltip" data-placement="top" title="Broadcast广播分析">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/03/12/Droidplugin-1/" data-toggle="tooltip" data-placement="top" title="DroidPlugin(一)">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/03/12/Linux-memory-1"
+                        data-title="存储管理(一)"
+                        data-url="http://localhost:5001/2017/03/12/Linux-memory-1/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>ContentProvider分析 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/06/05/contentprovider/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/school.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/school.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#四大组件" title="四大组件">四大组件</a>
+                        
+                        <a class="tag" href="/tags/#Android" title="Android">Android</a>
+                        
+                        <a class="tag" href="/tags/#源码分析" title="源码分析">源码分析</a>
+                        
+                    </div>
+                    <h1>ContentProvider分析</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on June 5, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>转眼要毕业了,再过几天就要毕设答辩了,铭记我十多年的求学时光,感谢所有帮助过我的老师,砥砺前行吧</p>
+
+<p>乘着答辩间隙分析一下<code class="highlighter-rouge">CP</code>的源码,之前实习时同事一直讨论不同<code class="highlighter-rouge">sdk</code>后<code class="highlighter-rouge">CursorWindow</code>泄露方的问题,借此机会研究一下。事实证明低版本和高版本确实不同,但也只是究竟在服务方还是调用方创建<code class="highlighter-rouge">CursorWindow</code>的区别,所以本质没什么区别。</p>
+
+<p><a href="http://blog.csdn.net/sinat_22657459/article/details/53323659">很清晰的介绍</a></p>
+
+<h3 id="contentprovider获取">ContentProvider获取</h3>
+
+<p>我们看一个简单的使用例子:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">fetchAllContacts</span><span class="o">()</span> <span class="o">{</span>  
+    <span class="n">ContentResolver</span> <span class="n">contentResolver</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">getContentResolver</span><span class="o">();</span>  
+    <span class="n">Cursor</span> <span class="n">cursor</span> <span class="o">=</span> <span class="n">contentResolver</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">provider</span><span class="o">.</span><span class="na">ContactsContract</span><span class="o">.</span><span class="na">Contacts</span><span class="o">.</span><span class="na">CONTENT_URI</span><span class="o">,</span>  <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>  
+    <span class="n">cursor</span><span class="o">.</span><span class="na">getCount</span><span class="o">();</span>  
+    <span class="k">while</span><span class="o">(</span><span class="n">cursor</span><span class="o">.</span><span class="na">moveToNext</span><span class="o">()){</span>        
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">cursor</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="n">cursor</span><span class="o">.</span><span class="na">getColumnIndex</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">provider</span><span class="o">.</span><span class="na">ContactsContract</span><span class="o">.</span><span class="na">Contacts</span><span class="o">.</span><span class="na">_ID</span><span class="o">)));</span>  
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">cursor</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="n">cursor</span><span class="o">.</span><span class="na">getColumnIndex</span><span class="o">(</span><span class="n">android</span><span class="o">.</span><span class="na">provider</span><span class="o">.</span><span class="na">ContactsContract</span><span class="o">.</span><span class="na">Contacts</span><span class="o">.</span><span class="na">DISPLAY_NAME</span><span class="o">)));</span>  
+    <span class="o">}</span>  
+    <span class="n">cursor</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>  
+<span class="o">}</span>  
+</code></pre>
+</div>
+<p>在ContextImpl初始化时,</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965637004854.jpg" alt="" /></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965635212328.jpg" alt="" /></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965637994922.jpg" alt="" /></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965639121555.jpg" alt="" /></p>
+
+<h4 id="amsgetcontentprovider">AMS.getContentProvider</h4>
+
+<p>最终使用<code class="highlighter-rouge">AMS</code>去拿到<code class="highlighter-rouge">ContentProvider</code>时, 这个函数首先会通过<code class="highlighter-rouge">getExistingProvider</code>函数来检查本地是否已经存在这个要获取的<code class="highlighter-rouge">ContentProvider</code>接口，如果存在，就直接返回了。本地已经存在的<code class="highlighter-rouge">ContextProvider</code>接口保存在<code class="highlighter-rouge">ActivityThread</code>类的<code class="highlighter-rouge">mProviderMap</code>成员变量中，以<code class="highlighter-rouge">ContentProvider</code>对应的<code class="highlighter-rouge">URI</code>的<code class="highlighter-rouge">authority</code>为键值保存。</p>
+
+<blockquote>
+  <p>AMS.java</p>
+</blockquote>
+
+<p><img src="/img/2017-06-05-contentprovider/14965642020755.jpg" alt="" /></p>
+
+<p>注意<code class="highlighter-rouge">cpr,cpi</code>是关键变量。首先检查<code class="highlighter-rouge">mProviderMap</code>中是否有对应<code class="highlighter-rouge">authority</code>的<code class="highlighter-rouge">cpr</code></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965646849696.jpg" alt="" /></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965647885129.jpg" alt="" /></p>
+
+<p>如果找不到,通过<code class="highlighter-rouge">PMS</code>解析<code class="highlighter-rouge">CP</code>:</p>
+
+<blockquote>
+  <p>PMS.java</p>
+</blockquote>
+
+<p><img src="/img/2017-06-05-contentprovider/14965649232019.jpg" alt="" /></p>
+
+<p>进入<code class="highlighter-rouge">PackageParser</code>去生成<code class="highlighter-rouge">ProviderInfo</code>,我们知道,在应用启动时,<code class="highlighter-rouge">PackageParser</code>会解析配置文件等,获取四大组件的信息,所以这时候<code class="highlighter-rouge">provider</code>是有内容的。</p>
+
+<blockquote>
+  <p>AMS.java</p>
+</blockquote>
+
+<p>同得到<code class="highlighter-rouge">cpi</code>后,构建<code class="highlighter-rouge">cpr</code>
+<img src="/img/2017-06-05-contentprovider/14965655740385.jpg" alt="" /></p>
+
+<p>检查这个<code class="highlighter-rouge">provider</code>是否允许在客户进程中加载,还是需要新启进程
+<img src="/img/2017-06-05-contentprovider/14965656162346.jpg" alt="" /></p>
+
+<p>如果需要新启进程,系统中正在加载的<code class="highlighter-rouge">CP</code>在<code class="highlighter-rouge">mLaunchingProvider</code>列表中</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965656898886.jpg" alt="" /></p>
+
+<p>使用<code class="highlighter-rouge">proc.thread</code>(调用方的<code class="highlighter-rouge">binderProxy</code>)来<code class="highlighter-rouge">installProvider</code>:看这个<code class="highlighter-rouge">CP</code>对应的进程是否已经启动,如果没有就先启动进程,如果启动了,就将该<code class="highlighter-rouge">CP</code>进行注册。通过获取<code class="highlighter-rouge">ProcessRecord</code>判断进程是否启动</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965657672527.jpg" alt="" /></p>
+
+<p>最后,因为在新进程启动,所以需要等待:直到新进程中设置了<code class="highlighter-rouge">cpr.provider</code>即可。</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965662266698.jpg" alt="" /></p>
+
+<h4 id="新进程启动">新进程启动</h4>
+
+<ul>
+  <li>ActivityManagerService.startProcessLocked</li>
+  <li>Process.start (新进程)</li>
+  <li>ActivityThread.main</li>
+  <li>ActivityThread.attach</li>
+  <li>ActivityManagerService.attachApplication (AMS做一些进程启动之后的微小工作。。)</li>
+</ul>
+
+<p>在<code class="highlighter-rouge">attachAppliction</code>时,会去启动对应的<code class="highlighter-rouge">CP</code>:</p>
+
+<blockquote>
+  <p>AMS.java
+<img src="/img/2017-06-05-contentprovider/14965671671795.jpg" alt="" /></p>
+</blockquote>
+
+<p><img src="/img/2017-06-05-contentprovider/14965671473241.jpg" alt="" /></p>
+
+<p>在<code class="highlighter-rouge">bindApplication</code>中:</p>
+
+<blockquote>
+  <p>ActivityThread.java</p>
+</blockquote>
+
+<p><img src="/img/2017-06-05-contentprovider/14965674592374.jpg" alt="" /></p>
+
+<p>构造<code class="highlighter-rouge">AppBindData</code>,将该塞的信息都塞进去包括<code class="highlighter-rouge">provider</code>,然后<code class="highlighter-rouge">installProvider</code></p>
+
+<blockquote>
+  <p>Handler处理
+<img src="/img/2017-06-05-contentprovider/14965676070828.jpg" alt="" /></p>
+</blockquote>
+
+<p>最后在新进程中,<code class="highlighter-rouge">installProvider</code>启动<code class="highlighter-rouge">CP</code>,同时通知<code class="highlighter-rouge">AMS</code>即可。又见到了熟悉的<code class="highlighter-rouge">classLoader.loadClass</code>,最后通过<code class="highlighter-rouge">publishContentProviders</code>通知<code class="highlighter-rouge">AMS bind Complete</code></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965676661054.jpg" alt="" />
+<img src="/img/2017-06-05-contentprovider/14965676168519.jpg" alt="" /></p>
+
+<p>有一个地方值得关注,<code class="highlighter-rouge">provider = localProvider.getIcontentProvider()</code>,<code class="highlighter-rouge">localProvider</code>是新生成的<code class="highlighter-rouge">CP</code></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965728382854.jpg" alt="" /></p>
+
+<p>返回的<code class="highlighter-rouge">mTransport</code>继承于<code class="highlighter-rouge">CPNative</code>,是一个本地<code class="highlighter-rouge">binder</code>:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965728916994.jpg" alt="" /></p>
+
+<blockquote>
+  <p>ContentProvider类和Transport类的关系就类似于ActivityThread和ApplicationThread的关系，其它应用程序不是直接调用ContentProvider接口来访问它的数据，而是通过调用它的内部对象mTransport来间接调用ContentProvider的接口</p>
+</blockquote>
+
+<p>最后调用真正子类的<code class="highlighter-rouge">onCreate</code>,而<code class="highlighter-rouge">AMS</code>唤醒之前睡的线程:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965731340325.jpg" alt="" /></p>
+
+<p>最后返回给上层的是<code class="highlighter-rouge">mTransport</code>,用它来进行后续的查询插入等</p>
+
+<h3 id="query">query</h3>
+
+<p><img src="/img/2017-06-05-contentprovider/14966445410100.jpg" alt="" /></p>
+
+<p>在拿到<code class="highlighter-rouge">CP</code>接口后,我们正式查询</p>
+
+<h4 id="contentproviderproxy">ContentProviderProxy</h4>
+
+<p><img src="/img/2017-06-05-contentprovider/14965739442683.jpg" alt="" /></p>
+
+<p>进入真正的<code class="highlighter-rouge">Transport</code>(<code class="highlighter-rouge">ContentProviderNative</code>)进行查询:先检查这个包是否有读的权限,进入自定义的<code class="highlighter-rouge">CP</code>查询:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965761496122.jpg" alt="" /></p>
+
+<p>正常套路:
+<img src="/img/2017-06-05-contentprovider/14965762009913.jpg" alt="" /></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965762478726.jpg" alt="" /></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965762881173.jpg" alt="" /></p>
+
+<p>一步步深入,最终进入<code class="highlighter-rouge">SQLiteCursorDriver</code>中查询:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965763534665.jpg" alt="" />
+可见服务端对应的为<code class="highlighter-rouge">SQLiteCursor</code></p>
+
+<p>这一步执行完成之后，就把这个<code class="highlighter-rouge">SQLiteCursor</code>对象返回给上层
+我们看,在服务端拿到这个<code class="highlighter-rouge">SQLiteCursor</code>后,封装给<code class="highlighter-rouge">CursorToBulkCursorAdaptor</code>,同时将<code class="highlighter-rouge">BulkCursorDescriptor</code>返回</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965764384409.jpg" alt="" /></p>
+
+<p>在客户端:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965765281873.jpg" alt="" /></p>
+
+<p>这个<code class="highlighter-rouge">BulkCursorDescriptor</code>其实是一个<code class="highlighter-rouge">Parceable</code></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965766559477.jpg" alt="" /></p>
+
+<p>有<code class="highlighter-rouge">setWindow</code>,在服务端一定有<code class="highlighter-rouge">getWindow</code>:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965767523881.jpg" alt="" /></p>
+
+<p>再看
+<img src="/img/2017-06-05-contentprovider/14965772016818.jpg" alt="" />
+所以最终应用层拿到的是一个<code class="highlighter-rouge">CursorWrapperInner</code>,而<code class="highlighter-rouge">qCursor</code>是<code class="highlighter-rouge"> BulkCursorToCursorAdaptor</code></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965775897653.jpg" alt="" /></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965776602844.jpg" alt="" />
+很关键的函数:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965777082999.jpg" alt="" />
+<code class="highlighter-rouge">setWindow(mBulkCursor.getWindow(newPosition));</code>获取<code class="highlighter-rouge">window</code></p>
+
+<blockquote>
+  <p>在这里我们重点说一下，在Provider通信过程中，binder通信直接对应的两端的对象：客户端是BulkCursorToCursorAdaptor，服务端是CursorToBulkCursorAdaptor。往外退一层，应用层访问的Cursor实质是封装的一个CursorWrapperInner对象，服务端实际构造好的是一个SQLiteCursor对象。</p>
+</blockquote>
+
+<blockquote>
+  <p>Content Provider首先会创建一个SQLiteCursor对象，即SQLite数据库游标对象，它继承了AbstractWindowedCursor类，后者又继承了AbstractCursor类，而AbstractCursor类又实现了CrossProcessCursor和Cursor接口。其中，最重要的是在AbstractWindowedCursor类中，有一个成员变量mWindow，它的类型为CursorWindow，这个成员变量是通过AbstractWindowedCursor的子类SQLiteCursor的setWindow成员函数来设置的。这个SQLiteCursor对象设置好了父类AbstractWindowedCursor类的mWindow成员变量之后，它就具有传输数据的能力了，因为这个mWindow对象内部包含一块匿名共享内存。</p>
+</blockquote>
+
+<p><code class="highlighter-rouge">CursorWindow</code>是一个<code class="highlighter-rouge">Parcelable</code>对象，可跨进程传输。所以就从服务端传递到了客户端，<code class="highlighter-rouge">CursorWindow</code>中<code class="highlighter-rouge">mWindowPtr</code>就是匿名共享内存指针</p>
+
+<p><code class="highlighter-rouge">CursorToBulkCursorAdaptor</code>是一个本地<code class="highlighter-rouge">binder</code>:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965779049868.jpg" alt="" /></p>
+<h4 id="new-cursorwindow">new CursorWindow</h4>
+
+<p>CursorWindow对象，它在内部创建了一块匿名共享内存，同时，它实现了Parcel接口，因此它可以在进程间传输。</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14965779750380.jpg" alt="" />
+<img src="/img/2017-06-05-contentprovider/14966485828871.jpg" alt="" />
+C++层创建匿名共享内存</p>
+<h4 id="fillwindow">fillWindow</h4>
+
+<p>在服务端,<code class="highlighter-rouge">SQLiteCursor.fillWindow</code></p>
+
+<blockquote>
+  <p>SQLiteCursor对象通过调用成员变量mQuery的fillWindow成员函数来把从SQLite数据库中查询得到的数据保存其父类AbstractWindowedCursor的成员变量mWindow中去，即保存到第三方应用程序创建的这块匿名共享内存中去。</p>
+</blockquote>
+
+<p>其实就是通过<code class="highlighter-rouge">fillWindow</code>填充<code class="highlighter-rouge">window</code>,把查询得到的结果放到匿名共享内存中去。在<code class="highlighter-rouge">SQLiteQuery</code>中<code class="highlighter-rouge">fillWindow</code>-&gt;<code class="highlighter-rouge">getSession().executeForCursorWindow</code>-&gt;<code class="highlighter-rouge">mConnection.executeForCursorWindow</code>-&gt;<code class="highlighter-rouge">nativeExecuteForCursorWindow</code>-&gt;<code class="highlighter-rouge">CopyRowResult cpr = copyRow(env, window, statement, numColumns, startPos, addedRows);</code></p>
+
+<p>反正通过<code class="highlighter-rouge">sqlite</code>引擎获取查询结果,然后填充<code class="highlighter-rouge">window</code>:</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14966662552709.jpg" alt="" />
+这里<code class="highlighter-rouge">window-&gt;putLong</code>…等就是填充<code class="highlighter-rouge">window</code>,之后查询时上层通过<code class="highlighter-rouge">getLong</code>也是从<code class="highlighter-rouge">window</code>中获取。</p>
+
+<h3 id="contentobserver">ContentObserver</h3>
+
+<p>跟广播差不多,使用<code class="highlighter-rouge">ContentService</code>来做中间层转发。</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14966384107480.jpg" alt="" /></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14966385122217.jpg" alt="" />
+返回的就是binder接口:</p>
+
+<blockquote>
+  <p>ContentObserver类的成员变量mTransport是一个Binder对象，它是要传递给ContentService服务的，以便当ContentObserver所监控的数据发生变化时，ContentService服务可以通过这个Binder对象通知相应的ContentObserver它监控的数据发生变化了。</p>
+</blockquote>
+
+<h5 id="register">register</h5>
+
+<p><img src="/img/2017-06-05-contentprovider/14966510528888.jpg" alt="" />
+关键注册函数,</p>
+
+<p><img src="/img/2017-06-05-contentprovider/14966511469638.jpg" alt="" />
+整个注册是一个树形结构,<code class="highlighter-rouge">getUriSegment</code>获取<code class="highlighter-rouge">uri</code>中的第<code class="highlighter-rouge">index</code>个部分,其实就是按<code class="highlighter-rouge">/</code>分割后一步步创建子节点罢了(递归)</p>
+
+<h4 id="resolvernotifychangenewuri-null">resolver.notifyChange(newUri, null);</h4>
+
+<p>继续使用<code class="highlighter-rouge">ContentService.nn</code></p>
+
+<p><img src="/img/2017-06-05-contentprovider/14966512745357.jpg" alt="" />
+<code class="highlighter-rouge">collectObserversLocked</code>获取<code class="highlighter-rouge">uri</code>对应的<code class="highlighter-rouge">observer</code>,然后通过<code class="highlighter-rouge">IContentObserver</code>接口通知改变,在<code class="highlighter-rouge">Transport</code>中分发至真正的<code class="highlighter-rouge">observer</code>的<code class="highlighter-rouge">onChange即可</code></p>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/06/05/contentprovider"
+                    data-title="ContentProvider分析"
+                    data-url="http://localhost:5001/2017/06/05/contentprovider/"
+                    data-images="http://localhost:5001/img/school.jpg"
+                    data-content="转眼要毕业了,再过几天就要毕设答辩了,铭记我十多年的求学时光,感谢所有帮助过我的老师,砥砺前行吧
+
+乘着答辩间隙分析一下CP的源码,之前实习时同事一直讨论... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/05/31/databinding-1/" data-toggle="tooltip" data-placement="top" title="dataBinding--应用层运行">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/06/05/contentprovider"
+                        data-title="ContentProvider分析"
+                        data-url="http://localhost:5001/2017/06/05/contentprovider/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

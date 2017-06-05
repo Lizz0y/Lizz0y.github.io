@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Slab - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/03/17/Slab/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Linux" title="Linux">Linux</a>
+                        
+                        <a class="tag" href="/tags/#SourceCode" title="SourceCode">SourceCode</a>
+                        
+                    </div>
+                    <h1>Slab</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on March 17, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<h3 id="内核缓冲区slab">内核缓冲区(slab)</h3>
+
+<p>此篇主要介绍在内核中,<code class="highlighter-rouge">linux</code>如何提高数据结构分配效率。</p>
+
+<h4 id="malloc缺点">malloc缺点</h4>
+
+<p>一般C程序员很喜欢使用<code class="highlighter-rouge">malloc</code>来分配内存,但会有以下缺陷:</p>
+
+<ul>
+  <li>久而久之会使存储堆碎片化</li>
+  <li>每次分配到缓冲区后都要初始化,释放的数据结构在下次分配时又要重新初始化,性能较差</li>
+</ul>
+
+<p>而这两点使它不适合作为内核内存的分配策略,举个栗子,内核经常会创建进程销毁进程,那<code class="highlighter-rouge">task_struct</code>这个结构就会经常被分配销毁,如果每次都要重新<code class="highlighter-rouge">malloc</code>并进行初始化会比较耗时,因此<code class="highlighter-rouge">linux</code>引入<code class="highlighter-rouge">slab</code>概念。</p>
+
+<h4 id="slab">slab</h4>
+<p>每种数据结构都有自己专用的缓冲区队列</p>
+
+<h5 id="小对象">小对象</h5>
+
+<p><code class="highlighter-rouge">slab</code>可以拥有<code class="highlighter-rouge">1&lt;&lt;n</code>个页面,并且在一个页面可以容纳好几个对象。下图是它的定义:</p>
+
+<p><img src="/img/2017-03-17-slab/14895923041017.jpg" alt="" /></p>
+
+<ul>
+  <li><code class="highlighter-rouge">list</code>:将一块<code class="highlighter-rouge">slab</code>链入一个专用缓冲区队列</li>
+  <li><code class="highlighter-rouge">colouroff</code>:着色区大小 使得<code class="highlighter-rouge">slab</code>中每个对象的起始地址都按缓冲行对齐</li>
+  <li><code class="highlighter-rouge">s_mem</code>:指向对象区的起点</li>
+  <li><code class="highlighter-rouge">free</code>:指向第一个空闲对象,每个空闲对象都会指向下一个空闲对象的序号</li>
+</ul>
+
+<p>在该机制中,同一个数据结构例如<code class="highlighter-rouge">inode</code>会维护属于自己的<code class="highlighter-rouge">slab</code>队列,同时还会有三条独立的链表,分别是:</p>
+
+<ol>
+  <li><code class="highlighter-rouge">slab</code>中所有对象都被分配队列 <code class="highlighter-rouge">all</code></li>
+  <li><code class="highlighter-rouge">slab</code>中所有对象均未被分配队列</li>
+  <li><code class="highlighter-rouge">slab</code>中部分对象被分配 <code class="highlighter-rouge">partial</code></li>
+</ol>
+
+<p>所以某个<code class="highlighter-rouge">slab</code>在某个时刻除了会在一条特定对象的队列中外,还会在上述链表中的某一条上。</p>
+
+<p><img src="/img/2017-03-17-slab/14896722439739.jpg" alt="" /></p>
+
+<ul>
+  <li>对象区存储该slab区的对象组</li>
+  <li>为了使对象与高速缓冲区对齐,增加着色区</li>
+  <li>对象链接数组是一个空闲对象链,数组中的值存储下一个空闲对象的<code class="highlighter-rouge">index</code></li>
+</ul>
+
+<p>同时,<code class="highlighter-rouge">linux</code>引入两层结构:
+<code class="highlighter-rouge">kmem_cache_t</code>结构是一个总结性的头部,维护第一层<code class="highlighter-rouge">slab</code>队列,这个队列都是<code class="highlighter-rouge">kmem_cache_t</code>结构,在该结构中,还有对应对象的构造函数(<code class="highlighter-rouge">ctor</code>)和析构函数(<code class="highlighter-rouge">dtor</code>)
+第二层结构:<code class="highlighter-rouge">kmem_cache_t</code>作为队列头,维护第二层<code class="highlighter-rouge">slab</code>,第二层是某种特定对象的队列,并且第二层<code class="highlighter-rouge">slab</code>会维护一个空闲对象队列,即前面的<code class="highlighter-rouge">free</code>变量</p>
+
+<p><img src="/img/2017-03-17-slab/14896636548003.jpg" alt="" /></p>
+
+<p>着色区使同一<code class="highlighter-rouge">slab</code>队列不同<code class="highlighter-rouge">slab</code>上对象区的起始地址错开</p>
+
+<h4 id="slab_cache"><code class="highlighter-rouge">slab_cache</code></h4>
+
+<p>不常用的对象<code class="highlighter-rouge">cache</code>数组,只是对象大小不同,因为没必要为它专门搞一个队列。</p>
+
+<p><code class="highlighter-rouge">kmalloc</code>:分配一个不具有专门<code class="highlighter-rouge">slab</code>结构,又不想用<code class="highlighter-rouge">page</code>,否则使用<code class="highlighter-rouge">alloc_page</code>即可。
+<code class="highlighter-rouge">kfreee</code></p>
+
+<p><img src="/img/2017-03-17-slab/14896643007090.jpg" alt="" /></p>
+
+<h4 id="kmem_cache_create">kmem_cache_create()</h4>
+
+<p><img src="/img/2017-03-17-slab/14896649630305.jpg" alt="" /></p>
+
+<p><code class="highlighter-rouge">size</code>:对象(缓冲区)大小
+<code class="highlighter-rouge">offset</code>:第一个对象在slab中的偏移</p>
+
+<p>该函数主要创造该对象对应的<code class="highlighter-rouge">kmem_cache_t</code>,做了一个准备工作,并没有真正的创建<code class="highlighter-rouge">slab</code></p>
+
+<h4 id="kmem_cache_alloc">kmem_cache_alloc()</h4>
+
+<p><img src="/img/2017-03-17-slab/14896651308601.jpg" alt="" /></p>
+
+<p>可以看到,没有包含空闲对象的<code class="highlighter-rouge">slab</code>，则<code class="highlighter-rouge">alloc_new_slab</code>,否则<code class="highlighter-rouge">kmem_cache_alloc_one_tail</code>分配一个空闲的对象:</p>
+<ul>
+  <li><code class="highlighter-rouge">slab_t-&gt;free*objsize + slab_t-&gt;s_mem</code>拿到第一个空闲的对象地址</li>
+  <li>更新<code class="highlighter-rouge">slab_t-&gt;free</code> 为下一个空闲对象<code class="highlighter-rouge">index </code></li>
+</ul>
+
+<h4 id="kmem_cache_grow">kmem_cache_grow()</h4>
+
+<p>在<code class="highlighter-rouge">alloc_new_slab</code>中进入该函数:</p>
+
+<p><img src="/img/2017-03-17-slab/14896738239883.jpg" alt="" /></p>
+
+<ul>
+  <li>首先根据<code class="highlighter-rouge">gfporder</code>即<code class="highlighter-rouge">slab</code>应有的<code class="highlighter-rouge">page number</code>来<code class="highlighter-rouge">alloc_page</code>,这里分配得到<code class="highlighter-rouge">objp</code> 注意是缓冲区(<code class="highlighter-rouge">obj</code>)的<code class="highlighter-rouge">mem</code></li>
+  <li>然后通过<code class="highlighter-rouge">kmem_cache_slabmgmt()</code>建立管理信息，即确定<code class="highlighter-rouge">slab_t</code>结构的各个变量值</li>
+  <li>通过<code class="highlighter-rouge">kmem_cache_init_objs</code>进行构造函数对象初始化</li>
+</ul>
+
+<h4 id="kmem_cache_free"><code class="highlighter-rouge">kmem_cache_free</code></h4>
+
+<p>释放缓冲区,可以根据释放对象的地址计算出所在页面,根据页面得到对象所在的<code class="highlighter-rouge">slab</code>指针(之前<code class="highlighter-rouge">alloc</code>的时候有设置过),然后就可以释放该对象,同时更新<code class="highlighter-rouge">free</code></p>
+
+<p><img src="/img/2017-03-17-slab/14896743034777.jpg" alt="" /></p>
+
+<p>很巧妙,把刚释放的对象<code class="highlighter-rouge">index</code>设为<code class="highlighter-rouge">slabp-&gt;free</code>,即插入<code class="highlighter-rouge">free</code>的头部。</p>
+
+<p><img src="/img/2017-03-17-slab/14896743331730.jpg" alt="" /></p>
+
+<p>更新三条链表,缓冲区的释放并不导致<code class="highlighter-rouge">slab</code>的释放,<code class="highlighter-rouge">slab</code>释放由<code class="highlighter-rouge">kswapd</code>等内核线程调用<code class="highlighter-rouge">kmem_cache_reap()</code>完成,在释放时会释放<code class="highlighter-rouge">slab</code>队列中80%的<code class="highlighter-rouge">slab</code>,对于释放的<code class="highlighter-rouge">slab</code>,要以此调用其析构函数,并<code class="highlighter-rouge">free page</code></p>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/03/17/Slab"
+                    data-title="Slab"
+                    data-url="http://localhost:5001/2017/03/17/Slab/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="内核缓冲区(slab)
+
+此篇主要介绍在内核中,linux如何提高数据结构分配效率。
+
+malloc缺点
+
+一般C程序员很喜欢使用malloc来分配内存,... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/03/17/Intent-bug/" data-toggle="tooltip" data-placement="top" title="intent传递对象之蜜汁错误">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/04/11/gralloc/" data-toggle="tooltip" data-placement="top" title="Android4.4图像显示之gralloc驱动分析">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/03/17/Slab"
+                        data-title="Slab"
+                        data-url="http://localhost:5001/2017/03/17/Slab/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

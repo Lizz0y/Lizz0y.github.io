@@ -62,5 +62,8 @@ ga_domain: huangxuan.me
 # Sidebar settings
 sidebar: false                       # whether or not using Sidebar.
 
+# Featured Tags
+featured-tags: true                     # whether or not using Feature-Tags
+featured-condition-size: 1              # A tag will be featured if the size of it is more than this condition value
 
 port: 5001

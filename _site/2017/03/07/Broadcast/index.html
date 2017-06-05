@@ -78,6 +78,10 @@
                         <a href="/">Home</a>
                     </li>
                     
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
                 </ul>
             </div>
         </div>
@@ -235,7 +239,7 @@
 </div>
 <p>这里的scheduler是mActivityThread中熟悉的handler,ReceiverDispathcer也保存了这个handler,作用后面会看到。</p>
 
-<p><img src="media/14886440981249/14888180481880.jpg" alt="" /></p>
+<p><img src="/img/2017-03-07-broadcast/14888180481880.jpg" alt="" /></p>
 
 <p>在<code class="highlighter-rouge">LoadApk</code>中:</p>
 
@@ -265,7 +269,7 @@
 </div>
 <p>在<code class="highlighter-rouge">loadapk</code>中,有一个<code class="highlighter-rouge">map</code>记录<code class="highlighter-rouge">receiver</code>与<code class="highlighter-rouge">dispather</code>的对应,而另一个map记录<code class="highlighter-rouge">context</code>与该<code class="highlighter-rouge">map</code>的对应。</p>
 
-<p><img src="media/14886440981249/14888184255170.jpg" alt="" /></p>
+<p><img src="/img/2017-03-07-broadcast/14888184255170.jpg" alt="" /></p>
 
 <p>进入AMS真正注册<code class="highlighter-rouge">receiver</code>:</p>
 
@@ -323,7 +327,8 @@
     <span class="o">}</span>
 </code></pre>
 </div>
-<p><img src="media/14886440981249/14888186491306.jpg" alt="" /></p>
+
+<p><img src="/img/2017-03-07-broadcast/14888186491306.jpg" alt="" /></p>
 
 <p>再看<code class="highlighter-rouge">sendBroadcast</code>发送广播吧</p>
 
@@ -393,9 +398,12 @@
 <p>r代表广播信息,<code class="highlighter-rouge">target</code>是广播的对象<code class="highlighter-rouge">filter</code></p>
 
 <div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">performReceiveLocked</span><span class="o">(</span><span class="n">filter</span><span class="o">.</span><span class="na">receiverList</span><span class="o">.</span><span class="na">app</span><span class="o">,</span> <span class="n">filter</span><span class="o">.</span><span class="na">receiverList</span><span class="o">.</span><span class="na">receiver</span><span class="o">,</span><span class="k">new</span> <span class="n">Intent</span><span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">intent</span><span class="o">),</span> <span class="n">r</span><span class="o">.</span><span class="na">resultCode</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">resultData</span><span class="o">,</span><span class="n">r</span><span class="o">.</span><span class="na">resultExtras</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">ordered</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">initialSticky</span><span class="o">,</span> <span class="n">r</span><span class="o">.</span><span class="na">userId</span><span class="o">);</span>
-                    
-<span class="o">![](</span><span class="n">media</span><span class="o">/</span><span class="mi">14886440981249</span><span class="o">/</span><span class="mi">14888189716968</span><span class="o">.</span><span class="na">jpg</span><span class="o">)</span>
-                    
+</code></pre>
+</div>
+
+<p><img src="/img/2017-03-07-broadcast/14888189716968.jpg" alt="" /></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>                    
 <span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">performReceiveLocked</span><span class="o">(</span><span class="n">ProcessRecord</span> <span class="n">app</span><span class="o">,</span> <span class="n">IIntentReceiver</span> <span class="n">receiver</span><span class="o">,</span><span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="kt">int</span> <span class="n">resultCode</span><span class="o">,</span> <span class="n">String</span> <span class="n">data</span><span class="o">,</span> <span class="n">Bundle</span> <span class="n">extras</span><span class="o">,</span><span class="kt">boolean</span> <span class="n">ordered</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">sticky</span><span class="o">,</span> <span class="kt">int</span> <span class="n">sendingUser</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
         <span class="c1">// Send the intent to the receiver asynchronously using one-way binder calls.</span>
         <span class="k">if</span> <span class="o">(</span><span class="n">app</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">app</span><span class="o">.</span><span class="na">thread</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
@@ -535,6 +543,10 @@
                     </li>
                     
                     
+                    <li class="next">
+                        <a href="/2017/03/12/Linux-memory-1/" data-toggle="tooltip" data-placement="top" title="存储管理(一)">Next Post &rarr;</a>
+                    </li>
+                    
                 </ul>
 
 
@@ -561,6 +573,118 @@
                 sidebar-container">
 
                 <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
                 
 
                 <!-- Friends Blog -->

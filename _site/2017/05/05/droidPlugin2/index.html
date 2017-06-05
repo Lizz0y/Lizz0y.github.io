@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>DroidPlugin系列之二 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/05/05/droidPlugin2/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#插件化" title="插件化">插件化</a>
+                        
+                        <a class="tag" href="/tags/#DroidPlugin" title="DroidPlugin">DroidPlugin</a>
+                        
+                    </div>
+                    <h1>DroidPlugin系列之二</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on May 5, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>事实证明我已经忘了一写了啥了对我就是这么健忘,欧耶(大概是最近毕设做傻了</p>
+
+<p>这次宏观上有了很充分的理解,所以也许会和第一篇有所重复</p>
+
+<h3 id="buildgradle">build.gradle</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">defaultConfig</span><span class="o">{</span>
+    <span class="c1">// 建议改为自己的 packageName + .droidplugin_stub ，防止跟其它本插件使用者冲突</span>
+    <span class="n">def</span> <span class="n">authorityName</span> <span class="o">=</span> <span class="s">"com.morgoo.droidplugin_stub"</span>
+    <span class="n">buildConfigField</span> <span class="s">"String"</span><span class="o">,</span> <span class="s">"AUTHORITY_NAME"</span><span class="o">,</span> <span class="s">"\"${authorityName}\""</span>
+    <span class="n">manifestPlaceholders</span> <span class="o">=</span> <span class="o">[</span>
+        <span class="nl">authorityName:</span><span class="s">"${authorityName}"</span><span class="o">,</span>
+    <span class="o">]</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>我们知道在这里设置的buildConfigField会在BuildConfig.java中生成相应变量,</p>
+<h3 id="androidmanifest">androidManifest</h3>
+
+<h4 id="预申请权限">预申请权限</h4>
+
+<h4 id="四大组件stub">四大组件stub</h4>
+
+<p>P00代表进程0。<strong>注意meta-data</strong></p>
+
+<p><img src="/img/2017-05-05-droidplugin2/14936293919569.jpg" alt="" /></p>
+
+<p><img src="/img/2017-05-05-droidplugin2/14936294934628.jpg" alt="" /></p>
+
+<p><img src="/img/2017-05-05-droidplugin2/14936295424604.jpg" alt="" /></p>
+
+<p>注意这里<code class="highlighter-rouge">provider</code>的<code class="highlighter-rouge">authorities</code>是<code class="highlighter-rouge">${authorityName}</code>,即前面<code class="highlighter-rouge">build.gradle</code>定义的</p>
+
+<h3 id="初始化">初始化</h3>
+
+<p>初始化过程我记得在一中讲过了<a href="http://lizz0y.me/2017/03/12/Droidplugin-1/">DroidPlugin一</a></p>
+
+<h3 id="contentprovider">ContentProvider</h3>
+
+<h4 id="icontentproviderinvokehandle">IContentProviderInvokeHandle</h4>
+
+<p>可以看到<code class="highlighter-rouge">proxy</code>的<code class="highlighter-rouge">beforeInvoke</code>中:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">beforeInvoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+<span class="c1">//local是真实的provider,stub是替代provider</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">mLocalProvider</span> <span class="o">&amp;&amp;</span> <span class="n">mStubProvider</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">//找到url</span>
+        <span class="kd">final</span> <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">indexFirstUri</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Uri</span> <span class="n">uri</span> <span class="o">=</span> <span class="o">(</span><span class="n">Uri</span><span class="o">)</span> <span class="n">args</span><span class="o">[</span><span class="n">index</span><span class="o">];</span>
+            <span class="c1">//找到authority</span>
+            <span class="n">String</span> <span class="n">authority</span> <span class="o">=</span> <span class="n">uri</span><span class="o">.</span><span class="na">getAuthority</span><span class="o">();</span>
+            <span class="k">if</span> <span class="o">(!</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">authority</span><span class="o">,</span> <span class="n">mStubProvider</span><span class="o">.</span><span class="na">authority</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">Uri</span><span class="o">.</span><span class="na">Builder</span> <span class="n">b</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Builder</span><span class="o">();</span>
+                <span class="n">b</span><span class="o">.</span><span class="na">scheme</span><span class="o">(</span><span class="n">uri</span><span class="o">.</span><span class="na">getScheme</span><span class="o">());</span>
+                <span class="c1">//把authority设为stub</span>
+                <span class="n">b</span><span class="o">.</span><span class="na">authority</span><span class="o">(</span><span class="n">mStubProvider</span><span class="o">.</span><span class="na">authority</span><span class="o">);</span>
+                <span class="n">b</span><span class="o">.</span><span class="na">path</span><span class="o">(</span><span class="n">uri</span><span class="o">.</span><span class="na">getPath</span><span class="o">());</span>
+                <span class="n">b</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="n">uri</span><span class="o">.</span><span class="na">getQuery</span><span class="o">());</span>
+                <span class="c1">//把原本的authority作为参数传过去</span>
+                <span class="n">b</span><span class="o">.</span><span class="na">appendQueryParameter</span><span class="o">(</span><span class="n">Env</span><span class="o">.</span><span class="na">EXTRA_TARGET_AUTHORITY</span><span class="o">,</span> <span class="n">authority</span><span class="o">);</span>
+                <span class="n">b</span><span class="o">.</span><span class="na">fragment</span><span class="o">(</span><span class="n">uri</span><span class="o">.</span><span class="na">getFragment</span><span class="o">());</span>
+                <span class="n">args</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="na">build</span><span class="o">();</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kd">super</span><span class="o">.</span><span class="na">beforeInvoke</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">method</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<h4 id="abstractcontentproviderstub">AbstractContentProviderStub</h4>
+
+<p>以<code class="highlighter-rouge">query</code>为例:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>
+<span class="nd">@Override</span>
+<span class="kd">public</span> <span class="n">Cursor</span> <span class="nf">query</span><span class="o">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="o">,</span> <span class="n">String</span><span class="o">[]</span> <span class="n">projection</span><span class="o">,</span>
+                        <span class="n">String</span> <span class="n">selection</span><span class="o">,</span> <span class="n">String</span><span class="o">[]</span> <span class="n">selectionArgs</span><span class="o">,</span> <span class="n">String</span> <span class="n">sortOrder</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">//真的要查时,把之前传入的参数拿出来</span>
+    <span class="n">String</span> <span class="n">targetAuthority</span> <span class="o">=</span> <span class="n">uri</span><span class="o">.</span><span class="na">getQueryParameter</span><span class="o">(</span><span class="n">Env</span><span class="o">.</span><span class="na">EXTRA_TARGET_AUTHORITY</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">targetAuthority</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">targetAuthority</span><span class="o">,</span> <span class="n">uri</span><span class="o">.</span><span class="na">getAuthority</span><span class="o">()))</span> <span class="o">{</span>
+        <span class="n">ContentProviderClient</span> <span class="n">client</span> <span class="o">=</span> <span class="n">getContentProviderClient</span><span class="o">(</span><span class="n">targetAuthority</span><span class="o">);</span>
+        <span class="k">try</span> <span class="o">{</span>
+        <span class="c1">//让真实的去query吧</span>
+            <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="n">buildNewUri</span><span class="o">(</span><span class="n">uri</span><span class="o">,</span> <span class="n">targetAuthority</span><span class="o">),</span> <span class="n">projection</span><span class="o">,</span> <span class="n">selection</span><span class="o">,</span> <span class="n">selectionArgs</span><span class="o">,</span> <span class="n">sortOrder</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">handleExpcetion</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+<span class="o">}</span>
+<span class="kd">private</span> <span class="kd">synchronized</span> <span class="n">ContentProviderClient</span> <span class="nf">getContentProviderClient</span><span class="o">(</span><span class="kd">final</span> <span class="n">String</span> <span class="n">targetAuthority</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">ContentProviderClient</span> <span class="n">client</span> <span class="o">=</span> <span class="n">sContentProviderClients</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">targetAuthority</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">client</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">client</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">Looper</span><span class="o">.</span><span class="na">getMainLooper</span><span class="o">()</span> <span class="o">!=</span> <span class="n">Looper</span><span class="o">.</span><span class="na">myLooper</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">waitForConnected</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="n">ProviderInfo</span> <span class="n">stubInfo</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="n">ProviderInfo</span> <span class="n">targetInfo</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">String</span> <span class="n">authority</span> <span class="o">=</span> <span class="n">getMyAuthority</span><span class="o">();</span>
+        <span class="n">stubInfo</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getPackageManager</span><span class="o">().</span><span class="na">resolveContentProvider</span><span class="o">(</span><span class="n">authority</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+        <span class="c1">//得到真实的providerInfo</span>
+        <span class="n">targetInfo</span> <span class="o">=</span> <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">resolveContentProvider</span><span class="o">(</span><span class="n">targetAuthority</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Can not reportMyProcessName on ContentProvider"</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">targetInfo</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">reportMyProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"RemoteException on reportMyProcessName"</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">targetInfo</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">PluginProcessManager</span><span class="o">.</span><span class="na">preLoadApk</span><span class="o">(</span><span class="n">getContext</span><span class="o">(),</span> <span class="n">targetInfo</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">handleExpcetion</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="c1">//去创建真实的provider</span>
+    <span class="n">ContentProviderClient</span> <span class="n">newClient</span> <span class="o">=</span> <span class="n">mContentResolver</span><span class="o">.</span><span class="na">acquireContentProviderClient</span><span class="o">(</span><span class="n">targetAuthority</span><span class="o">);</span>
+    <span class="n">sContentProviderClients</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">targetAuthority</span><span class="o">,</span> <span class="n">newClient</span><span class="o">);</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">targetInfo</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">//加入到runningProvider中去</span>
+            <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">onProviderCreated</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Exception on report onProviderCreated"</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">sContentProviderClients</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">targetAuthority</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>看过<code class="highlighter-rouge">weishu</code>的文章都知道,CP的替换是 将url中的authority替换为stub然后最终在真正查询的地方替换回来即可。</p>
+
+<h3 id="service">Service</h3>
+
+<h4 id="abstractservicestub">AbstractServiceStub</h4>
+
+<p>因为service与Activity不同,可以共用:</p>
+
+<pre><code class="language-java @Override">public void onStart(Intent intent, int startId) {
+    try {
+        if (intent != null) {
+            if (intent.getBooleanExtra("ActionKillSelf", false)) {
+               ...
+            } else {
+                mCreator.onStart(this, intent, 0, startId);
+            }
+        }
+    } catch (Throwable e) {
+        handleException(e);
+    }
+    ...
+}
+</code></pre>
+
+<h4 id="servcesmanager">ServcesManager</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">int</span> <span class="nf">onStart</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">,</span> <span class="kt">int</span> <span class="n">startId</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Intent</span> <span class="n">targetIntent</span> <span class="o">=</span> <span class="n">intent</span><span class="o">.</span><span class="na">getParcelableExtra</span><span class="o">(</span><span class="n">Env</span><span class="o">.</span><span class="na">EXTRA_TARGET_INTENT</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">targetIntent</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">ServiceInfo</span> <span class="n">targetInfo</span> <span class="o">=</span> <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">resolveServiceInfo</span><span class="o">(</span><span class="n">targetIntent</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">targetInfo</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Service</span> <span class="n">service</span> <span class="o">=</span> <span class="n">mNameService</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">targetInfo</span><span class="o">.</span><span class="na">name</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">service</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">handleCreateServiceOne</span><span class="o">(</span><span class="n">context</span><span class="o">,</span> <span class="n">intent</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="n">handleOnStartOne</span><span class="o">(</span><span class="n">targetIntent</span><span class="o">,</span> <span class="n">flags</span><span class="o">,</span> <span class="n">startId</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+<h5 id="handlecreateserviceone">handleCreateServiceOne</h5>
+
+<p>关键函数，其实和weishu介绍的一样 这里是第一次创建<code class="highlighter-rouge">service</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">handleCreateServiceOne</span><span class="o">(</span><span class="n">Context</span> <span class="n">hostContext</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">stubIntent</span><span class="o">,</span> <span class="n">ServiceInfo</span> <span class="n">info</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="c1">//拿到真实ResolveInfo</span>
+    <span class="n">ResolveInfo</span> <span class="n">resolveInfo</span> <span class="o">=</span> <span class="n">hostContext</span><span class="o">.</span><span class="na">getPackageManager</span><span class="o">().</span><span class="na">resolveService</span><span class="o">(</span><span class="n">stubIntent</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="n">ServiceInfo</span> <span class="n">stubInfo</span> <span class="o">=</span> <span class="n">resolveInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">?</span> <span class="n">resolveInfo</span><span class="o">.</span><span class="na">serviceInfo</span> <span class="o">:</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">reportMyProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">,</span> <span class="n">info</span><span class="o">.</span><span class="na">processName</span><span class="o">,</span> <span class="n">info</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+    <span class="c1">//preLoad</span>
+    <span class="n">PluginProcessManager</span><span class="o">.</span><span class="na">preLoadApk</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">info</span><span class="o">);</span>
+    <span class="n">Object</span> <span class="n">activityThread</span> <span class="o">=</span> <span class="n">ActivityThreadCompat</span><span class="o">.</span><span class="na">currentActivityThread</span><span class="o">();</span>
+    <span class="c1">//以下主要是在createService</span>
+    <span class="n">IBinder</span> <span class="n">fakeToken</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyFakeIBinder</span><span class="o">();</span>
+    <span class="n">Class</span> <span class="n">CreateServiceData</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="na">forName</span><span class="o">(</span><span class="n">ActivityThreadCompat</span><span class="o">.</span><span class="na">activityThreadClass</span><span class="o">().</span><span class="na">getName</span><span class="o">()</span> <span class="o">+</span> <span class="s">"$CreateServiceData"</span><span class="o">);</span>
+    <span class="n">Constructor</span> <span class="n">init</span> <span class="o">=</span> <span class="n">CreateServiceData</span><span class="o">.</span><span class="na">getDeclaredConstructor</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">init</span><span class="o">.</span><span class="na">isAccessible</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">init</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">Object</span> <span class="n">data</span> <span class="o">=</span> <span class="n">init</span><span class="o">.</span><span class="na">newInstance</span><span class="o">();</span>
+    <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeField</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="s">"token"</span><span class="o">,</span> <span class="n">fakeToken</span><span class="o">);</span>
+    <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeField</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="s">"info"</span><span class="o">,</span> <span class="n">info</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">VERSION</span><span class="o">.</span><span class="na">SDK_INT</span> <span class="o">&gt;=</span> <span class="n">VERSION_CODES</span><span class="o">.</span><span class="na">HONEYCOMB</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeField</span><span class="o">(</span><span class="n">data</span><span class="o">,</span> <span class="s">"compatInfo"</span><span class="o">,</span> <span class="n">CompatibilityInfoCompat</span><span class="o">.</span><span class="na">DEFAULT_COMPATIBILITY_INFO</span><span class="o">());</span>
+    <span class="o">}</span>
+    <span class="n">Method</span> <span class="n">method</span> <span class="o">=</span> <span class="n">activityThread</span><span class="o">.</span><span class="na">getClass</span><span class="o">().</span><span class="na">getDeclaredMethod</span><span class="o">(</span><span class="s">"handleCreateService"</span><span class="o">,</span> <span class="n">CreateServiceData</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">method</span><span class="o">.</span><span class="na">isAccessible</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">method</span><span class="o">.</span><span class="na">setAccessible</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">method</span><span class="o">.</span><span class="na">invoke</span><span class="o">(</span><span class="n">activityThread</span><span class="o">,</span> <span class="n">data</span><span class="o">);</span>
+    <span class="n">Object</span> <span class="n">mService</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">activityThread</span><span class="o">,</span> <span class="s">"mServices"</span><span class="o">);</span>
+    <span class="n">Service</span> <span class="n">service</span> <span class="o">=</span> <span class="o">(</span><span class="n">Service</span><span class="o">)</span> <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">mService</span><span class="o">,</span> <span class="s">"get"</span><span class="o">,</span> <span class="n">fakeToken</span><span class="o">);</span>
+    <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">mService</span><span class="o">,</span> <span class="s">"remove"</span><span class="o">,</span> <span class="n">fakeToken</span><span class="o">);</span>
+    <span class="n">mTokenServices</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">fakeToken</span><span class="o">,</span> <span class="n">service</span><span class="o">);</span>
+    <span class="n">mNameService</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">info</span><span class="o">.</span><span class="na">name</span><span class="o">,</span> <span class="n">service</span><span class="o">);</span>
+
+    <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">onServiceCreated</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">info</span><span class="o">);</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h5 id="handleonstartone">handleOnStartOne</h5>
+
+<p>这里是<code class="highlighter-rouge">start</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">handleOnStartOne</span><span class="o">(</span><span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">,</span> <span class="kt">int</span> <span class="n">startIds</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">ServiceInfo</span> <span class="n">info</span> <span class="o">=</span> <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">resolveServiceInfo</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">info</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Service</span> <span class="n">service</span> <span class="o">=</span> <span class="n">mNameService</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">info</span><span class="o">.</span><span class="na">name</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">service</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">ClassLoader</span> <span class="n">classLoader</span> <span class="o">=</span> <span class="n">getClassLoader</span><span class="o">(</span><span class="n">info</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">);</span>
+            <span class="n">intent</span><span class="o">.</span><span class="na">setExtrasClassLoader</span><span class="o">(</span><span class="n">classLoader</span><span class="o">);</span>
+            <span class="n">Object</span> <span class="n">token</span> <span class="o">=</span> <span class="n">findTokenByService</span><span class="o">(</span><span class="n">service</span><span class="o">);</span>
+            <span class="n">Integer</span> <span class="n">integer</span> <span class="o">=</span> <span class="n">mServiceTaskIds</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">token</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">integer</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">integer</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="kt">int</span> <span class="n">startId</span> <span class="o">=</span> <span class="n">integer</span> <span class="o">+</span> <span class="mi">1</span><span class="o">;</span>
+            <span class="n">mServiceTaskIds</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">token</span><span class="o">,</span> <span class="n">startId</span><span class="o">);</span>
+            <span class="kt">int</span> <span class="n">res</span> <span class="o">=</span> <span class="n">service</span><span class="o">.</span><span class="na">onStartCommand</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="n">flags</span><span class="o">,</span> <span class="n">startId</span><span class="o">);</span>
+            <span class="n">QueuedWorkCompat</span><span class="o">.</span><span class="na">waitToFinish</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<p>我们以<code class="highlighter-rouge">IActivityManagerHookHandle</code>的<code class="highlighter-rouge">stopService</code>为例:
+不去停止stub,而是直接停止自己</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">beforeInvoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+       
+        <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">args</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="n">index</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="k">instanceof</span> <span class="n">Intent</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Intent</span> <span class="n">intent</span> <span class="o">=</span> <span class="o">(</span><span class="n">Intent</span><span class="o">)</span> <span class="n">args</span><span class="o">[</span><span class="n">index</span><span class="o">];</span>
+            <span class="n">ServiceInfo</span> <span class="n">info</span> <span class="o">=</span> <span class="n">resolveService</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">info</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">isPackagePlugin</span><span class="o">(</span><span class="n">info</span><span class="o">.</span><span class="na">packageName</span><span class="o">))</span> <span class="o">{</span>
+                <span class="kt">int</span> <span class="n">re</span> <span class="o">=</span> <span class="n">ServcesManager</span><span class="o">.</span><span class="na">getDefault</span><span class="o">().</span><span class="na">stopService</span><span class="o">(</span><span class="n">mHostContext</span><span class="o">,</span> <span class="n">intent</span><span class="o">);</span>
+                <span class="n">setFakedResult</span><span class="o">(</span><span class="n">re</span><span class="o">);</span>
+                <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kd">super</span><span class="o">.</span><span class="na">beforeInvoke</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">method</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>//todo setExtrasClassLoader是干啥的？？</p>
+
+<h3 id="pm">pm</h3>
+
+<p>我们看到PM能做的真的好多,罗列一下:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">ActivityInfo</span> <span class="nf">generateActivityInfo</span><span class="o">(</span><span class="n">ComponenetName</span><span class="o">,</span><span class="n">flag</span><span class="o">)</span>
+<span class="n">PackageInfo</span> <span class="n">generatePackageInfo</span><span class="err">（</span><span class="n">PackageName</span><span class="o">,</span><span class="n">flag</span><span class="o">....)</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">PermissionInfo</span><span class="o">&gt;</span> <span class="nf">generatePermissionInfo</span><span class="o">(</span><span class="n">ComponentName</span><span class="o">,</span><span class="n">flag</span><span class="o">)</span>
+<span class="n">generateApplicationInfo</span><span class="o">(</span><span class="n">flags</span><span class="o">)</span>
+<span class="n">getActivities</span><span class="o">()</span> <span class="o">-&gt;</span><span class="n">mActivities</span>
+<span class="n">permissions</span>
+</code></pre>
+</div>
+<ul>
+  <li>注意这些得到以后,像ApplicationInfo的一些dir文件目录名就要换成插件自己的</li>
+  <li>注意Receiver也是ActivityInfo</li>
+</ul>
+
+<h3 id="intentmatcher">IntentMatcher</h3>
+
+<h3 id="hook">hook</h3>
+
+<h4 id="instrumentation替换">Instrumentation替换</h4>
+
+<p><img src="/img/2017-05-05-droidplugin2/14937025759028.jpg" alt="" /></p>
+<h4 id="handler替换">handler替换</h4>
+
+<p><img src="/img/2017-05-05-droidplugin2/14937025914875.jpg" alt="" /></p>
+<h4 id="ams替换">AMS替换</h4>
+
+<p><img src="/img/2017-05-05-droidplugin2/14937026966584.jpg" alt="" /></p>
+
+<p><img src="/img/2017-05-05-droidplugin2/14937027793235.jpg" alt="" /></p>
+<h4 id="各类service替换">各类Service替换</h4>
+
+<p>先替换getService拿到的<code class="highlighter-rouge">IBinder</code>
+<img src="/img/2017-05-05-droidplugin2/14937095876949.jpg" alt="" /></p>
+<h4 id="再替换ibinderquerylocalinterface方法">再替换Ibinder.queryLocalInterface方法</h4>
+
+<p><img src="/img/2017-05-05-droidplugin2/14937099396109.jpg" alt="" /></p>
+
+<h3 id="handle">handle</h3>
+
+<p>各类真正实现<code class="highlighter-rouge">before/after Invoke</code>的地方</p>
+
+<p>以AMS为关键:</p>
+
+<p>大部分都是把包名换成宿主包,关键函数如下:</p>
+
+<h4 id="startactivities">startActivities</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>
+
+<span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">doReplaceIntentForStartActivityAPIHigh</span><span class="o">(</span><span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">intentOfArgIndex</span> <span class="o">=</span> <span class="n">findFirstIntentIndexInArgs</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">args</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">intentOfArgIndex</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Intent</span> <span class="n">intent</span> <span class="o">=</span> <span class="o">(</span><span class="n">Intent</span><span class="o">)</span> <span class="n">args</span><span class="o">[</span><span class="n">intentOfArgIndex</span><span class="o">];</span>
+        <span class="c1">//XXX String callingPackage = (String) args[1];</span>
+        <span class="k">if</span> <span class="o">(!</span><span class="n">PluginPatchManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">canStartPluginActivity</span><span class="o">(</span><span class="n">intent</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">PluginPatchManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">startPluginActivity</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="n">ActivityInfo</span> <span class="n">activityInfo</span> <span class="o">=</span> <span class="n">resolveActivity</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">activityInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">isPackagePlugin</span><span class="o">(</span><span class="n">activityInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">))</span> <span class="o">{</span>
+        <span class="c1">//挑选stub</span>
+            <span class="n">ComponentName</span> <span class="n">component</span> <span class="o">=</span> <span class="n">selectProxyActivity</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">component</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">Intent</span> <span class="n">newIntent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Intent</span><span class="o">();</span>
+                <span class="k">try</span> <span class="o">{</span>
+                    <span class="c1">//TODO</span>
+                    <span class="n">ClassLoader</span> <span class="n">pluginClassLoader</span> <span class="o">=</span> <span class="n">PluginProcessManager</span><span class="o">.</span><span class="na">getPluginClassLoader</span><span class="o">(</span><span class="n">component</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">());</span>
+                    <span class="n">setIntentClassLoader</span><span class="o">(</span><span class="n">newIntent</span><span class="o">,</span> <span class="n">pluginClassLoader</span><span class="o">);</span>
+                <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">Log</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Set Class Loader to new Intent fail"</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="c1">//插入target参数</span>
+                <span class="n">newIntent</span><span class="o">.</span><span class="na">setComponent</span><span class="o">(</span><span class="n">component</span><span class="o">);</span>
+                <span class="n">newIntent</span><span class="o">.</span><span class="na">putExtra</span><span class="o">(</span><span class="n">Env</span><span class="o">.</span><span class="na">EXTRA_TARGET_INTENT</span><span class="o">,</span> <span class="n">intent</span><span class="o">);</span>
+                <span class="n">newIntent</span><span class="o">.</span><span class="na">setFlags</span><span class="o">(</span><span class="n">intent</span><span class="o">.</span><span class="na">getFlags</span><span class="o">());</span>
+                <span class="n">String</span> <span class="n">callingPackage</span> <span class="o">=</span> <span class="o">(</span><span class="n">String</span><span class="o">)</span> <span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">mHostContext</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">(),</span> <span class="n">callingPackage</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="n">newIntent</span><span class="o">.</span><span class="na">addFlags</span><span class="o">(</span><span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_ACTIVITY_NEW_TASK</span><span class="o">);</span>
+                    <span class="n">args</span><span class="o">[</span><span class="n">intentOfArgIndex</span><span class="o">]</span> <span class="o">=</span> <span class="n">newIntent</span><span class="o">;</span>
+                    <span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span> <span class="o">=</span> <span class="n">mHostContext</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">();</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">Log</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"startActivity,replace selectProxyActivity fail"</span><span class="o">);</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="c1">//并不知道这个在干啥。。</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">setIntentClassLoader</span><span class="o">(</span><span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="n">ClassLoader</span> <span class="n">classLoader</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">Bundle</span> <span class="n">mExtras</span> <span class="o">=</span> <span class="o">(</span><span class="n">Bundle</span><span class="o">)</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="s">"mExtras"</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">mExtras</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">mExtras</span><span class="o">.</span><span class="na">setClassLoader</span><span class="o">(</span><span class="n">classLoader</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">Bundle</span> <span class="n">value</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Bundle</span><span class="o">();</span>
+            <span class="n">value</span><span class="o">.</span><span class="na">setClassLoader</span><span class="o">(</span><span class="n">classLoader</span><span class="o">);</span>
+            <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeField</span><span class="o">(</span><span class="n">intent</span><span class="o">,</span> <span class="s">"mExtras"</span><span class="o">,</span> <span class="n">value</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+        <span class="n">intent</span><span class="o">.</span><span class="na">setExtrasClassLoader</span><span class="o">(</span><span class="n">classLoader</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">doReplaceIntentForStartActivityAPILow</span><span class="o">(</span><span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">RemoteException</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">intentOfArgIndex</span> <span class="o">=</span> <span class="n">findFirstIntentIndexInArgs</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">args</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">intentOfArgIndex</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Intent</span> <span class="n">intent</span> <span class="o">=</span> <span class="o">(</span><span class="n">Intent</span><span class="o">)</span> <span class="n">args</span><span class="o">[</span><span class="n">intentOfArgIndex</span><span class="o">];</span>
+        <span class="n">ActivityInfo</span> <span class="n">activityInfo</span> <span class="o">=</span> <span class="n">resolveActivity</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">activityInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">isPackagePlugin</span><span class="o">(</span><span class="n">activityInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">ComponentName</span> <span class="n">component</span> <span class="o">=</span> <span class="n">selectProxyActivity</span><span class="o">(</span><span class="n">intent</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">component</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">Intent</span> <span class="n">newIntent</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Intent</span><span class="o">();</span>
+                <span class="n">newIntent</span><span class="o">.</span><span class="na">setComponent</span><span class="o">(</span><span class="n">component</span><span class="o">);</span>
+                <span class="n">newIntent</span><span class="o">.</span><span class="na">putExtra</span><span class="o">(</span><span class="n">Env</span><span class="o">.</span><span class="na">EXTRA_TARGET_INTENT</span><span class="o">,</span> <span class="n">intent</span><span class="o">);</span>
+                <span class="n">newIntent</span><span class="o">.</span><span class="na">setFlags</span><span class="o">(</span><span class="n">intent</span><span class="o">.</span><span class="na">getFlags</span><span class="o">());</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">mHostContext</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">(),</span> <span class="n">activityInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="n">newIntent</span><span class="o">.</span><span class="na">addFlags</span><span class="o">(</span><span class="n">Intent</span><span class="o">.</span><span class="na">FLAG_ACTIVITY_NEW_TASK</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="n">args</span><span class="o">[</span><span class="n">intentOfArgIndex</span><span class="o">]</span> <span class="o">=</span> <span class="n">newIntent</span><span class="o">;</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                 <span class="n">Log</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"startActivity,replace selectProxyActivity fail"</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="nd">@Override</span>
+<span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">beforeInvoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+    <span class="n">RunningActivities</span><span class="o">.</span><span class="na">beforeStartActivity</span><span class="o">();</span>
+    <span class="kt">boolean</span> <span class="n">bRet</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">Build</span><span class="o">.</span><span class="na">VERSION</span><span class="o">.</span><span class="na">SDK_INT</span> <span class="o">&lt;</span> <span class="n">Build</span><span class="o">.</span><span class="na">VERSION_CODES</span><span class="o">.</span><span class="na">JELLY_BEAN_MR2</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">bRet</span> <span class="o">=</span> <span class="n">doReplaceIntentForStartActivityAPILow</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>    
+        <span class="n">bRet</span> <span class="o">=</span> <span class="n">doReplaceIntentForStartActivityAPIHigh</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">bRet</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">setFakedResult</span><span class="o">(</span><span class="n">Activity</span><span class="o">.</span><span class="na">RESULT_CANCELED</span><span class="o">);</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kd">super</span><span class="o">.</span><span class="na">beforeInvoke</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">method</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="getcontentprovider">getContentProvider</h4>
+
+<p>很有趣的函数，CP目前了解的太少后续补充</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="c1">//before比较好理解,就是更改authority为stub的</span>
+<span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">beforeInvoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">args</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="n">index</span> <span class="o">&amp;&amp;</span> <span class="n">args</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="k">instanceof</span> <span class="n">String</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">String</span> <span class="n">name</span> <span class="o">=</span> <span class="o">(</span><span class="n">String</span><span class="o">)</span> <span class="n">args</span><span class="o">[</span><span class="n">index</span><span class="o">];</span>
+            <span class="n">mStubProvider</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+            <span class="n">mTargetProvider</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+            <span class="n">ProviderInfo</span> <span class="n">info</span> <span class="o">=</span> <span class="n">mHostContext</span><span class="o">.</span><span class="na">getPackageManager</span><span class="o">().</span><span class="na">resolveContentProvider</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+            <span class="c1">//targetProvider</span>
+            <span class="n">mTargetProvider</span> <span class="o">=</span> <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">resolveContentProvider</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">mTargetProvider</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">info</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">TextUtils</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">mTargetProvider</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">info</span><span class="o">.</span><span class="na">packageName</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">mStubProvider</span> <span class="o">=</span> <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">selectStubProviderInfo</span><span class="o">(</span><span class="n">name</span><span class="o">);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">mStubProvider</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">args</span><span class="o">[</span><span class="n">index</span><span class="o">]</span> <span class="o">=</span> <span class="n">mStubProvider</span><span class="o">.</span><span class="na">authority</span><span class="o">;</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">Log</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"getContentProvider,fake fail 1"</span><span class="o">);</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">mTargetProvider</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                <span class="n">Log</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"getContentProvider,fake fail 2=%s"</span><span class="o">,</span> <span class="n">name</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="kd">super</span><span class="o">.</span><span class="na">beforeInvoke</span><span class="o">(</span><span class="n">receiver</span><span class="o">,</span> <span class="n">method</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+<span class="o">}</span>
+
+<span class="c1">//没怎么看懂 todo 等看完CP源码再回来</span>
+
+<span class="nd">@Override</span>
+<span class="kd">protected</span> <span class="kt">void</span> <span class="nf">afterInvoke</span><span class="o">(</span><span class="n">Object</span> <span class="n">receiver</span><span class="o">,</span> <span class="n">Method</span> <span class="n">method</span><span class="o">,</span> <span class="n">Object</span><span class="o">[]</span> <span class="n">args</span><span class="o">,</span> <span class="n">Object</span> <span class="n">invokeResult</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Throwable</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">invokeResult</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+         <span class="n">ProviderInfo</span> <span class="n">stubProvider2</span> <span class="o">=</span> <span class="o">(</span><span class="n">ProviderInfo</span><span class="o">)</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">invokeResult</span><span class="o">,</span> <span class="s">"info"</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">mStubProvider</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">mTargetProvider</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">TextUtils</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">stubProvider2</span><span class="o">.</span><span class="na">authority</span><span class="o">,</span> <span class="n">mStubProvider</span><span class="o">.</span><span class="na">authority</span><span class="o">))</span> <span class="o">{</span>
+            <span class="c1">//FIXME 其实这里写的并不好，需要适配各种机型。这里就先这样吧。</span>
+            <span class="n">Object</span> <span class="n">fromObj</span> <span class="o">=</span> <span class="n">invokeResult</span><span class="o">;</span>
+            <span class="c1">//生成新的provider??</span>
+            <span class="n">Object</span> <span class="n">toObj</span> <span class="o">=</span> <span class="n">ContentProviderHolderCompat</span><span class="o">.</span><span class="na">newInstance</span><span class="o">(</span><span class="n">mTargetProvider</span><span class="o">);</span>
+            <span class="c1">//toObj.provider = fromObj.provider;</span>
+            <span class="n">copyField</span><span class="o">(</span><span class="n">fromObj</span><span class="o">,</span> <span class="n">toObj</span><span class="o">,</span> <span class="s">"provider"</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">VERSION</span><span class="o">.</span><span class="na">SDK_INT</span> <span class="o">&gt;=</span> <span class="n">VERSION_CODES</span><span class="o">.</span><span class="na">JELLY_BEAN</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">copyConnection</span><span class="o">(</span><span class="n">fromObj</span><span class="o">,</span> <span class="n">toObj</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="c1">//toObj.noReleaseNeeded = fromObj.noReleaseNeeded;</span>
+            <span class="n">copyField</span><span class="o">(</span><span class="n">fromObj</span><span class="o">,</span> <span class="n">toObj</span><span class="o">,</span> <span class="s">"noReleaseNeeded"</span><span class="o">);</span>
+            <span class="n">Object</span> <span class="n">provider</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">invokeResult</span><span class="o">,</span> <span class="s">"provider"</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">provider</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="kt">boolean</span> <span class="n">localProvider</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">toObj</span><span class="o">,</span> <span class="s">"provider"</span><span class="o">)</span> <span class="o">==</span> <span class="kc">null</span><span class="o">;</span>            <span class="c1">//新建handler</span>
+                <span class="n">IContentProviderHook</span> <span class="n">invocationHandler</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IContentProviderHook</span><span class="o">(</span><span class="n">mHostContext</span><span class="o">,</span> <span class="n">provider</span><span class="o">,</span> <span class="n">mStubProvider</span><span class="o">,</span> <span class="n">mTargetProvider</span><span class="o">,</span> <span class="n">localProvider</span><span class="o">);</span>
+                <span class="n">invocationHandler</span><span class="o">.</span><span class="na">setEnable</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+                <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">clazz</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="na">getClass</span><span class="o">();</span>
+                <span class="n">List</span><span class="o">&lt;</span><span class="n">Class</span><span class="o">&lt;?&gt;&gt;</span> <span class="n">interfaces</span> <span class="o">=</span> <span class="n">Utils</span><span class="o">.</span><span class="na">getAllInterfaces</span><span class="o">(</span><span class="n">clazz</span><span class="o">);</span>
+                <span class="n">Class</span><span class="o">[]</span> <span class="n">ifs</span> <span class="o">=</span> <span class="n">interfaces</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">interfaces</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">interfaces</span><span class="o">.</span><span class="na">toArray</span><span class="o">(</span><span class="k">new</span> <span class="n">Class</span><span class="o">[</span><span class="n">interfaces</span><span class="o">.</span><span class="na">size</span><span class="o">()])</span> <span class="o">:</span> <span class="k">new</span> <span class="n">Class</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+                <span class="n">Object</span> <span class="n">proxyprovider</span> <span class="o">=</span> <span class="n">MyProxy</span><span class="o">.</span><span class="na">newProxyInstance</span><span class="o">(</span><span class="n">clazz</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">(),</span> <span class="n">ifs</span><span class="o">,</span> <span class="n">invocationHandler</span><span class="o">);</span>
+                <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeField</span><span class="o">(</span><span class="n">invokeResult</span><span class="o">,</span> <span class="s">"provider"</span><span class="o">,</span> <span class="n">proxyprovider</span><span class="o">);</span>
+                <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeField</span><span class="o">(</span><span class="n">toObj</span><span class="o">,</span> <span class="s">"provider"</span><span class="o">,</span> <span class="n">proxyprovider</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="n">setFakedResult</span><span class="o">(</span><span class="n">toObj</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">VERSION</span><span class="o">.</span><span class="na">SDK_INT</span> <span class="o">&gt;=</span> <span class="n">VERSION_CODES</span><span class="o">.</span><span class="na">JELLY_BEAN_MR2</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Object</span> <span class="n">provider</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">invokeResult</span><span class="o">,</span> <span class="s">"provider"</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">provider</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="kt">boolean</span> <span class="n">localProvider</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">invokeResult</span><span class="o">,</span> <span class="s">"provider"</span><span class="o">)</span> <span class="o">==</span> <span class="kc">null</span><span class="o">;</span>
+                <span class="n">IContentProviderHook</span> <span class="n">invocationHandler</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IContentProviderHook</span><span class="o">(</span><span class="n">mHostContext</span><span class="o">,</span> <span class="n">provider</span><span class="o">,</span> <span class="n">mStubProvider</span><span class="o">,</span> <span class="n">mTargetProvider</span><span class="o">,</span> <span class="n">localProvider</span><span class="o">);</span>
+                <span class="n">invocationHandler</span><span class="o">.</span><span class="na">setEnable</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+                <span class="n">Class</span><span class="o">&lt;?&gt;</span> <span class="n">clazz</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="na">getClass</span><span class="o">();</span>
+                <span class="n">List</span><span class="o">&lt;</span><span class="n">Class</span><span class="o">&lt;?&gt;&gt;</span> <span class="n">interfaces</span> <span class="o">=</span> <span class="n">Utils</span><span class="o">.</span><span class="na">getAllInterfaces</span><span class="o">(</span><span class="n">clazz</span><span class="o">);</span>
+                <span class="n">Class</span><span class="o">[]</span> <span class="n">ifs</span> <span class="o">=</span> <span class="n">interfaces</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">interfaces</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">interfaces</span><span class="o">.</span><span class="na">toArray</span><span class="o">(</span><span class="k">new</span> <span class="n">Class</span><span class="o">[</span><span class="n">interfaces</span><span class="o">.</span><span class="na">size</span><span class="o">()])</span> <span class="o">:</span> <span class="k">new</span> <span class="n">Class</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+                <span class="n">Object</span> <span class="n">proxyprovider</span> <span class="o">=</span> <span class="n">MyProxy</span><span class="o">.</span><span class="na">newProxyInstance</span><span class="o">(</span><span class="n">clazz</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">(),</span> <span class="n">ifs</span><span class="o">,</span> <span class="n">invocationHandler</span><span class="o">);</span>
+                <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeField</span><span class="o">(</span><span class="n">invokeResult</span><span class="o">,</span> <span class="s">"provider"</span><span class="o">,</span> <span class="n">proxyprovider</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="n">mStubProvider</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="n">mTargetProvider</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<h3 id="plugincallback">PluginCallBack</h3>
+
+<p>只对Activity的Create做了处理,在handleMessage中替换成了targetActivity</p>
+
+<h3 id="plugininstrumentation">PluginInstrumentation</h3>
+
+<p>这个类都是一些奇奇怪怪的变量修正,跳过吧心累了。唯一就是ApplicationOnCreate()中注册了静态广播:
+<code class="highlighter-rouge">PluginProcessManager.registerStaticReceiver(app, app.getApplicationInfo(), app.getClassLoader());
+</code></p>
+<h3 id="preloadapk">preLoadApk</h3>
+
+<p>前面看到很多次了,每次新建Activity或Service等都要来一次,设置classLoader与Application等</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">preLoadApk</span><span class="o">(</span><span class="n">Context</span> <span class="n">hostContext</span><span class="o">,</span> <span class="n">ComponentInfo</span> <span class="n">pluginInfo</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">NoSuchMethodException</span><span class="o">,</span> <span class="n">IllegalAccessException</span><span class="o">,</span> <span class="n">InvocationTargetException</span><span class="o">,</span> <span class="n">PackageManager</span><span class="o">.</span><span class="na">NameNotFoundException</span><span class="o">,</span> <span class="n">ClassNotFoundException</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">pluginInfo</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">hostContext</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">pluginInfo</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">getPluginContext</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+        <span class="cm">/*添加插件的LoadedApk对象到ActivityThread.mPackages*/</span>
+    <span class="kt">boolean</span> <span class="n">found</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">sPluginLoadedApkCache</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Object</span> <span class="n">object</span> <span class="o">=</span> <span class="n">ActivityThreadCompat</span><span class="o">.</span><span class="na">currentActivityThread</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">object</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Object</span> <span class="n">mPackagesObj</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">object</span><span class="o">,</span> <span class="s">"mPackages"</span><span class="o">);</span>
+            <span class="n">Object</span> <span class="n">containsKeyObj</span> <span class="o">=</span> <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">mPackagesObj</span><span class="o">,</span> <span class="s">"containsKey"</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+            <span class="c1">//不包含</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">containsKeyObj</span> <span class="k">instanceof</span> <span class="n">Boolean</span> <span class="o">&amp;&amp;</span> <span class="o">!(</span><span class="n">Boolean</span><span class="o">)</span> <span class="n">containsKeyObj</span><span class="o">)</span> <span class="o">{</span>
+                <span class="kd">final</span> <span class="n">Object</span> <span class="n">loadedApk</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">VERSION</span><span class="o">.</span><span class="na">SDK_INT</span> <span class="o">&gt;=</span> <span class="n">VERSION_CODES</span><span class="o">.</span><span class="na">HONEYCOMB</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">loadedApk</span> <span class="o">=</span> <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">object</span><span class="o">,</span> <span class="s">"getPackageInfoNoCheck"</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">,</span> <span class="n">CompatibilityInfoCompat</span><span class="o">.</span><span class="na">DEFAULT_COMPATIBILITY_INFO</span><span class="o">());</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">loadedApk</span> <span class="o">=</span> <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">object</span><span class="o">,</span> <span class="s">"getPackageInfoNoCheck"</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="n">sPluginLoadedApkCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">loadedApk</span><span class="o">);</span>
+                <span class="cm">/*添加ClassLoader LoadedApk.mClassLoader*/</span>
+
+                <span class="n">String</span> <span class="n">optimizedDirectory</span> <span class="o">=</span> <span class="n">PluginDirHelper</span><span class="o">.</span><span class="na">getPluginDalvikCacheDir</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+                <span class="n">String</span> <span class="n">libraryPath</span> <span class="o">=</span> <span class="n">PluginDirHelper</span><span class="o">.</span><span class="na">getPluginNativeLibraryDir</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+                <span class="n">String</span> <span class="n">apk</span> <span class="o">=</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">.</span><span class="na">publicSourceDir</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">apk</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">.</span><span class="na">publicSourceDir</span> <span class="o">=</span> <span class="n">PluginDirHelper</span><span class="o">.</span><span class="na">getPluginApkFile</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+                    <span class="n">apk</span> <span class="o">=</span> <span class="n">pluginInfo</span><span class="o">.</span><span class="na">applicationInfo</span><span class="o">.</span><span class="na">publicSourceDir</span><span class="o">;</span>
+                <span class="o">}</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">apk</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">ClassLoader</span> <span class="n">classloader</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="n">classloader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PluginClassLoader</span><span class="o">(</span><span class="n">apk</span><span class="o">,</span> <span class="n">optimizedDirectory</span><span class="o">,</span> <span class="n">libraryPath</span><span class="o">,</span> <span class="n">hostContext</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">().</span><span class="na">getParent</span><span class="o">());</span>
+                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                <span class="o">}</span>
+                <span class="k">if</span><span class="o">(</span><span class="n">classloader</span><span class="o">==</span><span class="kc">null</span><span class="o">){</span>
+                    <span class="n">PluginDirHelper</span><span class="o">.</span><span class="na">cleanOptimizedDirectory</span><span class="o">(</span><span class="n">optimizedDirectory</span><span class="o">);</span>
+                        <span class="n">classloader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PluginClassLoader</span><span class="o">(</span><span class="n">apk</span><span class="o">,</span> <span class="n">optimizedDirectory</span><span class="o">,</span> <span class="n">libraryPath</span><span class="o">,</span> <span class="n">hostContext</span><span class="o">.</span><span class="na">getClassLoader</span><span class="o">().</span><span class="na">getParent</span><span class="o">());</span>
+                    <span class="o">}</span>
+                    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">loadedApk</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="n">FieldUtils</span><span class="o">.</span><span class="na">writeDeclaredField</span><span class="o">(</span><span class="n">loadedApk</span><span class="o">,</span> <span class="s">"mClassLoader"</span><span class="o">,</span> <span class="n">classloader</span><span class="o">);</span>
+                    <span class="o">}</span>
+                    <span class="n">sPluginClassLoaderCache</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">classloader</span><span class="o">);</span>
+                    <span class="n">Thread</span><span class="o">.</span><span class="na">currentThread</span><span class="o">().</span><span class="na">setContextClassLoader</span><span class="o">(</span><span class="n">classloader</span><span class="o">);</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                <span class="o">}</span>
+                <span class="n">ProcessCompat</span><span class="o">.</span><span class="na">setArgV0</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">found</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">PluginProcessManager</span><span class="o">.</span><span class="na">preMakeApplication</span><span class="o">(</span><span class="n">hostContext</span><span class="o">,</span> <span class="n">pluginInfo</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+<span class="c1">//Application通过LoadedApk的makeApplication方法创建</span>
+<span class="kd">private</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">preMakeApplication</span><span class="o">(</span><span class="n">Context</span> <span class="n">hostContext</span><span class="o">,</span> <span class="n">ComponentInfo</span> <span class="n">pluginInfo</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">Object</span> <span class="n">loadedApk</span> <span class="o">=</span> <span class="n">sPluginLoadedApkCache</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">pluginInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">loadedApk</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Object</span> <span class="n">mApplication</span> <span class="o">=</span> <span class="n">FieldUtils</span><span class="o">.</span><span class="na">readField</span><span class="o">(</span><span class="n">loadedApk</span><span class="o">,</span> <span class="s">"mApplication"</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">mApplication</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">return</span><span class="o">;</span>
+            <span class="o">}</span>
+
+            <span class="k">if</span> <span class="o">(</span><span class="n">Looper</span><span class="o">.</span><span class="na">getMainLooper</span><span class="o">()</span> <span class="o">!=</span> <span class="n">Looper</span><span class="o">.</span><span class="na">myLooper</span><span class="o">())</span> <span class="o">{</span>
+                <span class="kd">final</span> <span class="n">Object</span> <span class="n">lock</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Object</span><span class="o">();</span>
+                <span class="n">mExec</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+                <span class="n">sHandle</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+                    <span class="nd">@Override</span>
+                    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                        <span class="k">try</span> <span class="o">{</span>
+                            <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">loadedApk</span><span class="o">,</span> <span class="s">"makeApplication"</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">ActivityThreadCompat</span><span class="o">.</span><span class="na">getInstrumentation</span><span class="o">());</span>
+                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"preMakeApplication FAIL"</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+                        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+                            <span class="n">mExec</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+                            <span class="kd">synchronized</span> <span class="o">(</span><span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+                                <span class="n">lock</span><span class="o">.</span><span class="na">notifyAll</span><span class="o">();</span>
+                            <span class="o">}</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span>
+                <span class="o">});</span>
+                <span class="k">if</span> <span class="o">(!</span><span class="n">mExec</span><span class="o">.</span><span class="na">get</span><span class="o">())</span> <span class="o">{</span>
+                    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">lock</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="k">try</span> <span class="o">{</span>
+                            <span class="n">lock</span><span class="o">.</span><span class="na">wait</span><span class="o">();</span>
+                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">MethodUtils</span><span class="o">.</span><span class="na">invokeMethod</span><span class="o">(</span><span class="n">loadedApk</span><span class="o">,</span> <span class="s">"makeApplication"</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="n">ActivityThreadCompat</span><span class="o">.</span><span class="na">getInstrumentation</span><span class="o">());</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"preMakeApplication FAIL"</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h3 id="myams">MyAms</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="c1">//先从正在运行的进程中查找看是否有符合条件的进程，如果有则直接使用之。如果进程名相同并且包名相同;或者包名不同但签名相同</span>
+<span class="n">String</span> <span class="n">stubProcessName1</span> <span class="o">=</span> <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">getStubProcessByTarget</span><span class="o">(</span><span class="n">targetInfo</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">stubProcessName1</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">List</span><span class="o">&lt;</span><span class="n">ActivityInfo</span><span class="o">&gt;</span> <span class="n">stubInfos</span> <span class="o">=</span> <span class="n">mStaticProcessList</span><span class="o">.</span><span class="na">getActivityInfoForProcessName</span><span class="o">(</span><span class="n">stubProcessName1</span><span class="o">,</span> <span class="n">useDialogStyle</span><span class="o">);</span>
+    <span class="k">for</span> <span class="o">(</span><span class="n">ActivityInfo</span> <span class="n">stubInfo</span> <span class="o">:</span> <span class="n">stubInfos</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">//对于stubInfo,如果启动模式相同</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">launchMode</span> <span class="o">==</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">launchMode</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">//如果支持多activity</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">launchMode</span> <span class="o">==</span> <span class="n">ActivityInfo</span><span class="o">.</span><span class="na">LAUNCH_MULTIPLE</span><span class="o">)</span> <span class="o">{</span>
+                <span class="c1">//那么直接加入</span>
+                <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">setTargetProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+                <span class="k">return</span> <span class="n">stubInfo</span><span class="o">;</span>
+            <span class="c1">//不然看一下是否已经在使用了</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(!</span><span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">isStubInfoUsed</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">,</span> <span class="n">stubProcessName1</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">setTargetProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+                <span class="k">return</span> <span class="n">stubInfo</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="c1">//运行的每一个行啊</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">stubProcessNames</span> <span class="o">=</span> <span class="n">mStaticProcessList</span><span class="o">.</span><span class="na">getProcessNames</span><span class="o">();</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">stubProcessName</span> <span class="o">:</span> <span class="n">stubProcessNames</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">List</span><span class="o">&lt;</span><span class="n">ActivityInfo</span><span class="o">&gt;</span> <span class="n">stubInfos</span> <span class="o">=</span> <span class="n">mStaticProcessList</span><span class="o">.</span><span class="na">getActivityInfoForProcessName</span><span class="o">(</span><span class="n">stubProcessName</span><span class="o">,</span> <span class="n">useDialogStyle</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">isProcessRunning</span><span class="o">(</span><span class="n">stubProcessName</span><span class="o">))</span> <span class="o">{</span><span class="c1">//该预定义的进程正在运行。</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">isPkgEmpty</span><span class="o">(</span><span class="n">stubProcessName</span><span class="o">))</span> <span class="o">{</span><span class="c1">//空进程，没有运行任何插件包。</span>
+            <span class="k">for</span> <span class="o">(</span><span class="n">ActivityInfo</span> <span class="n">stubInfo</span> <span class="o">:</span> <span class="n">stubInfos</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">launchMode</span> <span class="o">==</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">launchMode</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">launchMode</span> <span class="o">==</span> <span class="n">ActivityInfo</span><span class="o">.</span><span class="na">LAUNCH_MULTIPLE</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">setTargetProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+                        <span class="k">return</span> <span class="n">stubInfo</span><span class="o">;</span>
+                    <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(!</span><span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">isStubInfoUsed</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">,</span> <span class="n">stubProcessName1</span><span class="o">))</span> <span class="o">{</span>
+                        <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">setTargetProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+                        <span class="k">return</span> <span class="n">stubInfo</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+            <span class="k">throw</span> <span class="nf">throwException</span><span class="o">(</span><span class="s">"没有找到合适的StubInfo"</span><span class="o">);</span>
+            <span class="c1">//不在运行，看是否能运行</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> 
+        <span class="o">(</span><span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">isPkgCanRunInProcess</span><span class="o">(</span><span class="n">targetInfo</span><span class="o">.</span><span class="na">packageName</span><span class="o">,</span> <span class="n">stubProcessName</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">processName</span><span class="o">))</span> <span class="o">{</span>
+            <span class="k">for</span> <span class="o">(</span><span class="n">ActivityInfo</span> <span class="n">stubInfo</span> <span class="o">:</span> <span class="n">stubInfos</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">launchMode</span> <span class="o">==</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">launchMode</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">launchMode</span> <span class="o">==</span> <span class="n">ActivityInfo</span><span class="o">.</span><span class="na">LAUNCH_MULTIPLE</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">setTargetProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+                        <span class="k">return</span> <span class="n">stubInfo</span><span class="o">;</span>
+                    <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(!</span><span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">isStubInfoUsed</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">,</span> <span class="n">stubProcessName1</span><span class="o">))</span> <span class="o">{</span>
+                        <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">setTargetProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+                        <span class="k">return</span> <span class="n">stubInfo</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+            <span class="k">throw</span> <span class="nf">throwException</span><span class="o">(</span><span class="s">"没有找到合适的StubInfo"</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="c1">//这里需要考虑签名一样的情况，多个插件公用一个进程。</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span> <span class="c1">//该预定义的进程没有。</span>
+        <span class="k">for</span> <span class="o">(</span><span class="n">ActivityInfo</span> <span class="n">stubInfo</span> <span class="o">:</span> <span class="n">stubInfos</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">launchMode</span> <span class="o">==</span> <span class="n">targetInfo</span><span class="o">.</span><span class="na">launchMode</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">stubInfo</span><span class="o">.</span><span class="na">launchMode</span> <span class="o">==</span> <span class="n">ActivityInfo</span><span class="o">.</span><span class="na">LAUNCH_MULTIPLE</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">setTargetProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+                    <span class="k">return</span> <span class="n">stubInfo</span><span class="o">;</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(!</span><span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">isStubInfoUsed</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">,</span> <span class="n">stubProcessName1</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="n">mRunningProcessList</span><span class="o">.</span><span class="na">setTargetProcessName</span><span class="o">(</span><span class="n">stubInfo</span><span class="o">,</span> <span class="n">targetInfo</span><span class="o">);</span>
+                    <span class="k">return</span> <span class="n">stubInfo</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="k">throw</span> <span class="nf">throwException</span><span class="o">(</span><span class="s">"没有找到合适的StubInfo"</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>Service/Provider与Activity最大的区别在于 <code class="highlighter-rouge">isStubInfoUsed</code></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">boolean</span> <span class="nf">isStubInfoUsed</span><span class="o">(</span><span class="n">ProviderInfo</span> <span class="n">stubInfo</span><span class="o">)</span> <span class="o">{</span>
+<span class="c1">//TODO</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="kt">boolean</span> <span class="nf">isStubInfoUsed</span><span class="o">(</span><span class="n">ServiceInfo</span> <span class="n">stubInfo</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">//TODO</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+<p>所以就算已经有Service或Provider安家了,其他还是可以在同一个进程里公用的</p>
+
+<h3 id="ipackagemanagerhookhandle">IPackageManagerHookHandle</h3>
+
+<h4 id="getpackageinfo">getPackageInfo</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">packageInfo</span> <span class="o">=</span> <span class="n">PluginManager</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">getPackageInfo</span><span class="o">(</span><span class="n">packageName</span><span class="o">,</span> <span class="n">flags</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<p>因为没有安装，使用Parser去解析 包括所有拿到ActivityInfo等信息,都通过parser去中转。</p>
+
+<h3 id="总结">总结</h3>
+
+<p>看完全部其实对插件化已经很清楚了。</p>
+
+<blockquote>
+  <ul>
+    <li>Activity: 替换成stubActivity然后在handler回调中替换回来</li>
+    <li>Service:使用一个大的Service替代,在start的时候去主动生成targetService并启动</li>
+    <li>广播:注册静态的即可</li>
+    <li>Provider:这部分todo,但大体概念就是替换authority</li>
+  </ul>
+</blockquote>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/05/05/droidPlugin2"
+                    data-title="DroidPlugin系列之二"
+                    data-url="http://localhost:5001/2017/05/05/droidPlugin2/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="事实证明我已经忘了一写了啥了对我就是这么健忘,欧耶(大概是最近毕设做傻了
+
+这次宏观上有了很充分的理解,所以也许会和第一篇有所重复
+
+build.grad... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/05/02/multiDex&InstantRun/" data-toggle="tooltip" data-placement="top" title="MultiDex & Instant Run">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/05/12/myAngular-preface/" data-toggle="tooltip" data-placement="top" title="Build Your Own Angularjs-预备工作">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/05/05/droidPlugin2"
+                        data-title="DroidPlugin系列之二"
+                        data-url="http://localhost:5001/2017/05/05/droidPlugin2/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

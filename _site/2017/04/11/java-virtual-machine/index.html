@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>深入理解Java虚拟机 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/04/11/java-virtual-machine/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Java" title="Java">Java</a>
+                        
+                        <a class="tag" href="/tags/#深入理解Java虚拟机" title="深入理解Java虚拟机">深入理解Java虚拟机</a>
+                        
+                        <a class="tag" href="/tags/#阅读笔记" title="阅读笔记">阅读笔记</a>
+                        
+                    </div>
+                    <h1>深入理解Java虚拟机</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on April 11, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>趁着做毕设,决定把基础补一下,很多时候还是不能从原理去分析问题。这篇拖了很久额。。</p>
+
+<h3 id="内存管理">内存管理</h3>
+<p><img src="/img/2017-04-11-java-virtual-machine/14907778671562.jpg" alt="" /></p>
+
+<ul>
+  <li>程序计数器: 线程独立维护,线程私有内存</li>
+  <li>虚拟机栈: 即普通认知上的栈,有关方法执行,局部变量空间在编译期间已经分配完成,在运行期间不再变化。</li>
+  <li>本地方法栈:执行native方法</li>
+  <li>堆:被所有线程共享,在虚拟机启动时创建,存放对象实例，即GC堆,可划分多个线程私有的分配缓冲区</li>
+  <li>方法区:所有线程共享,存储已被虚拟机加载的类,常量等数据。看完后面会知道,加载class文件时会把字节流转化为方法区的运行时数据结构,包括运行时的常量池,存放编译期间生成的各种字面量</li>
+</ul>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14907888844092.jpg" alt="" /></p>
+
+<blockquote>
+  <p><code class="highlighter-rouge">intern</code>
+<code class="highlighter-rouge">public String intern()</code>
+返回字符串对象的规范化表示形式。
+一个初始时为空的字符串池，它由类 String 私有地维护。
+当调用 intern 方法时，如果池已经包含一个等于此 String 对象的字符串（该对象由 equals(Object) 方法确定），则返回池中的字符串。否则，将此 String 对象添加到池中，并且返回此 String 对象的引用。
+它遵循对于任何两个字符串 s 和 t，当且仅当 s.equals(t) 为 true 时，s.intern() == t.intern() 才为 true。
+所有字面值字符串和字符串赋值常量表达式都是内部的。
+返回：
+一个字符串，内容与此字符串相同，但它保证来自字符串池中。</p>
+</blockquote>
+
+<p>由此引出运行时常量池是可以动态变化的</p>
+
+<h3 id="对象创建">对象创建</h3>
+
+<p>类加载,为对象在堆中分配内存,将基本信息比如对象的hash,对象的GC Age存放在对象头,然后执行<init>方法 ---- 对象头主要包括两部分:</init></p>
+
+<ul>
+  <li>存储对象自身的运行时数据,如hash,GC Age,锁状态标识等等 即Mark Word。</li>
+  <li>类型指针,指向类元数据的指针</li>
+</ul>
+
+<p>实例数据存储对象真正有用的信息,即各种字段内容</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14907898658053.jpg" alt="" />
+<img src="/img/2017-04-11-java-virtual-machine/14907898806548.jpg" alt="" /></p>
+
+<h4 id="class文件">class文件</h4>
+
+<p>对于一份Java代码,使用编译器可以把代码编译为存储字节码的class文件,该字节码文件可以使用Java虚拟机执行。要注意,任何一个class文件只对应唯一一个类或接口的定义信息！</p>
+
+<p>class文件的具体格式就不赘述,class中最大的区域即为常量池。常量池主要存放两种内容:字面量和符号引用。字面量主要为字符串,声明为final的常量值等,
+在常量池中会存放符号引用,符号引用有以下三种:</p>
+
+<ul>
+  <li>类和接口的全限定名</li>
+  <li>字段的名称和描述符</li>
+  <li>方法的名称和描述符</li>
+</ul>
+
+<p>符号引用很值得关注,java不会在编译时就确定各种方法和字段的内存布局信息,而是在运行时动态解析,翻译到具体的内存地址,所以虚拟机在加载class文件时,需要从常量池获得对应的符号引用，再在类创建或运行时解析,翻译到具体的内存地址之中。具体的符号引用有见下图,或许可以提供一些启发:</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14907789912805.jpg" alt="" />
+使用Javap可以输出常量表</p>
+
+<blockquote>
+  <p>符号引用与虚拟机的内存布局无关，引用的目标并不一定加载到内存中。在Java中，一个java类将会编译成一个class文件。在编译时，java类并不知道所引用的类的实际地址，因此只能使用符号引用来代替。比如org.simple.People类引用了org.simple.Language类，在编译时People类并不知道Language类的实际内存地址，因此只能使用符号org.simple.Language（假设是这个，当然实际中是由类似于CONSTANT_Class_info的常量来表示的）来表示Language类的地址。</p>
+</blockquote>
+
+<h3 id="虚拟机类加载">虚拟机类加载</h3>
+
+<p>与编译时需要进行连接的语言不同,Java类型的加载连接和初始化都是在程序运行期间完成的。</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14899303847175.jpg" alt="" />
+上图不是在编译,而是在运行时动态进行的。</p>
+
+<h4 id="加载时机">加载时机</h4>
+
+<ul>
+  <li>遇到<code class="highlighter-rouge">new</code> <code class="highlighter-rouge">getstatic</code> <code class="highlighter-rouge">putstatic</code> <code class="highlighter-rouge">invokestatic</code></li>
+  <li>反射</li>
+  <li>初始化子类时会去加载父类
+…</li>
+</ul>
+
+<p>注意:</p>
+
+<ol>
+  <li>对于被final修饰的静态字段,在编译时已经把结果放入了常量池,所以是不会引起类的初始化的。</li>
+  <li>通过子类引用父类的静态字段,只会触发父类的初始化</li>
+</ol>
+
+<h4 id="加载">加载</h4>
+
+<p>在类加载阶段,完成3件事情:
+1) 通过类的名字获取类的二进制字节流
+2) 将字节流转化为方法区的运行时数据结构
+3) 在内存中生成java.lang.Class对象,该对象代表这个class,存储在方法区中</p>
+
+<h4 id="准备">准备</h4>
+
+<p>在准备阶段,为类变量分配内存,设置初始值,在这时只分配static修饰的变量,将其赋予<strong>初始值</strong>,实例变量会在对象实例化时随对象一起分配在Java堆中。对于final类型的会直接赋予值,因为该类型的已经在编译时写入class文件了。其余为<strong>初始值</strong>即零值</p>
+
+<h4 id="解析">解析</h4>
+
+<p>符号引用在class文件中以<code class="highlighter-rouge">CONSTANT_Class_info</code>,<code class="highlighter-rouge">CONSTANT_Fieldref_info</code>等类型的常量出现,解析阶段将符号引用替换为直接引用。</p>
+
+<p>符号引用与虚拟机实现的内存布局无关,但直接引用可以定位到目标。引用的目标必然已经存在于内存中。</p>
+
+<h4 id="初始化">初始化</h4>
+
+<p>初始化阶段执行类构造器<code class="highlighter-rouge">&lt;clinit&gt;</code>,即所有类变量的赋值动作和静态语句块
+<code class="highlighter-rouge">&lt;clinit&gt;</code>父类肯定优先于子类,如果多个线程同时初始化一个类,不要在<code class="highlighter-rouge">&lt;clinit&gt;</code>方法中执行耗时操作,因为会被阻塞。</p>
+
+<h3 id="类加载器">类加载器</h3>
+<p>类加载器实现类的加载(好像废话),比较两个类是否相等,特别要注意看是否由同一个类加载器加载。</p>
+
+<h4 id="双亲委派模式">双亲委派模式</h4>
+
+<p>类加载器可以分为三种:</p>
+
+<ul>
+  <li>启动类加载器:<code class="highlighter-rouge">bootstrap classloader</code>:加载<code class="highlighter-rouge">&lt;JAVA_HOME&gt;\lib</code>目录中的,并且名字需要被虚拟机识别</li>
+  <li>扩展类加载器:<code class="highlighter-rouge">extClassLoader</code>:加载<code class="highlighter-rouge">lib\ext</code>目录</li>
+  <li>应用程序类加载器,加载用户类路径的类。</li>
+</ul>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14898494026944.jpg" alt="" /></p>
+
+<p>上图是众人皆知的双亲委派模式,如果一个类加载器收到类加载的请求,会先把请求委派给父类加载器,如果无法加载再由自己加载,可以解决用户自己写系统重类想要替代系统类的不安全行为。</p>
+
+<h5 id="loadclass-vs-findclass">loadClass() vs findClass()</h5>
+<p><code class="highlighter-rouge">findClass()</code>是遵守双亲委派模式,而<code class="highlighter-rouge">loadClass()</code>是不遵守的。
+在<code class="highlighter-rouge">Extension ClassLoader</code>使用的是<code class="highlighter-rouge">findClass()</code>,<code class="highlighter-rouge">AppClassLoader</code>使用的是<code class="highlighter-rouge">loadClass()</code></p>
+
+<blockquote>
+  <p><code class="highlighter-rouge">Launcher$AppClassLoader</code>是用于加载各个不同应用下面的类，同一个JVM中可以同时存在多个应用，而这些应用可能是来自不同的开发方，他们之间彼此可能都不知道是谁，但是他们写的类却可能具有相同的全限定名，所以为了确保这些应用之间互不干扰，就需要由各应用的类加载器去加载所属应用的类，这样就不会发生类冲突了。</p>
+</blockquote>
+
+<p>因为实际上,双亲委派模式是先看类是否被加载过,再看父节点是否可以加载！</p>
+
+<p>所以我们在写应用时,为了遵守双亲委派模式,重写findClass()即可,在父节点加载失败时,会自动调用自己的<code class="highlighter-rouge">findClass()</code>,不需要重写<code class="highlighter-rouge">loadClass()</code></p>
+
+<p>但是<code class="highlighter-rouge">loadClass()</code>在有的时候也是有用的:</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14918904833776.jpg" alt="" />
+如果要想在JVM的不同类加载器中保留具有相同全限定名的类，那就要通过重写<code class="highlighter-rouge">loadClass</code>来实现，此时首先是通过用户自定义的类加载器来判断该类是否可加载，如果可以加载就由自定义的类加载器进行加载，如果不能够加载才交给父类加载器去加载。</p>
+
+<h3 id="运行时">运行时</h3>
+
+<h4 id="java栈帧结构">java栈帧结构</h4>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14898498688630.jpg" alt="" /></p>
+
+<h4 id="方法调用">方法调用</h4>
+
+<p>在前面类加载时,会把符号引用转化为直接引用,这些引用称为静态解析。即方法在程序真正运行之前就有一个可确定的调用版本,并且在运行期间不可变。主要有静态方法和私有方法。</p>
+
+<h4 id="分派">分派</h4>
+
+<h5 id="重载">重载</h5>
+
+<p>首先看一段解释:</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14899038259031.jpg" alt="" />
+编译器在编译时根据参数的静态类型决定使用哪个重载(overload)版本</p>
+
+<h5 id="重写override">重写(override)</h5>
+
+<p>即动态分发,编译时根据调用者静态类型与参数的静态类型选择方法,然后运行时先查找实际类型是否有相同函数签名的方法,找不到再依次向上在父类中寻找。</p>
+
+<h5 id="方法选择总结">方法选择总结</h5>
+
+<p>在编译器编译过程,使用静态分配。根据静态类型与方法参数选择符号引用
+在运行阶段,使用动态分配,根据方法接受者的实际类型来选择实际方法。</p>
+
+<h3 id="编译优化">编译优化</h3>
+
+<p>一开始总是与编译成字节码弄混,其实java代码会在编译器前端被先编译成字节码（javac）即class文件,然后jvm会在编译器后端把字节码变成机器码</p>
+
+<p>这部分说深了就比较复杂,涉及较多编译原理的知识,简单总结一下:</p>
+
+<p>编译过程主要分为三个过程:</p>
+
+<ul>
+  <li>解析与填充符号表</li>
+  <li>插入式注解处理器的注解处理过程</li>
+  <li>分析与字节码生成过程</li>
+</ul>
+
+<p>该过程更像是编译原理的过程,通过词法和语法分析,将字符流转化为语法树,树的每一个节点都代表一个语法结构,例如包,类型,修饰符,运算符等结构。根据语法树填充符号表。</p>
+
+<p>然后进行语义分析,标注检查变量使用前是否被声明,变量与赋值之间的数据类型是否匹配。同时检查数据及控制流,分析方法的每条路径是否都有返回值等</p>
+
+<blockquote>
+  <p>有个很好玩的例子:
+在参数中赋予final对运行期间是没有作用的,因为局部变量在常量池中没有访问标记,所以final只会在编译性间作不变性的保障。</p>
+</blockquote>
+
+<p>最后解语法糖,生成字节码。生成字节码的过程中,语法树中加入了<code class="highlighter-rouge">&lt;init&gt;</code>与<code class="highlighter-rouge">&lt;clinit&gt;</code>方法。</p>
+
+<h4 id="语法糖">语法糖🍬</h4>
+
+<h5 id="泛型">泛型</h5>
+
+<p>Java中,泛型只在程序源码中存在,编译后的字节码文件中已经替换完原生类型,并且在相应的地方插入了强制转型,所以泛型在Java中只能算是一颗语法糖。</p>
+
+<p>所以在重载中,只改变泛型类型是不能被编译通过的,(解释了我多年的困惑,在jdk1.6后引入Signature属性,可以存储一个方法在字节码层面的特征签名,即保存参数化类型的信息。因此我们还是可以通过反射获取参数化类型。</p>
+
+<h5 id="自动装箱拆箱的陷阱">自动装箱&amp;拆箱的陷阱</h5>
+
+<p>在比较对象与基本类型时,对象会进行拆箱。拆箱即为intValue()操作,特别注意不能为null</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">Integer</span> <span class="n">i1</span><span class="o">=</span><span class="mi">100</span><span class="o">;</span>  
+<span class="n">Integer</span> <span class="n">i2</span><span class="o">=</span><span class="mi">100</span><span class="o">;</span>  
+<span class="n">Integer</span> <span class="n">i3</span><span class="o">=</span><span class="mi">300</span><span class="o">;</span>  
+<span class="n">Integer</span> <span class="n">i4</span><span class="o">=</span><span class="mi">300</span><span class="o">;</span>  
+<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">i1</span><span class="o">==</span><span class="n">i2</span><span class="o">);</span> <span class="c1">//true</span>
+<span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">i3</span><span class="o">==</span><span class="n">i4</span><span class="o">);</span> <span class="c1">//false</span>
+</code></pre>
+</div>
+<p>装箱为<code class="highlighter-rouge">valueOf()</code>:</p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="kd">public</span> <span class="kd">static</span> <span class="n">Integer</span> <span class="nf">valueOf</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">)</span> <span class="o">{</span>  
+        <span class="k">if</span><span class="o">(</span><span class="n">i</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="mi">128</span> <span class="o">&amp;&amp;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">IntegerCache</span><span class="o">.</span><span class="na">high</span><span class="o">)</span>  
+            <span class="k">return</span> <span class="n">IntegerCache</span><span class="o">.</span><span class="na">cache</span><span class="o">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">128</span><span class="o">];</span>  
+        <span class="k">else</span>  
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">Integer</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>  
+    <span class="o">}</span>  
+</code></pre>
+</div>
+<p>所以对于-128至127,是同一个Integer对象</p>
+
+<blockquote>
+  <p>当封装类与基础类型进行==运行时，封装类会进行拆箱，拆箱结果与基础类型对比值；而两个封装类进行==运行时，与其它的对象进行==运行一样，对比两个对象的地址，也即判断是否两个引用是否指向同一个对象。</p>
+</blockquote>
+
+<h3 id="运行优化">运行优化</h3>
+
+<p>这部分涉及的更复杂了,即编译的后端。先记录简单知识,以HotSpot为例,主要是解析器和即时编译器共存的架构。</p>
+
+<p>解析器:解析器可以省去编译(后端)的时间,立即执行,即翻译一条执行一条</p>
+
+<p>编译器:编译器可以把代码编译成本地代码,执行效率高,注意这里和前面的编译优化的区别,这里是把class文件编译为机器语言。</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14899989334824.jpg" alt="" />
+看我机子上的mixMode,代表就是解析器和编译器共存的模式。</p>
+
+<p>HotSpot有两个即时编译器,即C1和C2</p>
+
+<p>热点代码:当JVM发现某个方法或代码运行特别频繁，会把它们当做热点代码,为了提高执行效率,会在运行时把代码编译成机器码</p>
+
+<p>分层编译:</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14901125422645.jpg" alt="" /></p>
+
+<p>看了一些知乎的回答觉得非常帮助我理解:</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14901135496721.jpg" alt="" />
+<img src="/img/2017-04-11-java-virtual-machine/14901137838955.jpg" alt="" /></p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14901138639999.jpg" alt="" /></p>
+
+<h3 id="并发与线程安全">并发与线程安全</h3>
+
+<p>局部变量和方法参数是线程私有的,不会被共享与竞争</p>
+
+<p>JAVA内存模型:
+所有变量都存储在主内存,每个线程有自己的工作内存,保存了该线程所使用的变量的主内存副本拷贝</p>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14901142686746.jpg" alt="" />
+Java内存模型共定义了8种原子性操作:
+lock(主线程),<code class="highlighter-rouge">unlock,read,load,use,assign,store,write</code></p>
+
+<p>注意:lock作用于主内存的变量,把变量标识为一个线程独占的状态。一个变量只允许一条线程对其lock,lock后会清空工作内存中此变量的值,之后使用一定会重新执行load或assign,对一个变量unlock之前,必须先把此变量同步回主内存</p>
+
+<h4 id="volatile">volatile</h4>
+
+<p>volatile的使用看两个例子就行:</p>
+
+<ol>
+  <li><code class="highlighter-rouge">count++</code></li>
+  <li><code class="highlighter-rouge">while(a)  first a = true ;  then another thread change a to false</code></li>
+</ol>
+
+<p>在不符合以下两条规则的运算场景中,依旧要加锁保持原子性:</p>
+
+<ul>
+  <li>运算结果并不依赖变量的当前值,或者确保只有单一的线程修改</li>
+  <li>变量不需要与其他的状态变量共同参与不变约束</li>
+</ul>
+
+<p>使用<code class="highlighter-rouge">volatile</code>还可以禁止指令重排序优化</p>
+
+<h5 id="原子性">原子性</h5>
+
+<h5 id="可见性">可见性</h5>
+
+<p><code class="highlighter-rouge">volatile,synchronized,final</code>
+同步的可见性在于unlock之前会把变量同步回主内存</p>
+
+<h5 id="有序性">有序性</h5>
+
+<p><code class="highlighter-rouge">volatile,synchronized</code></p>
+
+<h4 id="先行发生原则">先行发生原则</h4>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14901151886171.jpg" alt="" /></p>
+
+<h4 id="线程三种方式">线程三种方式:</h4>
+
+<h5 id="内核线程-klt--轻量级进程">内核线程 KLT &amp; 轻量级进程</h5>
+
+<p>需要进行上下文切换,使用纯线程,因此消耗内核资源
+<img src="/img/2017-04-11-java-virtual-machine/14903676128755.jpg" alt="" /></p>
+
+<h5 id="用户线程--完全用户态完成">用户线程  完全用户态完成</h5>
+
+<h5 id="用户线程轻量级线程">用户线程+轻量级线程</h5>
+
+<p><img src="/img/2017-04-11-java-virtual-machine/14903677303678.jpg" alt="" /></p>
+<h3 id="线程安全">线程安全</h3>
+
+<p>当多个线程访问一个对象时,如果不用考虑这些线程在运行时环境下的调度和交替执行,也不需要进行额外的同步或其他任何的协调操作</p>
+
+<h4 id="无同步">无同步</h4>
+
+<p>有两类代码天身线程安全:</p>
+
+<ul>
+  <li>可重入代码,纯代码:即就算代码被中断,控制权返回时原理的程序不会出现任何错误。</li>
+  <li>线程本地存储</li>
+</ul>
+
+<h4 id="锁优化">锁优化</h4>
+
+<h5 id="自适应自旋">自适应自旋</h5>
+
+<p>我们知道自旋锁会一直等待,如果等待时间少则是很高效率因为不用上下文切换了,但是时间长就白白消耗处理器资源。jdk1.6后加入自适应自旋锁,即自旋时间不再固定,而是由前一次在同一个锁上的自旋时间与状态来决定。</p>
+
+<h5 id="锁消除">锁消除</h5>
+
+<p>JIT在运行时如果发现不可能存在共享数据竞争则把锁解除</p>
+
+<h5 id="锁粗化">锁粗化</h5>
+
+<p>一系列连续操作对同一个对象反复加锁和解锁,就把加锁同步的范围粗化</p>
+
+<h5 id="轻量级锁">轻量级锁</h5>
+
+<p>使用CAS进行同步,基于对于绝大部分的锁不存在竞争的依据。如果发生竞争,则比使用传统锁要耗时,多了CAS这一步。</p>
+
+<h5 id="偏向锁">偏向锁</h5>
+
+<p>基于轻量级锁,偏向于某个线程。一旦出现多线程竞争的情况就必须撤销偏向锁。如果程序中大多数的锁总是被同一个线程访问,适合用偏向锁。</p>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/04/11/java-virtual-machine"
+                    data-title="深入理解Java虚拟机"
+                    data-url="http://localhost:5001/2017/04/11/java-virtual-machine/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="趁着做毕设,决定把基础补一下,很多时候还是不能从原理去分析问题。这篇拖了很久额。。
+
+内存管理
+
+
+
+  程序计数器: 线程独立维护,线程私有内存
+  虚... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/04/11/gralloc/" data-toggle="tooltip" data-placement="top" title="Android4.4图像显示之gralloc驱动分析">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/04/17/concurrent/" data-toggle="tooltip" data-placement="top" title="Java并发编程之细枝末节">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/04/11/java-virtual-machine"
+                        data-title="深入理解Java虚拟机"
+                        data-url="http://localhost:5001/2017/04/11/java-virtual-machine/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

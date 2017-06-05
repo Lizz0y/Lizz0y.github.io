@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Gradle实战与Nuwa顺带分析 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/04/28/gradleAndNuwa/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Gradle" title="Gradle">Gradle</a>
+                        
+                        <a class="tag" href="/tags/#HotFix" title="HotFix">HotFix</a>
+                        
+                    </div>
+                    <h1>Gradle实战与Nuwa顺带分析</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on April 28, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p><a href="http://jiajixin.cn/2015/08/07/gradle-android/">很棒的总结</a></p>
+
+<p><a href="http://blog.csdn.net/innost/article/details/48228651">很好的语法总结</a></p>
+
+<h3 id="gradle基本">Gradle基本</h3>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14932951429578.jpg" alt="" /></p>
+
+<p>我们知道,一个Task的生命周期分三部分:初始化,配置,执行。</p>
+
+<ul>
+  <li>
+    <p>初始化阶段，会去读取根工程中setting.gradle中的include信息，决定有哪几个工程加入构建，创建project实例，比如下面有三个工程：<code class="highlighter-rouge">include ':app', ':lib1', ':lib2'</code></p>
+  </li>
+  <li>
+    <p>配置阶段，会去执行所有工程的build.gradle脚本，配置project对象，一个对象由多个任务组成，此阶段也会去创建、配置task及相关信息。</p>
+  </li>
+  <li>
+    <p>运行阶段，根据gradle命令传递过来的task名称，执行相关依赖任务</p>
+  </li>
+</ul>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14933572585310.jpg" alt="" /></p>
+
+<p>注意两种task的区别,第一种写法代表是配置,就算执行另一个task,Hello world也还是会打印出来。第二种写法代表是真正的执行体。</p>
+
+<h4 id="设置task的类型和依赖">设置task的类型和依赖</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">task</span> <span class="nf">copyFile</span><span class="o">(</span><span class="nl">type:</span> <span class="n">Copy</span><span class="o">)</span> <span class="o">{</span>
+   <span class="n">from</span> <span class="err">'</span><span class="n">xml</span><span class="err">'</span>
+   <span class="n">into</span> <span class="err">'</span><span class="n">destination</span><span class="err">'</span>
+<span class="o">}</span>
+<span class="n">task</span> <span class="nf">taskA</span><span class="o">(</span><span class="nl">dependsOn:</span> <span class="n">taskB</span><span class="o">)</span> <span class="o">{</span>
+   <span class="c1">//do something</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="设置property">设置Property</h4>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14932981971835.jpg" alt="" /></p>
+
+<h3 id="一些重要语法">一些重要语法</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="c1">//无类型的函数定义，必须使用def关键字  </span>
+<span class="n">def</span>  <span class="nf">nonReturnTypeFunc</span><span class="o">(){</span>  
+    <span class="n">last_line</span>   <span class="c1">//最后一行代码的执行结果就是本函数的返回值  </span>
+<span class="o">}</span>  
+<span class="c1">//如果指定了函数返回类型，则可不必加def关键字来定义函数  </span>
+<span class="n">String</span> <span class="nf">getString</span><span class="o">(){</span>  
+   <span class="k">return</span><span class="s">"I am a string"</span>  
+<span class="o">}</span>  
+</code></pre>
+</div>
+
+<h4 id="closure">closure</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">def</span> <span class="n">aClosure</span> <span class="o">=</span> <span class="o">{</span><span class="c1">//闭包是一段代码，所以需要用花括号括起来..  </span>
+    <span class="n">Stringparam1</span><span class="o">,</span> <span class="kt">int</span> <span class="n">param2</span> <span class="o">-&gt;</span>  <span class="c1">//这个箭头很关键。箭头前面是参数定义，箭头后面是代码  </span>
+    <span class="n">println</span><span class="s">"this is code"</span> <span class="c1">//这是代码，最后一句是返回值，  </span>
+   <span class="c1">//也可以使用return，和Groovy中普通函数一样  </span>
+<span class="o">}</span>  
+<span class="n">aClosure</span><span class="o">.</span><span class="na">call</span><span class="o">(</span><span class="s">"this is string"</span><span class="o">,</span><span class="mi">100</span><span class="o">)</span>  <span class="err">或者</span>  
+<span class="n">aClosure</span><span class="o">(</span><span class="s">"this is string"</span><span class="o">,</span> <span class="mi">100</span><span class="o">)</span>  
+</code></pre>
+</div>
+
+<p>如果闭包没定义参数的话，则隐含有一个参数，这个参数名字叫it，和this的作用类似。it代表闭包的参数。</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code>
+<span class="kd">public</span> <span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="n">each</span><span class="o">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">self</span><span class="o">,</span> <span class="n">Closure</span> <span class="n">closure</span><span class="o">)</span>  
+<span class="cm">/**
+上面这个函数表示针对List的每一个元素都会调用closure
+做一些处理。这里的closure，就有点回调函数的感觉。但是，在使用这个each函数的时候，我们传递一个怎样的Closure进去呢？比如：  
+def iamList = [1,2,3,4,5]  //定义一个List  
+iamList.each{ //调用它的each，这段代码的格式看不懂了吧？each是个函数，圆括号去哪了？  
+      println it  
+}**/</span>
+</code></pre>
+</div>
+<p>Groovy中，当函数的最后一个参数是闭包的话，可以省略圆括号</p>
+
+<h3 id="自定义gradle插件">自定义Gradle插件</h3>
+
+<p><a href="http://blog.csdn.net/liuhongwei123888/article/details/50541759">自定义Gradle插件</a></p>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14933703969513.jpg" alt="" /></p>
+
+<p>自定义插件的文件结构如上图。</p>
+
+<h4 id="插件主要代码">插件主要代码</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">micky</span><span class="o">.</span><span class="na">gradle</span><span class="o">;</span>  
+<span class="kn">import</span> <span class="nn">org.gradle.api.*</span><span class="o">;</span>  
+  
+<span class="kd">class</span> <span class="nc">MyCustomPlugin</span> <span class="kd">implements</span> <span class="n">Plugin</span><span class="o">&lt;</span><span class="n">Project</span><span class="o">&gt;</span> <span class="o">{</span>  
+    <span class="kt">void</span> <span class="nf">apply</span><span class="o">(</span><span class="n">Project</span> <span class="n">project</span><span class="o">)</span> <span class="o">{</span>  
+        <span class="n">project</span><span class="o">.</span><span class="na">task</span><span class="o">(</span><span class="err">'</span><span class="n">myTask</span><span class="err">'</span><span class="o">)</span> <span class="o">&lt;&lt;</span> <span class="o">{</span>  
+            <span class="n">println</span> <span class="s">"Hi this is micky's plugin"</span>  
+        <span class="o">}</span>  
+    <span class="o">}</span>  
+<span class="o">}</span>  
+</code></pre>
+</div>
+
+<p>在<code class="highlighter-rouge">META-INF</code>的<code class="highlighter-rouge">plugins</code>下创建<code class="highlighter-rouge">property</code>文件,名字需要跟plugin的ID匹配,比如这里应该是<code class="highlighter-rouge">包名+ mycustom + properties</code>,这个是以后我们在<code class="highlighter-rouge">apply plugin</code> 使用的名字</p>
+
+<p>内容为: <code class="highlighter-rouge">implementation-class=包名+MyCustomPlugin</code></p>
+
+<p>在根目录下建立<code class="highlighter-rouge">setting.gradle</code>目录,设置插件名字:
+<code class="highlighter-rouge">rootProject.name='gradle-micky'</code></p>
+
+<h4 id="maven发布">Maven发布</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">apply</span> <span class="nl">plugin:</span> <span class="err">'</span><span class="n">groovy</span><span class="err">'</span>  
+<span class="n">apply</span> <span class="nl">plugin:</span> <span class="err">'</span><span class="n">maven</span><span class="err">'</span>  
+  
+<span class="n">dependencies</span> <span class="o">{</span>  
+    <span class="n">compile</span> <span class="nf">gradleApi</span><span class="o">()</span>  
+    <span class="n">compile</span> <span class="nf">localGroovy</span><span class="o">()</span>  
+<span class="o">}</span>  
+  
+<span class="n">repositories</span> <span class="o">{</span>  
+    <span class="n">mavenCentral</span><span class="o">()</span>  
+<span class="o">}</span>  
+  
+<span class="n">group</span><span class="o">=</span><span class="err">'</span><span class="n">com</span><span class="o">.</span><span class="na">micky</span><span class="err">'</span>  
+<span class="n">version</span><span class="o">=</span><span class="err">'</span><span class="mf">1.0</span><span class="o">.</span><span class="mi">0</span><span class="err">'</span>  
+  
+<span class="n">uploadArchives</span> <span class="o">{</span>  
+    <span class="n">repositories</span> <span class="o">{</span>  
+        <span class="n">mavenDeployer</span> <span class="o">{</span>  
+            <span class="n">repository</span><span class="o">(</span><span class="nl">url:</span> <span class="n">uri</span><span class="o">(</span><span class="err">'</span><span class="o">../</span><span class="n">repo</span><span class="err">'</span><span class="o">))</span>  
+        <span class="o">}</span>  
+    <span class="o">}</span>  
+<span class="o">}</span>  
+</code></pre>
+</div>
+
+<p>or</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">apply</span> <span class="nl">plugin:</span> <span class="err">'</span><span class="n">maven</span><span class="err">'</span>
+<span class="n">uploadArchives</span> <span class="o">{</span>
+    <span class="n">repositories</span> <span class="o">{</span>
+        <span class="n">mavenDeployer</span> <span class="o">{</span>
+            <span class="n">pom</span><span class="o">.</span><span class="na">groupId</span> <span class="o">=</span> <span class="n">GROUP_ID</span>
+            <span class="n">pom</span><span class="o">.</span><span class="na">artifactId</span> <span class="o">=</span> <span class="n">ARTIFACT_ID</span>
+            <span class="n">pom</span><span class="o">.</span><span class="na">version</span> <span class="o">=</span> <span class="n">VERSION</span>
+            <span class="nf">repository</span><span class="o">(</span><span class="nl">url:</span> <span class="n">RELEASE_REPOSITORY_URL</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">authentication</span><span class="o">(</span><span class="nl">userName:</span> <span class="n">USERNAME</span><span class="o">,</span> <span class="nl">password:</span> <span class="n">PASSWORD</span><span class="o">)</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="执行">执行</h4>
+
+<p><code class="highlighter-rouge">gradle uploadArchives</code>就把插件jar文件存储在本地maven库里，本地maven库即我们在脚本里创建的”../repo”目录</p>
+
+<h4 id="应用">应用</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">buildscript</span> <span class="o">{</span>  
+    <span class="n">repositories</span> <span class="o">{</span>  
+        <span class="n">maven</span> <span class="o">{</span>  
+            <span class="n">url</span> <span class="nf">uri</span><span class="o">(</span><span class="err">'</span><span class="o">../</span><span class="n">repo</span><span class="err">'</span><span class="o">)</span>  
+        <span class="o">}</span>  
+    <span class="o">}</span>  
+  
+    <span class="n">dependencies</span> <span class="o">{</span>  
+        <span class="n">classpath</span> <span class="nl">group:</span> <span class="err">'</span><span class="n">com</span><span class="o">.</span><span class="na">micky</span><span class="err">'</span><span class="o">,</span>  <span class="nl">name:</span> <span class="err">'</span><span class="n">gradle</span><span class="o">-</span><span class="n">micky</span><span class="err">'</span><span class="o">,</span>  <span class="nl">version:</span> <span class="err">'</span><span class="mf">1.0</span><span class="o">.</span><span class="mi">0</span><span class="err">'</span>  
+    <span class="o">}</span>  
+<span class="o">}</span>  
+  
+<span class="n">apply</span> <span class="nl">plugin:</span> <span class="err">'</span><span class="n">com</span><span class="o">.</span><span class="na">micky</span><span class="o">.</span><span class="na">mycustom</span><span class="err">'</span>  
+</code></pre>
+</div>
+
+<p>可以看到url就是本地repo,设置依赖,还要设置apply plugin,代表引入这个插件</p>
+
+<h4 id="加入任务">加入任务</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">afterEvaluate</span> <span class="o">{</span>
+    <span class="n">android</span><span class="o">.</span><span class="na">applicationVariants</span><span class="o">.</span><span class="na">each</span> <span class="o">{</span> <span class="n">variant</span> <span class="o">-&gt;</span>
+        <span class="n">def</span> <span class="n">dx</span> <span class="o">=</span> <span class="n">tasks</span><span class="o">.</span><span class="na">findByName</span><span class="o">(</span><span class="s">"dex${variant.name.capitalize()}"</span><span class="o">)</span>
+        <span class="n">def</span> <span class="n">hello</span> <span class="o">=</span> <span class="s">"hello${variant.name.capitalize()}"</span>
+        <span class="n">task</span><span class="o">(</span><span class="n">hello</span><span class="o">)</span> <span class="o">&lt;&lt;</span> <span class="o">{</span>
+			<span class="n">println</span> <span class="s">"hello"</span>
+        <span class="o">}</span>
+        <span class="n">tasks</span><span class="o">.</span><span class="na">findByName</span><span class="o">(</span><span class="n">hello</span><span class="o">).</span><span class="na">dependsOn</span> <span class="n">dx</span><span class="o">.</span><span class="na">taskDependencies</span><span class="o">.</span><span class="na">getDependencies</span><span class="o">(</span><span class="n">dx</span><span class="o">)</span>
+        <span class="n">dx</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">tasks</span><span class="o">.</span><span class="na">findByName</span><span class="o">(</span><span class="n">hello</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>我们知道,variant = productFlavors+ buildTypes 所以每个variant的每个dex是不一样的</p>
+<h3 id="自定义gradle-task">自定义Gradle Task</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">MyCustomTask</span> <span class="kd">extends</span> <span class="n">DefaultTask</span> <span class="o">{</span>  
+    <span class="nd">@TaskAction</span>  
+    <span class="kt">void</span> <span class="nf">output</span><span class="o">()</span> <span class="o">{</span>  
+        <span class="n">println</span> <span class="s">"Hello this is my custom task output"</span>  
+    <span class="o">}</span>  
+<span class="o">}</span>  
+<span class="kd">class</span> <span class="nc">MyCustomPlugin</span> <span class="kd">implements</span> <span class="n">Plugin</span><span class="o">&lt;</span><span class="n">Project</span><span class="o">&gt;</span> <span class="o">{</span>  
+    <span class="kt">void</span> <span class="nf">apply</span><span class="o">(</span><span class="n">Project</span> <span class="n">project</span><span class="o">)</span> <span class="o">{</span>  
+        <span class="n">project</span><span class="o">.</span><span class="na">task</span><span class="o">(</span><span class="err">'</span><span class="n">customTask</span><span class="err">'</span><span class="o">,</span> <span class="nl">type:</span> <span class="n">MyCustomTask</span><span class="o">)</span>  
+    <span class="o">}</span>  
+<span class="o">}</span> 
+</code></pre>
+</div>
+
+<h4 id="extension">Extension</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">MyCustomPluginExtension</span> <span class="o">{</span>  
+    <span class="n">def</span> <span class="n">message</span> <span class="o">=</span> <span class="s">"From MyCustomPluginExtention"</span>  
+    <span class="n">def</span> <span class="n">sender</span> <span class="o">=</span> <span class="s">"MyCustomPluin"</span>  
+<span class="o">}</span> 
+<span class="kd">class</span> <span class="nc">MyCustomPlugin</span> <span class="kd">implements</span> <span class="n">Plugin</span><span class="o">&lt;</span><span class="n">Project</span><span class="o">&gt;</span> <span class="o">{</span>  
+    <span class="kt">void</span> <span class="nf">apply</span><span class="o">(</span><span class="n">Project</span> <span class="n">project</span><span class="o">)</span> <span class="o">{</span>  
+        <span class="n">project</span><span class="o">.</span><span class="na">extensions</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="err">'</span><span class="n">myArgs</span><span class="err">'</span><span class="o">,</span> <span class="n">MyCustomPluginExtension</span><span class="o">)</span>  
+        <span class="n">project</span><span class="o">.</span><span class="na">task</span><span class="o">(</span><span class="err">'</span><span class="n">customTask</span><span class="err">'</span><span class="o">,</span> <span class="nl">type:</span> <span class="n">MyCustomTask</span><span class="o">)</span>  
+    <span class="o">}</span>  
+<span class="o">}</span> 
+<span class="kt">void</span> <span class="nf">output</span><span class="o">()</span> <span class="o">{</span>  
+        <span class="n">println</span> <span class="s">"Sender is ${project.myArgs.sender},\nmessage: ${project.myArgs.message}"</span>  
+<span class="o">}</span> 
+</code></pre>
+</div>
+
+<p>在<code class="highlighter-rouge">build.gradle</code>内也可以重新定义message,sender。所以叫扩展,就是用户可以自由定义:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">myArgs</span> <span class="o">{</span>  
+    <span class="n">sender</span><span class="o">=</span><span class="err">'</span><span class="n">Micky</span> <span class="n">Liu</span><span class="err">'</span>  
+    <span class="n">message</span><span class="o">=</span><span class="err">'</span><span class="n">Gradle</span> <span class="n">is</span> <span class="n">so</span> <span class="n">simple</span><span class="o">.</span><span class="err">'</span>  
+    <span class="n">nestArgs</span> <span class="o">{</span>  
+        <span class="n">receiver</span><span class="o">=</span><span class="err">'</span><span class="n">David</span> <span class="n">Chen</span><span class="err">'</span>  
+        <span class="n">email</span><span class="o">=</span><span class="err">'</span><span class="n">David</span><span class="err">@</span><span class="mi">126</span><span class="o">.</span><span class="na">com</span><span class="err">'</span>  
+    <span class="o">}</span>  
+  
+<span class="o">}</span> 
+</code></pre>
+</div>
+<h4 id="多渠道打包">多渠道打包</h4>
+
+<h5 id="flavor">flavor</h5>
+
+<p>flavor + buildType :</p>
+
+<p>buildType更多是内部的不同,例如debug or release
+flavor更多是外部的不同,例如多个渠道</p>
+
+<p>Gradle会为不同flavor关联对应的sourceSet，默认位置为src/<flavorName>目录</flavorName></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">android</span> <span class="o">{</span>
+    <span class="o">....</span>
+
+    <span class="n">productFlavors</span> <span class="o">{</span>
+        <span class="n">flavor1</span> <span class="o">{</span>
+            <span class="n">minSdkVersion</span> <span class="mi">14</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="n">android</span> <span class="o">{</span>
+    <span class="n">defaultConfig</span> <span class="o">{</span>
+        <span class="n">buildConfigField</span> <span class="s">"boolean"</span><span class="o">,</span> <span class="s">"AUTO_UPDATES"</span><span class="o">,</span> <span class="s">"true"</span>
+    <span class="o">}</span>
+
+    <span class="n">productFlavors</span> <span class="o">{</span>
+        <span class="n">wandoujia</span> <span class="o">{</span>
+            <span class="n">buildConfigField</span> <span class="s">"boolean"</span><span class="o">,</span> <span class="s">"AUTO_UPDATES"</span><span class="o">,</span> <span class="s">"false"</span>
+        <span class="o">}</span>        
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre>
+</div>
+<blockquote>
+  <p>Gradle会在generateSources阶段为flavor生成一个BuildConfig.java文件。BuildConfig类默认提供了一些常量字段，比如应用的版本名（VERSION_NAME），应用的包名（PACKAGE_NAME）等。更强大的是，开发者还可以添加自定义的一些字段。</p>
+</blockquote>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14933646908691.jpg" alt="" /></p>
+
+<p>Gradle在构建应用时，会优先使用flavor所属dataSet中的同名资源。所以可以进行资源覆盖,例如换包名等。</p>
+
+<h5 id="修改包名">修改包名</h5>
+
+<p><a href="http://hugozhu.myalert.info/2014/08/03/50-use-gradle-to-customize-apk-build.html">有借鉴意义的文章</a> 
+<a href="http://toastdroid.com/2014/03/28/customizing-your-build-with-gradle/">很多总结性知识</a></p>
+
+<p>让我想起了我悲伤的换包,我要跟导师控诉</p>
+
+<ul>
+  <li>修改debug版的包名</li>
+  <li>修正资源文件里的包名</li>
+  <li>定制APK的应用名称</li>
+  <li>修改Cp的authority</li>
+</ul>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">android</span><span class="o">.</span><span class="na">applicationVariants</span><span class="o">.</span><span class="na">all</span> <span class="o">{</span> <span class="n">variant</span> <span class="o">-&gt;</span>
+    <span class="n">def</span> <span class="n">buildType</span> <span class="o">=</span> <span class="n">variant</span><span class="o">.</span><span class="na">buildType</span>
+    <span class="n">def</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">java</span><span class="o">.</span><span class="na">nio</span><span class="o">.</span><span class="na">charset</span><span class="o">.</span><span class="na">Charset</span><span class="o">.</span><span class="na">defaultCharset</span><span class="o">().</span><span class="na">toString</span><span class="o">()</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">buildType</span><span class="o">.</span><span class="na">applicationIdSuffix</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">def</span> <span class="n">defaultPackageId</span> <span class="o">=</span> <span class="n">variant</span><span class="o">.</span><span class="na">packageName</span><span class="o">.</span><span class="na">replaceAll</span><span class="o">(</span><span class="n">buildType</span><span class="o">.</span><span class="na">applicationIdSuffix</span><span class="o">,</span><span class="err">''</span><span class="o">)</span>
+        <span class="n">variant</span><span class="o">.</span><span class="na">mergeResources</span><span class="o">.</span><span class="na">doLast</span> <span class="o">{</span>
+            <span class="n">def</span> <span class="n">dir</span> <span class="o">=</span> <span class="n">file</span><span class="o">(</span><span class="s">"${buildDir}/intermediates/res/${variant.dirName}/layout"</span><span class="o">)</span>
+            <span class="n">dir</span><span class="o">.</span><span class="na">listFiles</span><span class="o">().</span><span class="na">each</span> <span class="o">{</span> <span class="n">f</span><span class="o">-&gt;</span>
+                <span class="n">String</span> <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="na">getText</span><span class="o">(</span><span class="n">encoding</span><span class="o">)</span>
+                <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="na">replaceAll</span><span class="o">(</span><span class="s">"res/"</span><span class="o">+</span><span class="n">defaultPackageId</span><span class="o">,</span> <span class="s">"res/"</span><span class="o">+</span><span class="n">variant</span><span class="o">.</span><span class="na">packageName</span><span class="o">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">content</span><span class="o">,</span> <span class="n">encoding</span><span class="o">)</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="杂">杂</h4>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">inputs</span><span class="o">.</span><span class="na">dir</span> <span class="n">sources</span>
+<span class="n">outputs</span><span class="o">.</span><span class="na">file</span> <span class="n">destination</span>
+</code></pre>
+</div>
+
+<p>指定输入和输出时,可以获得增量编译的优势。</p>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14933009927487.jpg" alt="" /></p>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14933577361720.jpg" alt="" /></p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="n">tasks</span><span class="o">.</span><span class="na">whenTaskAdded</span> <span class="o">{</span> <span class="n">theTask</span> <span class="o">-&gt;</span>
+       <span class="k">if</span> <span class="o">(</span><span class="n">theTask</span><span class="o">.</span><span class="na">name</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="s">"packageRelease"</span><span class="o">))</span> <span class="o">{</span>
+           <span class="n">theTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="s">"getReleasePassword"</span>
+       <span class="o">}</span>
+ <span class="o">}</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">whenTaskAdded</code>后面的闭包会在gradle配置阶段完成。
+<code class="highlighter-rouge">afterEvaluate</code>是在配置阶段要结束，项目评估完会走到这一步。</p>
+
+<h3 id="遗留问题">遗留问题</h3>
+
+<p>据说facebook的Buck构建速度很快,到时候研究一下</p>
+
+<h3 id="nuwa源码分析">Nuwa源码分析</h3>
+<p><a href="http://www.cnblogs.com/xgjblog/p/5483220.html">很好的实践文章</a>
+热补丁,具体原理基于ClassLoader,烂大街了没啥好说的。操作也是:打完patch.jar直接推入sdcard即可。</p>
+
+<p>所以今天来分析一下源码。</p>
+
+<p>Nuwa分成两个部分,<code class="highlighter-rouge">sdk</code>和<code class="highlighter-rouge">gradle plugin</code>部分。前者实现<code class="highlighter-rouge">dex</code>合并过程,后者实现字节码注入过程。所以unbelievable,后者才是nuwa真正的精华部分。</p>
+
+<h4 id="sdk">sdk</h4>
+
+<p>注入代码不再赘述,看一下build.gradle结构:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>nuwa
+----build.gradle ①
+sample
+----build.gradle ②
+build.gradle ③
+</code></pre>
+</div>
+
+<p>最外层build.gradle③</p>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14934312843869.jpg" alt="" /></p>
+
+<p>看到直接引入<code class="highlighter-rouge">maven</code>,<code class="highlighter-rouge">nuwa</code>的依赖。注意这里是gradle插件依赖,和后面的<code class="highlighter-rouge">compile project(:nuwa)引入的是sdk依赖不同</code></p>
+
+<p>再看①:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+</code></pre>
+</div>
+
+<p>apply依赖的插件,然后把它作<code class="highlighter-rouge">library</code>上传到maven仓库中</p>
+
+<p>最后看②:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(":nuwa")
+    compile 'com.android.support:appcompat-v7:22.2.1'
+    compile 'com.android.support:design:22.2.1'
+}
+
+apply plugin: "cn.jiajixin.nuwa"
+
+</code></pre>
+</div>
+
+<p>看到这里<code class="highlighter-rouge">compile project(:nuwa)</code>,说明是依赖于工程中另一个项目<code class="highlighter-rouge">nuwa</code>,<code class="highlighter-rouge">apply plugin: "cn.jiajixin.nuwa"</code>把gradle插件进行应用。</p>
+
+<p>这里我一直有个疑问,什么时候既要compile&amp;apply,什么时候只需要compile。我个人认为是如果库作为插件那么是前者,如果是作为Library那么是后者。知道的同学请告知一下,感激不尽。</p>
+
+<h4 id="gradle-plugin">gradle plugin</h4>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14934319361168.jpg" alt="" />
+<img src="/img/2017-04-29-gradleAndNuwa/14934319878836.jpg" alt="" /></p>
+
+<h5 id="extension-1">Extension</h5>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">NuwaExtension</span> <span class="o">{</span>
+    <span class="n">HashSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">includePackage</span> <span class="o">=</span> <span class="o">[]</span>
+    <span class="n">HashSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">excludeClass</span> <span class="o">=</span> <span class="o">[]</span>
+    <span class="kt">boolean</span> <span class="n">debugOn</span> <span class="o">=</span> <span class="kc">true</span>
+
+    <span class="nf">NuwaExtension</span><span class="o">(</span><span class="n">Project</span> <span class="n">project</span><span class="o">)</span> <span class="o">{</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>声明了Extension,用户可自由配置。</p>
+
+<h5 id="plugin">Plugin</h5>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code><span class="kd">class</span> <span class="nc">NuwaPlugin</span> <span class="kd">implements</span> <span class="n">Plugin</span><span class="o">&lt;</span><span class="n">Project</span><span class="o">&gt;</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kt">void</span> <span class="nf">apply</span><span class="o">(</span><span class="n">Project</span> <span class="n">project</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">project</span><span class="o">.</span><span class="na">extensions</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="s2">"nuwa"</span><span class="o">,</span> <span class="n">NuwaExtension</span><span class="o">,</span> <span class="n">project</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<p>首先创建<code class="highlighter-rouge">extension</code></p>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code><span class="n">project</span><span class="o">.</span><span class="na">afterEvaluate</span> <span class="o">{</span>
+            <span class="kt">def</span> <span class="n">extension</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">extensions</span><span class="o">.</span><span class="na">findByName</span><span class="o">(</span><span class="s2">"nuwa"</span><span class="o">)</span> <span class="k">as</span> <span class="n">NuwaExtension</span>
+            <span class="n">includePackage</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="na">includePackage</span>
+            <span class="n">excludeClass</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="na">excludeClass</span>
+            <span class="n">debugOn</span> <span class="o">=</span> <span class="n">extension</span><span class="o">.</span><span class="na">debugOn</span>
+
+</code></pre>
+</div>
+
+<p>在配置完后,把一些用户配置写入变量。</p>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code><span class="n">project</span><span class="o">.</span><span class="na">android</span><span class="o">.</span><span class="na">applicationVariants</span><span class="o">.</span><span class="na">each</span> <span class="o">{</span> <span class="n">variant</span> <span class="o">-&gt;</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">variant</span><span class="o">.</span><span class="na">name</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="o">||</span> <span class="o">(</span><span class="n">variant</span><span class="o">.</span><span class="na">name</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">debugOn</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">Map</span> <span class="n">hashMap</span>
+        <span class="n">File</span> <span class="n">nuwaDir</span>
+        <span class="n">File</span> <span class="n">patchDir</span>
+        <span class="kt">def</span> <span class="n">preDexTask</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">.</span><span class="na">findByName</span><span class="o">(</span><span class="s2">"preDex${variant.name.capitalize()}"</span><span class="o">)</span>
+        <span class="kt">def</span> <span class="n">dexTask</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">.</span><span class="na">findByName</span><span class="o">(</span><span class="s2">"dex${variant.name.capitalize()}"</span><span class="o">)</span>
+        <span class="kt">def</span> <span class="n">proguardTask</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">.</span><span class="na">findByName</span><span class="o">(</span><span class="s2">"proguard${variant.name.capitalize()}"</span><span class="o">)</span>
+        <span class="kt">def</span> <span class="n">processManifestTask</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">.</span><span class="na">findByName</span><span class="o">(</span><span class="s2">"process${variant.name.capitalize()}Manifest"</span><span class="o">)</span>
+        <span class="kt">def</span> <span class="n">manifestFile</span> <span class="o">=</span> <span class="n">processManifestTask</span><span class="o">.</span><span class="na">outputs</span><span class="o">.</span><span class="na">files</span><span class="o">.</span><span class="na">files</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+        <span class="cm">/**
+        * 这个属性是从控制台输入的,代表之前release版本生成的混淆文件和hash文件目录,这两个文件发版时需要保持
+         * ./gradlew clean nuwaQihooDebugPatch -P NuwaDir=/Users/jason/Documents/nuwa
+ */</span>
+        <span class="kt">def</span> <span class="n">oldNuwaDir</span> <span class="o">=</span> <span class="n">NuwaFileUtils</span><span class="o">.</span><span class="na">getFileFromProperty</span><span class="o">(</span><span class="n">project</span><span class="o">,</span> <span class="n">NUWA_DIR</span><span class="o">)</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">oldNuwaDir</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">//如果mapping文件用户自己定义了,那就应用吧</span>
+                <span class="kt">def</span> <span class="n">mappingFile</span> <span class="o">=</span> <span class="n">NuwaFileUtils</span><span class="o">.</span><span class="na">getVariantFile</span><span class="o">(</span><span class="n">oldNuwaDir</span><span class="o">,</span> <span class="n">variant</span><span class="o">,</span> <span class="n">MAPPING_TXT</span><span class="o">)</span>
+                <span class="n">NuwaAndroidUtils</span><span class="o">.</span><span class="na">applymapping</span><span class="o">(</span><span class="n">proguardTask</span><span class="o">,</span> <span class="n">mappingFile</span><span class="o">)</span>
+        <span class="o">}</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">oldNuwaDir</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">//把hashFile load到内存</span>
+            <span class="kt">def</span> <span class="n">hashFile</span> <span class="o">=</span> <span class="n">NuwaFileUtils</span><span class="o">.</span><span class="na">getVariantFile</span><span class="o">(</span><span class="n">oldNuwaDir</span><span class="o">,</span> <span class="n">variant</span><span class="o">,</span> <span class="n">HASH_TXT</span><span class="o">)</span>
+            <span class="n">hashMap</span> <span class="o">=</span> <span class="n">NuwaMapUtils</span><span class="o">.</span><span class="na">parseMap</span><span class="o">(</span><span class="n">hashFile</span><span class="o">)</span>
+        <span class="o">}</span>
+</code></pre>
+</div>
+
+<p>遍历variants,找到各种Task。然后创建closure:</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">def</span> <span class="n">dirName</span> <span class="o">=</span> <span class="n">variant</span><span class="o">.</span><span class="na">dirName</span>
+<span class="n">nuwaDir</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">"${project.buildDir}/outputs/nuwa"</span><span class="o">)</span>
+<span class="n">def</span> <span class="n">outputDir</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">"${nuwaDir}/${dirName}"</span><span class="o">)</span>
+<span class="n">def</span> <span class="n">hashFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="n">outputDir</span><span class="o">,</span> <span class="s">"hash.txt"</span><span class="o">)</span>
+<span class="n">Closure</span> <span class="n">nuwaPrepareClosure</span> <span class="o">=</span> <span class="o">{</span>
+    <span class="c1">//已经定义了application类,则加入excludeClass列表,不执行字节码修改</span>
+    <span class="n">def</span> <span class="n">applicationName</span> <span class="o">=</span> <span class="n">NuwaAndroidUtils</span><span class="o">.</span><span class="na">getApplication</span><span class="o">(</span><span class="n">manifestFile</span><span class="o">)</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">applicationName</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">excludeClass</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">applicationName</span><span class="o">)</span>
+    <span class="o">}</span>
+    <span class="n">outputDir</span><span class="o">.</span><span class="na">mkdirs</span><span class="o">()</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">hashFile</span><span class="o">.</span><span class="na">exists</span><span class="o">())</span> <span class="o">{</span>
+       <span class="n">hashFile</span><span class="o">.</span><span class="na">createNewFile</span><span class="o">()</span>
+    <span class="o">}</span>
+    <span class="c1">//创建patch文件夹,到时候hash有变动的就放到那里</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">oldNuwaDir</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">patchDir</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">"${nuwaDir}/${dirName}/patch"</span><span class="o">)</span>
+        <span class="n">patchDir</span><span class="o">.</span><span class="na">mkdirs</span><span class="o">()</span>
+        <span class="n">patchList</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">patchDir</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="n">def</span> <span class="n">nuwaPatch</span> <span class="o">=</span> <span class="s">"nuwa${variant.name.capitalize()}Patch"</span>
+<span class="n">project</span><span class="o">.</span><span class="na">task</span><span class="o">(</span><span class="n">nuwaPatch</span><span class="o">)</span> <span class="o">&lt;&lt;</span> <span class="o">{</span>
+<span class="c1">//执行patch的dex操作</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">patchDir</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">NuwaAndroidUtils</span><span class="o">.</span><span class="na">dex</span><span class="o">(</span><span class="n">project</span><span class="o">,</span> <span class="n">patchDir</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="n">def</span> <span class="n">nuwaPatchTask</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">[</span><span class="n">nuwaPatch</span><span class="o">]</span>
+<span class="n">Closure</span> <span class="n">copyMappingClosure</span> <span class="o">=</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">proguardTask</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">def</span> <span class="n">mapFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">"${project.buildDir}/outputs/mapping/${variant.dirName}/mapping.txt"</span><span class="o">)</span>
+        <span class="n">def</span> <span class="n">newMapFile</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">"${nuwaDir}/${variant.dirName}/mapping.txt"</span><span class="o">);</span>
+        <span class="c1">// 将构建产生的mapping文件拷贝至目标nuwa目录</span>
+        <span class="n">FileUtils</span><span class="o">.</span><span class="na">copyFile</span><span class="o">(</span><span class="n">mapFile</span><span class="o">,</span> <span class="n">newMapFile</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code><span class="c1">//创建一个task名为nuwaJarBeforeDex</span>
+<span class="kt">def</span> <span class="n">nuwaJarBeforeDex</span> <span class="o">=</span> <span class="s2">"nuwaJarBeforeDex${variant.name.capitalize()}"</span>
+<span class="n">project</span><span class="o">.</span><span class="na">task</span><span class="o">(</span><span class="n">nuwaJarBeforeDex</span><span class="o">)</span> <span class="o">&lt;&lt;</span> <span class="o">{</span>
+<span class="c1">//获得所有输入文件</span>
+    <span class="n">Set</span><span class="o">&lt;</span><span class="n">File</span><span class="o">&gt;</span> <span class="n">inputFiles</span> <span class="o">=</span> <span class="n">dexTask</span><span class="o">.</span><span class="na">inputs</span><span class="o">.</span><span class="na">files</span><span class="o">.</span><span class="na">files</span>
+    <span class="n">inputFiles</span><span class="o">.</span><span class="na">each</span> <span class="o">{</span> <span class="n">inputFile</span> <span class="o">-&gt;</span>
+        <span class="kt">def</span> <span class="n">path</span> <span class="o">=</span> <span class="n">inputFile</span><span class="o">.</span><span class="na">absolutePath</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">path</span><span class="o">.</span><span class="na">endsWith</span><span class="o">(</span><span class="s2">".jar"</span><span class="o">))</span> <span class="o">{</span>
+        <span class="c1">//对jar进行字节码注入,dex任务之前会生成一个jar</span>
+            <span class="n">NuwaProcessor</span><span class="o">.</span><span class="na">processJar</span><span class="o">(</span><span class="n">hashFile</span><span class="o">,</span> <span class="n">inputFile</span><span class="o">,</span> <span class="n">patchDir</span><span class="o">,</span> <span class="n">hashMap</span><span class="o">,</span> <span class="n">includePackage</span><span class="o">,</span> <span class="n">excludeClass</span><span class="o">)</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="c1">//nuwaJarBeforeDexTask在dexTask之前,在dexTask原来之前所有task之后</span>
+<span class="kt">def</span> <span class="n">nuwaJarBeforeDexTask</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">[</span><span class="n">nuwaJarBeforeDex</span><span class="o">]</span>
+<span class="n">nuwaJarBeforeDexTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">dexTask</span><span class="o">.</span><span class="na">taskDependencies</span><span class="o">.</span><span class="na">getDependencies</span><span class="o">(</span><span class="n">dexTask</span><span class="o">)</span>
+<span class="n">dexTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">nuwaJarBeforeDexTask</span>
+<span class="n">nuwaJarBeforeDexTask</span><span class="o">.</span><span class="na">doFirst</span><span class="o">(</span><span class="n">nuwaPrepareClosure</span><span class="o">)</span><span class="c1">//创建文件夹等初始化</span>
+<span class="n">nuwaJarBeforeDexTask</span><span class="o">.</span><span class="na">doLast</span><span class="o">(</span><span class="n">copyMappingClosure</span><span class="o">)</span><span class="c1">//copy mapping 善后工作</span>
+<span class="n">nuwaPatchTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">nuwaJarBeforeDexTask</span><span class="c1">//等注入字节码完成后,dex patch</span>
+<span class="n">beforeDexTasks</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">nuwaJarBeforeDexTask</span><span class="o">)</span>
+</code></pre>
+</div>
+<p>先看没有开启multiDex即没有preTask的过程,整个依赖为 dex之前的所有task-&gt;获得dex之前的所有输入文件-&gt;字节码注入-&gt;dex patch -&gt; dex</p>
+
+<p>再看有preDex的:</p>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code><span class="c1">//preDex会在dex任务之前把所有的库工程和第三方jar包提前打成dex，</span>
+<span class="c1">//下次运行只需重新dex被修改的库，以此节省时间。</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">preDexTask</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">def</span> <span class="n">nuwaJarBeforePreDex</span> <span class="o">=</span> <span class="s2">"nuwaJarBeforePreDex${variant.name.capitalize()}"</span>
+    <span class="n">project</span><span class="o">.</span><span class="na">task</span><span class="o">(</span><span class="n">nuwaJarBeforePreDex</span><span class="o">)</span> <span class="o">&lt;&lt;</span> <span class="o">{</span>
+        <span class="n">Set</span><span class="o">&lt;</span><span class="n">File</span><span class="o">&gt;</span> <span class="n">inputFiles</span> <span class="o">=</span> <span class="n">preDexTask</span><span class="o">.</span><span class="na">inputs</span><span class="o">.</span><span class="na">files</span><span class="o">.</span><span class="na">files</span>
+        <span class="n">inputFiles</span><span class="o">.</span><span class="na">each</span> <span class="o">{</span> <span class="n">inputFile</span> <span class="o">-&gt;</span>
+            <span class="kt">def</span> <span class="n">path</span> <span class="o">=</span> <span class="n">inputFile</span><span class="o">.</span><span class="na">absolutePath</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">NuwaProcessor</span><span class="o">.</span><span class="na">shouldProcessPreDexJar</span><span class="o">(</span><span class="n">path</span><span class="o">))</span> <span class="o">{</span>
+                <span class="c1">//向classes.jar注入字节码</span>
+                <span class="n">NuwaProcessor</span><span class="o">.</span><span class="na">processJar</span><span class="o">(</span><span class="n">hashFile</span><span class="o">,</span> <span class="n">inputFile</span><span class="o">,</span> <span class="n">patchDir</span><span class="o">,</span> <span class="n">hashMap</span><span class="o">,</span> <span class="n">includePackage</span><span class="o">,</span> <span class="n">excludeClass</span><span class="o">)</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kt">def</span> <span class="n">nuwaJarBeforePreDexTask</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">[</span><span class="n">nuwaJarBeforePreDex</span><span class="o">]</span>
+    <span class="n">nuwaJarBeforePreDexTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">preDexTask</span><span class="o">.</span><span class="na">taskDependencies</span><span class="o">.</span><span class="na">getDependencies</span><span class="o">(</span><span class="n">preDexTask</span><span class="o">)</span>
+    <span class="n">preDexTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">nuwaJarBeforePreDexTask</span>
+    <span class="n">nuwaJarBeforePreDexTask</span><span class="o">.</span><span class="na">doFirst</span><span class="o">(</span><span class="n">nuwaPrepareClosure</span><span class="o">)</span>
+    <span class="kt">def</span> <span class="n">nuwaClassBeforeDex</span> <span class="o">=</span> <span class="s2">"nuwaClassBeforeDex${variant.name.capitalize()}"</span>
+    <span class="n">project</span><span class="o">.</span><span class="na">task</span><span class="o">(</span><span class="n">nuwaClassBeforeDex</span><span class="o">)</span> <span class="o">&lt;&lt;</span> <span class="o">{</span>
+        <span class="n">Set</span><span class="o">&lt;</span><span class="n">File</span><span class="o">&gt;</span> <span class="n">inputFiles</span> <span class="o">=</span> <span class="n">dexTask</span><span class="o">.</span><span class="na">inputs</span><span class="o">.</span><span class="na">files</span><span class="o">.</span><span class="na">files</span>
+        <span class="n">inputFiles</span><span class="o">.</span><span class="na">each</span> <span class="o">{</span> <span class="n">inputFile</span> <span class="o">-&gt;</span>
+            <span class="kt">def</span> <span class="n">path</span> <span class="o">=</span> <span class="n">inputFile</span><span class="o">.</span><span class="na">absolutePath</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">path</span><span class="o">.</span><span class="na">endsWith</span><span class="o">(</span><span class="s2">".class"</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">path</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="s2">"/R\$"</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">path</span><span class="o">.</span><span class="na">endsWith</span><span class="o">(</span><span class="s2">"/R.class"</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">path</span><span class="o">.</span><span class="na">endsWith</span><span class="o">(</span><span class="s2">"/BuildConfig.class"</span><span class="o">))</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">NuwaSetUtils</span><span class="o">.</span><span class="na">isIncluded</span><span class="o">(</span><span class="n">path</span><span class="o">,</span> <span class="n">includePackage</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="k">if</span> <span class="o">(!</span><span class="n">NuwaSetUtils</span><span class="o">.</span><span class="na">isExcluded</span><span class="o">(</span><span class="n">path</span><span class="o">,</span> <span class="n">excludeClass</span><span class="o">))</span> <span class="o">{</span>
+                        <span class="kt">def</span> <span class="n">bytes</span> <span class="o">=</span> <span class="n">NuwaProcessor</span><span class="o">.</span><span class="na">processClass</span><span class="o">(</span><span class="n">inputFile</span><span class="o">)</span>
+                        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="s2">"${dirName}/"</span><span class="o">)[</span><span class="mi">1</span><span class="o">]</span>
+                        <span class="kt">def</span> <span class="n">hash</span> <span class="o">=</span> <span class="n">DigestUtils</span><span class="o">.</span><span class="na">shaHex</span><span class="o">(</span><span class="n">bytes</span><span class="o">)</span>
+                        <span class="n">hashFile</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">NuwaMapUtils</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="n">path</span><span class="o">,</span> <span class="n">hash</span><span class="o">))</span>
+                        <span class="c1">//与上一个release版本hash值不一样则复制出来,作为patch.jar的组成部分</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">NuwaMapUtils</span><span class="o">.</span><span class="na">notSame</span><span class="o">(</span><span class="n">hashMap</span><span class="o">,</span> <span class="n">path</span><span class="o">,</span> <span class="n">hash</span><span class="o">))</span> <span class="o">{</span>
+                            <span class="n">NuwaFileUtils</span><span class="o">.</span><span class="na">copyBytesToFile</span><span class="o">(</span><span class="n">inputFile</span><span class="o">.</span><span class="na">bytes</span><span class="o">,</span> <span class="n">NuwaFileUtils</span><span class="o">.</span><span class="na">touchFile</span><span class="o">(</span><span class="n">patchDir</span><span class="o">,</span> <span class="n">path</span><span class="o">))</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kt">def</span> <span class="n">nuwaClassBeforeDexTask</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">[</span><span class="n">nuwaClassBeforeDex</span><span class="o">]</span>
+    <span class="n">nuwaClassBeforeDexTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">dexTask</span><span class="o">.</span><span class="na">taskDependencies</span><span class="o">.</span><span class="na">getDependencies</span><span class="o">(</span><span class="n">dexTask</span><span class="o">)</span>
+    <span class="n">dexTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">nuwaClassBeforeDexTask</span>
+    <span class="n">nuwaClassBeforeDexTask</span><span class="o">.</span><span class="na">doLast</span><span class="o">(</span><span class="n">copyMappingClosure</span><span class="o">)</span>
+    <span class="n">nuwaPatchTask</span><span class="o">.</span><span class="na">dependsOn</span> <span class="n">nuwaClassBeforeDexTask</span>
+    <span class="n">beforeDexTasks</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">nuwaClassBeforeDexTask</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<p>有无preDex:当有preDex时,dex任务会把preDex生成的jar文件和主工程中的class文件一起生成class.dex，没有时直接是一个jar</p>
+
+<p>最后:</p>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code> <span class="n">project</span><span class="o">.</span><span class="na">task</span><span class="o">(</span><span class="n">NUWA_PATCHES</span><span class="o">)</span> <span class="o">&lt;&lt;</span> <span class="o">{</span>
+    <span class="n">patchList</span><span class="o">.</span><span class="na">each</span> <span class="o">{</span> <span class="n">patchDir</span> <span class="o">-&gt;</span>
+        <span class="n">NuwaAndroidUtils</span><span class="o">.</span><span class="na">dex</span><span class="o">(</span><span class="n">project</span><span class="o">,</span> <span class="n">patchDir</span><span class="o">)</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+<span class="n">beforeDexTasks</span><span class="o">.</span><span class="na">each</span> <span class="o">{</span>
+    <span class="n">project</span><span class="o">.</span><span class="na">tasks</span><span class="o">[</span><span class="n">NUWA_PATCHES</span><span class="o">].</span><span class="na">dependsOn</span> <span class="n">it</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p>dex patch依赖于字节码注入。</p>
+
+<h5 id="字节码注入">字节码注入</h5>
+
+<p>使用asm进行字节码注入:</p>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code><span class="kd">static</span> <span class="nf">processJar</span><span class="o">(</span><span class="n">File</span> <span class="n">hashFile</span><span class="o">,</span> <span class="n">File</span> <span class="n">jarFile</span><span class="o">,</span> <span class="n">File</span> <span class="n">patchDir</span><span class="o">,</span> <span class="n">Map</span> <span class="n">map</span><span class="o">,</span> <span class="n">HashSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">includePackage</span><span class="o">,</span> <span class="n">HashSet</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">excludeClass</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">jarFile</span><span class="o">)</span> <span class="o">{</span>
+            <span class="kt">def</span> <span class="n">optJar</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="n">jarFile</span><span class="o">.</span><span class="na">getParent</span><span class="o">(),</span> <span class="n">jarFile</span><span class="o">.</span><span class="na">name</span> <span class="o">+</span> <span class="s2">".opt"</span><span class="o">)</span>
+
+            <span class="kt">def</span> <span class="n">file</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JarFile</span><span class="o">(</span><span class="n">jarFile</span><span class="o">);</span>
+            <span class="n">Enumeration</span> <span class="n">enumeration</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="na">entries</span><span class="o">();</span>
+            <span class="n">JarOutputStream</span> <span class="n">jarOutputStream</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JarOutputStream</span><span class="o">(</span><span class="k">new</span> <span class="n">FileOutputStream</span><span class="o">(</span><span class="n">optJar</span><span class="o">));</span>
+
+            <span class="k">while</span> <span class="o">(</span><span class="n">enumeration</span><span class="o">.</span><span class="na">hasMoreElements</span><span class="o">())</span> <span class="o">{</span>
+                <span class="n">JarEntry</span> <span class="n">jarEntry</span> <span class="o">=</span> <span class="o">(</span><span class="n">JarEntry</span><span class="o">)</span> <span class="n">enumeration</span><span class="o">.</span><span class="na">nextElement</span><span class="o">();</span>
+                <span class="n">String</span> <span class="n">entryName</span> <span class="o">=</span> <span class="n">jarEntry</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+                <span class="n">ZipEntry</span> <span class="n">zipEntry</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ZipEntry</span><span class="o">(</span><span class="n">entryName</span><span class="o">);</span>
+
+                <span class="n">InputStream</span> <span class="n">inputStream</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">(</span><span class="n">jarEntry</span><span class="o">);</span>
+                <span class="n">jarOutputStream</span><span class="o">.</span><span class="na">putNextEntry</span><span class="o">(</span><span class="n">zipEntry</span><span class="o">);</span>
+                <span class="c1">//枚举jar包中的文件</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">shouldProcessClassInJar</span><span class="o">(</span><span class="n">entryName</span><span class="o">,</span> <span class="n">includePackage</span><span class="o">,</span> <span class="n">excludeClass</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="kt">def</span> <span class="n">bytes</span> <span class="o">=</span> <span class="n">referHackWhenInit</span><span class="o">(</span><span class="n">inputStream</span><span class="o">);</span>
+                    <span class="n">jarOutputStream</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">bytes</span><span class="o">);</span>
+
+                    <span class="kt">def</span> <span class="n">hash</span> <span class="o">=</span> <span class="n">DigestUtils</span><span class="o">.</span><span class="na">shaHex</span><span class="o">(</span><span class="n">bytes</span><span class="o">)</span>
+                    <span class="n">hashFile</span><span class="o">.</span><span class="na">append</span><span class="o">(</span><span class="n">NuwaMapUtils</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="n">entryName</span><span class="o">,</span> <span class="n">hash</span><span class="o">))</span>
+
+                    <span class="k">if</span> <span class="o">(</span><span class="n">NuwaMapUtils</span><span class="o">.</span><span class="na">notSame</span><span class="o">(</span><span class="n">map</span><span class="o">,</span> <span class="n">entryName</span><span class="o">,</span> <span class="n">hash</span><span class="o">))</span> <span class="o">{</span>
+                        <span class="n">NuwaFileUtils</span><span class="o">.</span><span class="na">copyBytesToFile</span><span class="o">(</span><span class="n">bytes</span><span class="o">,</span> <span class="n">NuwaFileUtils</span><span class="o">.</span><span class="na">touchFile</span><span class="o">(</span><span class="n">patchDir</span><span class="o">,</span> <span class="n">entryName</span><span class="o">))</span>
+                    <span class="o">}</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">jarOutputStream</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">IOUtils</span><span class="o">.</span><span class="na">toByteArray</span><span class="o">(</span><span class="n">inputStream</span><span class="o">));</span>
+                <span class="o">}</span>
+                <span class="n">jarOutputStream</span><span class="o">.</span><span class="na">closeEntry</span><span class="o">();</span>
+            <span class="o">}</span>
+            <span class="n">jarOutputStream</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+            <span class="n">file</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+
+            <span class="k">if</span> <span class="o">(</span><span class="n">jarFile</span><span class="o">.</span><span class="na">exists</span><span class="o">())</span> <span class="o">{</span>
+                <span class="n">jarFile</span><span class="o">.</span><span class="na">delete</span><span class="o">()</span>
+            <span class="o">}</span>
+            <span class="n">optJar</span><span class="o">.</span><span class="na">renameTo</span><span class="o">(</span><span class="n">jarFile</span><span class="o">)</span>
+        <span class="o">}</span>
+
+    <span class="o">}</span>
+
+</code></pre>
+</div>
+
+<p>最关键的注入代码:</p>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code><span class="c1">//refer hack class when object init</span>
+    <span class="kd">private</span> <span class="kd">static</span> <span class="kt">byte</span><span class="o">[]</span> <span class="nf">referHackWhenInit</span><span class="o">(</span><span class="n">InputStream</span> <span class="n">inputStream</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">ClassReader</span> <span class="n">cr</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClassReader</span><span class="o">(</span><span class="n">inputStream</span><span class="o">);</span>
+        <span class="n">ClassWriter</span> <span class="n">cw</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClassWriter</span><span class="o">(</span><span class="n">cr</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+        <span class="n">ClassVisitor</span> <span class="n">cv</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClassVisitor</span><span class="o">(</span><span class="n">Opcodes</span><span class="o">.</span><span class="na">ASM4</span><span class="o">,</span> <span class="n">cw</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="n">MethodVisitor</span> <span class="nf">visitMethod</span><span class="o">(</span><span class="kt">int</span> <span class="n">access</span><span class="o">,</span> <span class="n">String</span> <span class="n">name</span><span class="o">,</span> <span class="n">String</span> <span class="n">desc</span><span class="o">,</span>
+                                             <span class="n">String</span> <span class="n">signature</span><span class="o">,</span> <span class="n">String</span><span class="o">[]</span> <span class="n">exceptions</span><span class="o">)</span> <span class="o">{</span>
+
+                <span class="n">MethodVisitor</span> <span class="n">mv</span> <span class="o">=</span> <span class="kd">super</span><span class="o">.</span><span class="na">visitMethod</span><span class="o">(</span><span class="n">access</span><span class="o">,</span> <span class="n">name</span><span class="o">,</span> <span class="n">desc</span><span class="o">,</span> <span class="n">signature</span><span class="o">,</span> <span class="n">exceptions</span><span class="o">);</span>
+                <span class="n">mv</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MethodVisitor</span><span class="o">(</span><span class="n">Opcodes</span><span class="o">.</span><span class="na">ASM4</span><span class="o">,</span> <span class="n">mv</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="nd">@Override</span>
+                    <span class="kt">void</span> <span class="nf">visitInsn</span><span class="o">(</span><span class="kt">int</span> <span class="n">opcode</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="c1">//如果是构造函数</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="s2">"&lt;init&gt;"</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">name</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">opcode</span> <span class="o">==</span> <span class="n">Opcodes</span><span class="o">.</span><span class="na">RETURN</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="kd">super</span><span class="o">.</span><span class="na">visitLdcInsn</span><span class="o">(</span><span class="n">Type</span><span class="o">.</span><span class="na">getType</span><span class="o">(</span><span class="s2">"Lcn/jiajixin/nuwa/Hack;"</span><span class="o">));</span>
+                        <span class="o">}</span>
+                        <span class="kd">super</span><span class="o">.</span><span class="na">visitInsn</span><span class="o">(</span><span class="n">opcode</span><span class="o">);</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+                <span class="k">return</span> <span class="n">mv</span><span class="o">;</span>
+            <span class="o">}</span>
+
+        <span class="o">};</span>
+        <span class="n">cr</span><span class="o">.</span><span class="na">accept</span><span class="o">(</span><span class="n">cv</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">cw</span><span class="o">.</span><span class="na">toByteArray</span><span class="o">();</span>
+    <span class="o">}</span>
+
+</code></pre>
+</div>
+
+<p>dex patch:</p>
+
+<p><code class="highlighter-rouge">dx --dex --output=patch.jar classDir</code> classDir是注入字节码后的补丁目录</p>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="err"> </span><span class="kd">public</span> <span class="kd">static</span> <span class="nf">dex</span><span class="o">(</span><span class="n">Project</span> <span class="n">project</span><span class="o">,</span> <span class="n">File</span> <span class="n">classDir</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">classDir</span><span class="o">.</span><span class="na">listFiles</span><span class="o">().</span><span class="na">size</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">def</span> <span class="n">sdkDir</span>
+  
+            <span class="n">Properties</span> <span class="n">properties</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Properties</span><span class="o">()</span>
+            <span class="n">File</span> <span class="n">localProps</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">rootProject</span><span class="o">.</span><span class="na">file</span><span class="o">(</span><span class="s">"local.properties"</span><span class="o">)</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">localProps</span><span class="o">.</span><span class="na">exists</span><span class="o">())</span> <span class="o">{</span>
+                <span class="n">properties</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="n">localProps</span><span class="o">.</span><span class="na">newDataInputStream</span><span class="o">())</span>
+                <span class="n">sdkDir</span> <span class="o">=</span> <span class="n">properties</span><span class="o">.</span><span class="na">getProperty</span><span class="o">(</span><span class="s">"sdk.dir"</span><span class="o">)</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="n">sdkDir</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">getenv</span><span class="o">(</span><span class="s">"ANDROID_HOME"</span><span class="o">)</span>
+            <span class="o">}</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">sdkDir</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">def</span> <span class="n">cmdExt</span> <span class="o">=</span> <span class="n">Os</span><span class="o">.</span><span class="na">isFamily</span><span class="o">(</span><span class="n">Os</span><span class="o">.</span><span class="na">FAMILY_WINDOWS</span><span class="o">)</span> <span class="o">?</span> <span class="err">'</span><span class="o">.</span><span class="na">bat</span><span class="err">'</span> <span class="o">:</span> <span class="err">''</span>
+                <span class="n">def</span> <span class="n">stdout</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ByteArrayOutputStream</span><span class="o">()</span>
+                <span class="n">project</span><span class="o">.</span><span class="na">exec</span> <span class="o">{</span>
+                    <span class="n">commandLine</span> <span class="s">"${sdkDir}/build-tools/${project.android.buildToolsVersion}/dx${cmdExt}"</span><span class="o">,</span>
+                            <span class="err">'</span><span class="o">--</span><span class="n">dex</span><span class="err">'</span><span class="o">,</span>
+                            <span class="s">"--output=${new File(classDir.getParent(), PATCH_NAME).absolutePath}"</span><span class="o">,</span>
+                            <span class="s">"${classDir.absolutePath}"</span>
+                    <span class="n">standardOutput</span> <span class="o">=</span> <span class="n">stdout</span>
+                <span class="o">}</span>
+                <span class="n">def</span> <span class="n">error</span> <span class="o">=</span> <span class="n">stdout</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">trim</span><span class="o">()</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">error</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">println</span> <span class="s">"dex error:"</span> <span class="o">+</span> <span class="n">error</span>
+                <span class="o">}</span>
+            <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidUserDataException</span><span class="o">(</span><span class="err">'</span><span class="n">$ANDROID_HOME</span> <span class="n">is</span> <span class="n">not</span> <span class="n">defined</span><span class="err">'</span><span class="o">)</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<h4 id="注意点">注意点</h4>
+
+<ul>
+  <li>不能注入字节码的类是Application的子类，因为Hack.apk在程序运行之前没有被加载，所以如果Application类中引用了Hack.apk中的Hack.class文件，则会报Class找不到的异常，之后也永远找不到了。所以这个类不能注入字节码，但是需要提前加载初始化方法中动态加载该Hack.apk。</li>
+  <li>发版时的mapping文件以及所有class文件的hash值的文件需要保持下来打patch使用。</li>
+</ul>
+
+<p><a href="http://blog.csdn.net/sbsujjbcy/article/details/51028027">坑</a></p>
+
+<ul>
+  <li>Nuwa处理的是混淆后的jar，混淆后的jar包名和类名发生了变化，你再使用配置进去的excludeClass是无法主动不进行字节码注入处理的，除非你加进去的是混淆后的类名。可以拿到Build目录下的mapping.txt然后反混淆即可。</li>
+</ul>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14934363009939.jpg" alt="" /></p>
+
+<p>最后,很好的开源项目:https://github.com/Livyli/AndHotFix,进行了完善与改造,值得研究</p>
+
+<h4 id="transform">Transform</h4>
+
+<p><a href="http://blog.csdn.net/sbsujjbcy/article/details/50839263">gradle1.5.0以后的新特性</a></p>
+
+<blockquote>
+  <p>The Dex class is gone. You cannot access it anymore through the variant API (the getter is still there for now but will throw an exception)
+Transform can only be registered globally which applies them to all the variants. We’ll improve this shortly.</p>
+</blockquote>
+
+<p>也就是说,以后我们不能直接通过<code class="highlighter-rouge">variant API</code>去操作<code class="highlighter-rouge">dex</code>,通过Transform吧！</p>
+
+<p>作用就是第三方插件在class文件转为为dex文件前操作编译好的class文件，所以只有这一步我已开始还想了半天它到底怎么指定的插入的位置的。。</p>
+
+<p><img src="/img/2017-04-29-gradleAndNuwa/14934406958131.jpg" alt="" /></p>
+
+<p>可以看到由<code class="highlighter-rouge">transform + (contentType)[Classes | Resources] + with + [name] + for + flavor|buildType
+</code></p>
+
+<h5 id="注册">注册</h5>
+
+<div class="language-groovy highlighter-rouge"><pre class="highlight"><code><span class="c1">//插件的apply方法最前面注册</span>
+<span class="kt">def</span> <span class="n">isApp</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">plugins</span><span class="o">.</span><span class="na">hasPlugin</span><span class="o">(</span><span class="n">AppPlugin</span><span class="o">)</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">isApp</span><span class="o">)</span> <span class="o">{</span>
+      <span class="kt">def</span> <span class="n">android</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="na">extensions</span><span class="o">.</span><span class="na">getByType</span><span class="o">(</span><span class="n">AppExtension</span><span class="o">)</span>
+      <span class="kt">def</span> <span class="n">transform</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TransformImpl</span><span class="o">(</span><span class="n">project</span><span class="o">)</span>
+      <span class="n">android</span><span class="o">.</span><span class="na">registerTransform</span><span class="o">(</span><span class="n">transform</span><span class="o">)</span>
+<span class="o">}</span><span class="err"> </span><span class="kd">class</span> <span class="nc">TransformImpl</span> <span class="kd">extends</span> <span class="n">Transform</span> <span class="o">{</span>
+    <span class="n">Project</span> <span class="n">project</span>
+    <span class="kd">public</span> <span class="nf">TransformTest</span><span class="o">(</span><span class="n">Project</span> <span class="n">project</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">project</span> <span class="o">=</span> <span class="n">project</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="n">String</span> <span class="nf">getName</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="s2">"TransformImpl"</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="n">Set</span><span class="o">&lt;</span><span class="n">QualifiedContent</span><span class="o">.</span><span class="na">ContentType</span><span class="o">&gt;</span> <span class="n">getInputTypes</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">TransformManager</span><span class="o">.</span><span class="na">CONTENT_CLASS</span><span class="o">;</span>
+    <span class="o">}</span>
+
+
+    <span class="nd">@Override</span>
+    <span class="n">Set</span><span class="o">&lt;</span><span class="n">QualifiedContent</span><span class="o">.</span><span class="na">Scope</span><span class="o">&gt;</span> <span class="n">getScopes</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">TransformManager</span><span class="o">.</span><span class="na">SCOPE_FULL_PROJECT</span><span class="o">;</span>
+    <span class="o">}</span>
+
+
+    <span class="nd">@Override</span>
+    <span class="kt">boolean</span> <span class="nf">isIncremental</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+
+
+    <span class="nd">@Override</span>
+    <span class="kt">void</span> <span class="nf">transform</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">,</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">TransformInput</span><span class="o">&gt;</span> <span class="n">inputs</span><span class="o">,</span> <span class="n">Collection</span><span class="o">&lt;</span><span class="n">TransformInput</span><span class="o">&gt;</span> <span class="n">referencedInputs</span><span class="o">,</span> <span class="n">TransformOutputProvider</span> <span class="n">outputProvider</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">isIncremental</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">TransformException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+        <span class="c1">//todo 在这里进行字节码注入即可</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre>
+</div>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/04/28/gradleAndNuwa"
+                    data-title="Gradle实战与Nuwa顺带分析"
+                    data-url="http://localhost:5001/2017/04/28/gradleAndNuwa/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="很棒的总结
+
+很好的语法总结
+
+Gradle基本
+
+
+
+我们知道,一个Task的生命周期分三部分:初始化,配置,执行。
+
+
+  
+    初始化阶段，会去... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/04/27/concurrent-executor/" data-toggle="tooltip" data-placement="top" title="Future总结">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/04/29/javascript-one/" data-toggle="tooltip" data-placement="top" title="JavaScript学习一">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/04/28/gradleAndNuwa"
+                        data-title="Gradle实战与Nuwa顺带分析"
+                        data-url="http://localhost:5001/2017/04/28/gradleAndNuwa/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

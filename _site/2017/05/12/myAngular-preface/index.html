@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="永远好奇，永远敬畏">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Build Your Own Angularjs-预备工作 - Lizz0y's Notes</title>
+
+    <link rel="canonical" href="http://localhost:5001/2017/05/12/myAngular-preface/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">Liz Notes</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/2017-02-01-binder/pic.jpeg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/2017-02-01-binder/pic.jpeg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#阅读笔记" title="阅读笔记">阅读笔记</a>
+                        
+                        <a class="tag" href="/tags/#翻译" title="翻译">翻译</a>
+                        
+                        <a class="tag" href="/tags/#Build Your Own Angularjs" title="Build Your Own Angularjs">Build Your Own Angularjs</a>
+                        
+                    </div>
+                    <h1>Build Your Own Angularjs-预备工作</h1>
+                    
+                    
+                    <h2 class="subheading"></h2>
+                    
+                    <span class="meta">Posted by Liz on May 12, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p>开个<code class="highlighter-rouge">Build Your Own Angularjs</code>的翻译系列吧。个人目前熟练移动端，前端是刚入门的状态，所以有什么问题请大家多多指出。学习前端到了有点迷茫的阶段，之前android基本把一些库的源码都能很流畅的撸一遍，但直接撸前端库发现难度有点大摔，所以借着还有两个月毕业的时间，强迫自己把这本书翻译一遍，算是给自己的一个毕业礼物吧。所有代码见<a href="https://github.com/Lizz0y/myAngularjs">github</a></p>
+
+<p>从今天开始，我们要完成一个强大的<code class="highlighter-rouge">JavaScript</code>框架。我们需要建立一个工程，并配上自动化测试机制。幸运的是，现在已经有很多现成的工具供我们使用。在这节，我们使用<code class="highlighter-rouge">NPM</code>和<code class="highlighter-rouge">Grunt</code>建立一个<code class="highlighter-rouge">JavaScript</code>库，并使用<code class="highlighter-rouge">JSHint</code>进行静态分析，<code class="highlighter-rouge">Jasmine</code>进行单元测试。</p>
+
+<p>首先介绍一下相关工具：</p>
+
+<ul>
+  <li><code class="highlighter-rouge">Node.js</code>: 流行的服务端JS平台。<code class="highlighter-rouge">Nodejs</code>使用<code class="highlighter-rouge">Npm</code>作为模块管理器，现在请先搭建好搭建<code class="highlighter-rouge">Node</code>和<code class="highlighter-rouge">Npm</code>环境，具体过程请自行完成。</li>
+  <li>Grunt:我们将使用它来作为JS的构建工具。现在请使用<code class="highlighter-rouge">Npm</code>安装<code class="highlighter-rouge">grunt-cli</code>包。</li>
+</ul>
+
+<p>安装<code class="highlighter-rouge">Grunt</code>时，需要同时安装<code class="highlighter-rouge">grunt</code>与<code class="highlighter-rouge">grunt-cli</code>，并使用<code class="highlighter-rouge">npm -g</code>进行全局安装。</p>
+
+<p>到这一步时，你需要安装好<code class="highlighter-rouge">node</code>,<code class="highlighter-rouge">npm</code>,<code class="highlighter-rouge">grunt</code>与<code class="highlighter-rouge">grunt-cli</code></p>
+
+<h3 id="创建工程目录">创建工程目录</h3>
+
+<p>现在让我们为我们的库创建基本的目录结构吧！我们需要以下几个目录，包括<code class="highlighter-rouge">src</code>源目录和用来进行单元测试的<code class="highlighter-rouge">test</code>目录。</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945193043052.jpg" alt="" /></p>
+
+<h3 id="为npm创建packagejson">为Npm创建package.json</h3>
+
+<p>为了使用<code class="highlighter-rouge">Npm</code>,我们需要使用<code class="highlighter-rouge">package.json</code>文件。该文件让<code class="highlighter-rouge">Npm</code>了解我们工程的一些基本情况，主要提供所依赖的包信息。</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945193612186.jpg" alt="" /></p>
+
+<h3 id="创建grunt的构建文件">创建grunt的构建文件。</h3>
+<p>这个文件只是一段JS文件，包括要运行的任务和配置。可以用来测试和打包项目。你可以把他想象成<code class="highlighter-rouge">C</code>中的<code class="highlighter-rouge">Makefile</code>,或者<code class="highlighter-rouge">android</code>中的<code class="highlighter-rouge">build.gradle/ant.xml</code></p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945193943496.jpg" alt="" />
+一切在该文件中都被包装成函数，并被模块导出，是不是和<code class="highlighter-rouge">Node.js</code>的模块机制很像。<code class="highlighter-rouge">grunt.initConfig</code>将把我们的项目配置传递给<code class="highlighter-rouge">Grunt</code></p>
+
+<h3 id="hello-world">Hello World!</h3>
+
+<p>我们先来一段<code class="highlighter-rouge">Hello World</code>开心一下吧~ 创建一个<code class="highlighter-rouge">hello.js</code>文件</p>
+
+<blockquote>
+  <p>src/hel lo.js</p>
+</blockquote>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">sayHello</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="s2">"Hello, world!"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<h3 id="使用jshint来静态分析">使用<code class="highlighter-rouge">JSHint</code>来静态分析</h3>
+
+<p><code class="highlighter-rouge">JSHint</code>是一个阅读你的<code class="highlighter-rouge">JS</code>代码并给出存在的语法或结构问题。和<code class="highlighter-rouge">android</code>中的<code class="highlighter-rouge">linter</code>很像，都是代码分析工具。</p>
+
+<p>使用Npm安装吧 <code class="highlighter-rouge">npm install grunt-contrib-jshint --save-dev</code></p>
+
+<p>当你在工程目录下安装时，你的工程中会出现<code class="highlighter-rouge">node_modules</code>,</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945195987333.jpg" alt="" /></p>
+
+<p>新安装的模块也会出现在其中,哦你会发现你的<code class="highlighter-rouge">package.json</code>也发生了一些变化</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945196429889.jpg" alt="" /></p>
+
+<p>多了<code class="highlighter-rouge">devDependencies</code>,因为你加了<code class="highlighter-rouge">--save-dev</code>，所以这些变化会自动写到<code class="highlighter-rouge">package.json</code>,不然就要你手动加啦。</p>
+
+<p>现在，我们把<code class="highlighter-rouge">gruntfile.js</code>改动一下:</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945196904936.jpg" alt="" />
+<code class="highlighter-rouge">all</code>代表只检查<code class="highlighter-rouge">src</code>下所有<code class="highlighter-rouge">js</code>文件，并且我们会引用两个不在我们自己代码中定义的变量。即<code class="highlighter-rouge">_ from Lo-Dash</code> 和<code class="highlighter-rouge">$ from jQuery</code>, 我们启用了<code class="highlighter-rouge">browser</code>和<code class="highlighter-rouge">devel JSHint</code>环境，这使得当我们在引用来自浏览器的<code class="highlighter-rouge">Global</code>变量例如<code class="highlighter-rouge">setTimeout</code>和<code class="highlighter-rouge">console</code>不会报错</p>
+
+<p><code class="highlighter-rouge">grunt.loadNpmTasks</code>将<code class="highlighter-rouge">jshint</code>的任务传递到我们自己的构建任务中。</p>
+
+<p>我们使用<code class="highlighter-rouge">grunt jshint</code>来进行代码检查</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945608192848.jpg" alt="" />
+可以看到<code class="highlighter-rouge">lint free</code>!</p>
+
+<h3 id="使用jasminesinontestem进行单元测试">使用Jasmine,Sinon，Testem进行单元测试</h3>
+
+<p>单元测试在平时开发过程中非常常见，我们需要有一个好的测试框架。我们使用<code class="highlighter-rouge">Jasmine</code>，因为他有一个好又简单的<code class="highlighter-rouge">API</code>并且可以和<code class="highlighter-rouge">Grunt</code>良好交互。</p>
+
+<p>我们使用<code class="highlighter-rouge">Testem</code>跑测试用例，它提供了一个很好的<code class="highlighter-rouge">UI</code>界面让我们看测试结果,使用<code class="highlighter-rouge">Sinon.JS</code>作为测试辅助库，当我们要用到<code class="highlighter-rouge">http</code>时<code class="highlighter-rouge">sinon</code>变得非常有用。</p>
+
+<p>我们首先安装<code class="highlighter-rouge">grunt</code>与<code class="highlighter-rouge">Testem</code>进行交互整合的库。他会帮我们同时引入<code class="highlighter-rouge">Jasmine</code>框架的依赖</p>
+
+<p><code class="highlighter-rouge">npm install grunt-contrib-testem —save-dev</code></p>
+
+<p>同时安装<code class="highlighter-rouge">Sinon</code>,这两步都在当前目录下进行 <code class="highlighter-rouge">npm install sinon —save-dev</code></p>
+
+<p>然后在<code class="highlighter-rouge">Gruntfile.js</code>中配置<code class="highlighter-rouge">Testem</code>,</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945609013120.jpg" alt="" /></p>
+
+<p>同时在最后一行增加
+<code class="highlighter-rouge">grunt.loadNpmTasks(‘grunt-contrib-testem’)</code></p>
+
+<p>在<code class="highlighter-rouge">initConfig</code>中我们定义了<code class="highlighter-rouge">testem</code>任务，并把它叫做<code class="highlighter-rouge">unit</code>。它会为在<code class="highlighter-rouge">src</code>目录下的所有js文件运行测试用例,测试文件在<code class="highlighter-rouge">test</code>目录下,运行时,<code class="highlighter-rouge">Testem</code>会一直观察这些文件是否变化了,如果变化了就自动重新运行测试用例。</p>
+
+<p>使用<code class="highlighter-rouge">launch_in_dev</code>,我们告诉<code class="highlighter-rouge">testem</code>我们希望建立一个<code class="highlighter-rouge">PhantomJs</code>的浏览器来运行测试用例。<code class="highlighter-rouge">PhantomJS</code>是一个基于<code class="highlighter-rouge">webkit</code>的<code class="highlighter-rouge">javascript API</code>。它让我们运行测试用例时不需要管理外部浏览器,就是说就算你没安装浏览器它也可以模拟一个浏览器来给你运行测试用例。现在全局安装它吧</p>
+
+<p><code class="highlighter-rouge">npm install -g phantoms</code></p>
+
+<p>我们使用<code class="highlighter-rouge">before_task</code>钩子让<code class="highlighter-rouge">JSHint</code>先进行检查</p>
+
+<p>在测试代码中我们会引用在<code class="highlighter-rouge">Jasmine</code>中定义的全局变量,所以把他们加入到<code class="highlighter-rouge">JSHint</code>的<code class="highlighter-rouge">global</code>对象中
+<img src="/img/2017-05-12-myAngular-preface/14945609278998.jpg" alt="" />
+我们新建<code class="highlighter-rouge">hello_spec.js</code>文件作为测试用例,新建在<code class="highlighter-rouge">test</code>目录下:</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945609336952.jpg" alt="" /></p>
+
+<p>如果你用过<code class="highlighter-rouge">ruby</code>的<code class="highlighter-rouge">rSpec</code>,那这段代码应该很熟悉,<code class="highlighter-rouge">describe</code>块代表一系列测试用例,每个测试用例都有一个名字和函数</p>
+
+<p><code class="highlighter-rouge">Jasmine</code>的idea来自<code class="highlighter-rouge">Behavior-Driven Development</code>,行为驱动开发。<code class="highlighter-rouge">describe</code>和<code class="highlighter-rouge">it</code>描述了我们代码的行为,这些测试用例代表我们的代码应该具有的输出。这也是为什么使用<code class="highlighter-rouge">_spec.js</code>作为后缀。</p>
+
+<p>我们来运行吧,<code class="highlighter-rouge">grunt testsem:run:unit</code></p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945609390005.jpg" alt="" /></p>
+
+<p>在浏览器中打开它说的<code class="highlighter-rouge">url</code>可以测试其他浏览器，这里可以看到测试通过，</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945609451436.jpg" alt="" />
+这一步其实花了很多功夫才成功,首先Phantomjs装不成功,一直报错,后来github的issue上有人说卸了去他的官网直接装二进制文件,果然成功了。</p>
+
+<p>在<code class="highlighter-rouge">Web Storm</code>的<code class="highlighter-rouge">terminal</code>里出不来。。。不懂为什么</p>
+
+<p>尝试编辑<code class="highlighter-rouge">src/hello.js</code>或是<code class="highlighter-rouge">test/hello_spec.js</code>,如果<code class="highlighter-rouge">termina</code>l一直运行着的话是会自动刷新重新测试的。当你学习这本书的时候，我们希望<code class="highlighter-rouge">TestemUI</code>永远运行着，这样就能一直进行test。</p>
+
+<h3 id="include-lo-dash和jquery">Include Lo-Dash和jQuery</h3>
+
+<p><code class="highlighter-rouge">Angular</code>本身不需要<code class="highlighter-rouge">require</code>任何第三方库,除了<code class="highlighter-rouge">jQuery</code>,然而我们有必要在我们自己的<code class="highlighter-rouge">Angular</code>中引入一些库,让<code class="highlighter-rouge">Angular</code>更酷一些?</p>
+
+<p>以下两个低级别的操作可以委派给第三方库</p>
+
+<ul>
+  <li>数组和对象操作,比如<code class="highlighter-rouge">Equal</code>和<code class="highlighter-rouge">Clone</code> ,委托给<code class="highlighter-rouge">Lo-Dash</code></li>
+  <li><code class="highlighter-rouge">dom</code>操作和处理,委托给<code class="highlighter-rouge">jQuery</code></li>
+</ul>
+
+<p>首先安装:</p>
+
+<p><code class="highlighter-rouge">npm install lodash —save</code>
+<code class="highlighter-rouge">npm install jquery —save</code></p>
+
+<p>与之前安装的区别在于<code class="highlighter-rouge">--save</code>,意味着这些包在运行时被依赖，不是开发期依赖</p>
+
+<p>我们现在来尝试一些新鲜的东西：</p>
+
+<p>这个函数把<code class="highlighter-rouge">to</code>当做参数，使用<code class="highlighter-rouge">Lo-Dash</code>模板构造了一个结果字符串，我们同时修改测试用例:</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">sayHello</span><span class="p">(</span><span class="nx">to</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">template</span><span class="p">(</span><span class="s2">"Hello, &lt;%= name %&gt;!"</span><span class="p">)({</span><span class="na">name</span><span class="p">:</span> <span class="nx">to</span><span class="p">});</span> 
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>测试用例:</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="nx">describe</span><span class="p">(</span><span class="s2">"Hello"</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">it</span><span class="p">(</span><span class="s2">"says hello to receiver"</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>         <span class="nx">expect</span><span class="p">(</span><span class="nx">sayHello</span><span class="p">(</span> <span class="s1">'Jane'</span> <span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="s2">"Hello, Jane!"</span><span class="p">);</span>
+    <span class="p">});</span> 
+<span class="p">});</span>
+</code></pre>
+</div>
+
+<p>如果我们现在尝试运行测试用例，是不会成功的，因为<code class="highlighter-rouge">Testem</code>找不到<code class="highlighter-rouge">Lo-Dash</code>,因为我们把<code class="highlighter-rouge">Lo-Dash</code>安装在<code class="highlighter-rouge">node_packages</code>中，没有把加载到我们的测试用例中，所以<code class="highlighter-rouge">_</code>变量是找不到的，我们可以修复他 通过改变<code class="highlighter-rouge">Gruntfile.js</code>,把<code class="highlighter-rouge">Lo-Dash</code>和<code class="highlighter-rouge">jQuery</code>一起包含进来:</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14946029801466.jpg" alt="" /></p>
+
+<p>ok,我这么做了,测试失败，说我<code class="highlighter-rouge">redefination</code>….,重复定义了,还是在github的issue上找到解决方案,天下码农一家亲，</p>
+
+<div class="language-js highlighter-rouge"><pre class="highlight"><code>        <span class="nx">testem</span><span class="err">:</span> <span class="p">{</span>
+            <span class="nl">unit</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nl">options</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nl">framework</span><span class="p">:</span>  <span class="s1">'jasmine2'</span> <span class="p">,</span>
+                    <span class="nx">launch_in_dev</span><span class="err">:</span> <span class="p">[</span> <span class="s1">'PhantomJS'</span> <span class="p">],</span>
+                    <span class="nx">before_tests</span><span class="err">:</span>  <span class="s1">'grunt jshint '</span><span class="p">,</span>
+                    <span class="nx">serve_files</span><span class="err">:</span> <span class="p">[</span>
+                        <span class="s1">'node_modules/lodash/lodash.min.js'</span><span class="p">,</span>
+                        <span class="s1">'node_modules/jquery/dist/jquery.min.js'</span><span class="p">,</span>
+                        <span class="s1">'node_modules/sinon/pkg/sinon.js'</span><span class="p">,</span>
+                        <span class="s1">'src/**/*.js'</span><span class="p">,</span>
+                        <span class="s1">'test/**/*.js'</span>
+
+                    <span class="p">],</span>
+                    <span class="nx">watch_files</span><span class="err">:</span> <span class="p">[</span>
+                        <span class="s1">'src/**/*.js'</span> <span class="p">,</span>
+                        <span class="s1">'test/**/*.js'</span>
+                    <span class="p">]</span> <span class="p">}</span>
+<span class="p">}</span> <span class="p">}</span>
+</code></pre>
+</div>
+
+<p>测试成功！</p>
+
+<p><img src="/img/2017-05-12-myAngular-preface/14945609583639.jpg" alt="" /></p>
+
+<h3 id="定义默认的grunt-task">定义默认的Grunt Task</h3>
+
+<p>在<code class="highlighter-rouge">Gruntfile.js</code>最后加一句:</p>
+
+<p><code class="highlighter-rouge">grunt.registerTask( 'default' , [ 'testem:run:unit' ]);</code> 
+在命令行直接<code class="highlighter-rouge">grunt</code>即可运行测试用例。</p>
+
+
+
+                <hr>
+
+                
+                <!-- 多说 Share start -->
+                </style>
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2017/05/12/myAngular-preface"
+                    data-title="Build Your Own Angularjs-预备工作"
+                    data-url="http://localhost:5001/2017/05/12/myAngular-preface/"
+                    data-images="http://localhost:5001/img/2017-02-01-binder/pic.jpeg"
+                    data-content="开个Build Your Own Angularjs的翻译系列吧。个人目前熟练移动端，前端是刚入门的状态，所以有什么问题请大家多多指出。学习前端到了有点迷... | Lizz0y's Notes " >
+                    <div class="ds-share-inline">
+                      <ul  class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/05/05/droidPlugin2/" data-toggle="tooltip" data-placement="top" title="DroidPlugin系列之二">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2017/05/23/weex-start/" data-toggle="tooltip" data-placement="top" title="Weex启动过程">Next Post &rarr;</a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2017/05/12/myAngular-preface"
+                        data-title="Build Your Own Angularjs-预备工作"
+                        data-url="http://localhost:5001/2017/05/12/myAngular-preface/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by Hux
+    var _user = 'lizz0y';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    
+
+
+                    
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; Liz Notes 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Hux
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'huangxuan.me';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+<script>
+    // dynamic User by Hux
+    var _baId = '4cc1f2d8f3067386cc5cdb626a202900';
+
+    // Originial
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?" + _baId;
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>

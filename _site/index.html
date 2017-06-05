@@ -78,6 +78,10 @@
                         <a href="/">Home</a>
                     </li>
                     
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
                 </ul>
             </div>
         </div>
@@ -139,112 +143,263 @@
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 post-container">
                 
 <div class="post-preview">
-    <a href="/2017/03/07/Broadcast/">
+    <a href="/2017/06/05/contentprovider/">
         <h2 class="post-title">
-            Broadcast广播分析
+            ContentProvider分析
         </h2>
         
         <div class="post-content-preview">
-            BroadCast广播
+            转眼要毕业了,再过几天就要毕设答辩了,铭记我十多年的求学时光,感谢所有帮助过我的老师,砥砺前行吧
 
-继续分析广播。
+乘着答辩间隙分析一下CP的源码,之前实习时同事一直讨论不同sdk后CursorWindow泄露方的问题,借此机会研究一下。事实证明低版本和高版本确实不同,但也只是究竟在服务方还是调用方创建CursorWindow的区别,所以本质没什么区别。
 
-背景知识
+很清晰的介绍
 
-消息传递: 其实跟观察者模式类似,一方订阅消息,当消息发布时接收处理事件。
-
-
-  J2EE:消息驱动Bean来实现应用程序各个组件之间的消息传递
-  COM:连接点实现消息传递
-  Android:广播,现在更多的是Rx模式。
-
-
-与startService类似,广播依旧要与AMS交互。程序将Receiver注册到AMS中,当相应的S...
+ContentProvider获取...
         </div>
     </a>
     <p class="post-meta">
-        Posted by Liz on March 7, 2017
+        Posted by Liz on June 5, 2017
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/2017/02/28/Service/">
+    <a href="/2017/05/31/databinding-1/">
         <h2 class="post-title">
-            Serivice启动机制
+            dataBinding--应用层运行
         </h2>
         
         <div class="post-content-preview">
-            今天理一下Service,就从最简单的startService(intent)开始,将Service定义在新的进程启动。
+            本章从应用层角度分析代码运行过程:QQ音乐团队的分析很完美哈
 
+入口
 
-  ContextWrapper.java
+对于activity_main.xml,会生成ActivityMainBinding类:
 
-
-@Override
-public ComponentName startService(Intent service) {
-    return mBase.startService(service);
-}
-
-
-
-mBa...
+ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+return bindToAddedViews...
         </div>
     </a>
     <p class="post-meta">
-        Posted by Liz on February 28, 2017
+        Posted by Liz on May 31, 2017
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/2017/02/26/Proxy/">
+    <a href="/2017/05/27/weex-render/">
         <h2 class="post-title">
-            代理机制
+            Dom渲染过程
         </h2>
         
         <div class="post-content-preview">
-            代理
+            本节,我们介绍Dom的渲染过程,在主界面中进行render,先引入.we文件:
 
-最近想学习插件机制和Hook原理,决定从droidPlugin开始。以下资料多来自weishu与IBM资料,附带一些自己的理解,希望可以共同学习。
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;text style="font-size:100px;"&gt;Hello World.&lt;/text&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
 
-静态代理
-静态代理就是实现接口,将原始接口Impl当成参数传入
 
-public interface Shopping {
-    Object[] doShopping(long money);
-}
-public class Shopp...
+
+可以看到只有一个div包裹了text。
+
+先...
         </div>
     </a>
     <p class="post-meta">
-        Posted by Liz on February 26, 2017
+        Posted by Liz on May 27, 2017
     </p>
 </div>
 <hr>
 
 <div class="post-preview">
-    <a href="/2017/02/01/binder/">
+    <a href="/2017/05/23/weex-start/">
         <h2 class="post-title">
-            Binder系列
+            Weex启动过程
         </h2>
         
         <div class="post-content-preview">
-            由最重要的Binder开始Android sourceCode的学习记录。学习资料多来于老罗的csdn，仅作为自己的学习笔记。
+            本文先分析android sdk中的启动过程,参考了以下文章:
 
-Binder，进程通信的中介，是一种misc设备。整个进程通讯以binder_open打开binder设备驱动程序，binder_mmap分配通信过程中使用的内存，binder_ioctl作为用户层与驱动层的交互。
+来自郑海波的Weex Android SDK源码分析
 
-static const struct fil...
+Weex SDK Android 源码解析
+
+WXApplication
+
+一切从WXApplication出发:
+
+public class WXApplication extends Application {
+    @Override
+    public voi...
         </div>
     </a>
     <p class="post-meta">
-        Posted by Liz on February 1, 2017
+        Posted by Liz on May 23, 2017
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2017/05/12/myAngular-preface/">
+        <h2 class="post-title">
+            Build Your Own Angularjs-预备工作
+        </h2>
+        
+        <div class="post-content-preview">
+            开个Build Your Own Angularjs的翻译系列吧。个人目前熟练移动端，前端是刚入门的状态，所以有什么问题请大家多多指出。学习前端到了有点迷茫的阶段，之前android基本把一些库的源码都能很流畅的撸一遍，但直接撸前端库发现难度有点大摔，所以借着还有两个月毕业的时间，强迫自己把这本书翻译一遍，算是给自己的一个毕业礼物吧。所有代码见github
+
+从今天开始，我们要完成一个强大的...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Liz on May 12, 2017
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2017/05/05/droidPlugin2/">
+        <h2 class="post-title">
+            DroidPlugin系列之二
+        </h2>
+        
+        <div class="post-content-preview">
+            事实证明我已经忘了一写了啥了对我就是这么健忘,欧耶(大概是最近毕设做傻了
+
+这次宏观上有了很充分的理解,所以也许会和第一篇有所重复
+
+build.gradle
+
+defaultConfig{
+    // 建议改为自己的 packageName + .droidplugin_stub ，防止跟其它本插件使用者冲突
+    def authorityName = "com.morgoo.dro...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Liz on May 5, 2017
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2017/05/02/multiDex&InstantRun/">
+        <h2 class="post-title">
+            MultiDex & Instant Run
+        </h2>
+        
+        <div class="post-content-preview">
+            ClassLoader
+
+
+
+
+  
+    PathClassLoader是Android应用中的默认加载器，PathClassLoader只能加载/data/app中的apk，也就是已经安装到手机中的apk。这个也是PathClassLoader作为默认的类加载器的原因，因为一般程序都是安装了，在打开，这时候PathClassLoader就去加载指定的apk(解压成dex，然后在优化成o...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Liz on May 2, 2017
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2017/05/02/andfix/">
+        <h2 class="post-title">
+            Andfix分析
+        </h2>
+        
+        <div class="post-content-preview">
+            今天分析一下Andfix,why,要有这么多平台。大家共同维护一个好好的爱不行吗？
+
+说到底Andfix逻辑极为简单,还是很佩服Ali的人。通过baksmali把更改的类和方法写到注解中去,然后在native层通过方法结构体的替换实现方法级别的热补丁。当然缺点很多,无法改变变量(它自己没处理),增加方法没办法等。不过,这些真的是严重bug的话都可以通过把代码写的简陋点来绕过。
+
+java层代...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Liz on May 2, 2017
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2017/04/29/javascript-one/">
+        <h2 class="post-title">
+            JavaScript学习一
+        </h2>
+        
+        <div class="post-content-preview">
+            移动端狗发现大前端才是未来的方向,所以学习一下Js。其实个人很讨厌Js,很久以前也学过发现毫无兴趣,感觉非常没有逻辑(不要打我),但都开始改RN了还是先巩固一下基础吧&gt; &lt;
+
+对象
+
+在Js中,对象是属性的集合。
+
+//||可以填充默认值
+var middle = a["xx"]||"unknown"
+
+
+
+原型
+
+这个系列讲的太好了,哭泣
+
+对象都是通过函数创建的,函数也是对象...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Liz on April 29, 2017
+    </p>
+</div>
+<hr>
+
+<div class="post-preview">
+    <a href="/2017/04/28/gradleAndNuwa/">
+        <h2 class="post-title">
+            Gradle实战与Nuwa顺带分析
+        </h2>
+        
+        <div class="post-content-preview">
+            很棒的总结
+
+很好的语法总结
+
+Gradle基本
+
+
+
+我们知道,一个Task的生命周期分三部分:初始化,配置,执行。
+
+
+  
+    初始化阶段，会去读取根工程中setting.gradle中的include信息，决定有哪几个工程加入构建，创建project实例，比如下面有三个工程：include ':app', ':lib1', ':lib2'
+  
+  
+    配置阶段，会去执行所...
+        </div>
+    </a>
+    <p class="post-meta">
+        Posted by Liz on April 28, 2017
     </p>
 </div>
 <hr>
 
 
 <!-- Pager -->
+
+<ul class="pager">
+    
+    
+    <li class="next">
+        <a href="/page2">Older Posts &rarr;</a>
+    </li>
+    
+</ul>
 
 
             </div>
@@ -255,6 +410,118 @@ static const struct fil...
                 sidebar-container">
 
                 <!-- Featured Tags -->
+                
+                <section>
+                    <!-- no hr -->
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Android" title="Android" rel="7">
+                                    Android
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#SourceCode" title="SourceCode" rel="5">
+                                    SourceCode
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Linux" title="Linux" rel="3">
+                                    Linux
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#DroidPlugin" title="DroidPlugin" rel="2">
+                                    DroidPlugin
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Java" title="Java" rel="6">
+                                    Java
+                                </a>
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#阅读笔记" title="阅读笔记" rel="2">
+                                    阅读笔记
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Concurrent" title="Concurrent" rel="5">
+                                    Concurrent
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#插件化" title="插件化" rel="3">
+                                    插件化
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#热补丁" title="热补丁" rel="2">
+                                    热补丁
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+                				<a href="/tags/#Weex" title="Weex" rel="2">
+                                    Weex
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Js" title="Js" rel="2">
+                                    Js
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#源码分析" title="源码分析" rel="4">
+                                    源码分析
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
                 
 
                 <!-- Friends Blog -->
