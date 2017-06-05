@@ -36,9 +36,15 @@ public void fetchAllContacts() {
 
 ![](/img/2017-06-05-contentprovider/14965637004854.jpg)
 
+
+
 ![](/img/2017-06-05-contentprovider/14965635212328.jpg)
 
+
+
 ![](/img/2017-06-05-contentprovider/14965637994922.jpg)
+
+
 
 ![](/img/2017-06-05-contentprovider/14965639121555.jpg)
 
@@ -52,7 +58,11 @@ public void fetchAllContacts() {
 ![](/img/2017-06-05-contentprovider/14965642020755.jpg)
 
 注意`cpr,cpi`是关键变量。首先检查`mProviderMap`中是否有对应`authority`的`cpr`
+
+
 ![](/img/2017-06-05-contentprovider/14965646849696.jpg)
+
+
 
 ![](/img/2017-06-05-contentprovider/14965647885129.jpg)
 
