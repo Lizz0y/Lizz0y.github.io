@@ -1,0 +1,233 @@
+---
+layout:     post
+title:      "android中的消息循环"
+date:       2017-08-29
+author:     "Liz"
+header-img: "img/sky.jpg"
+tags:
+    - Android 
+    - SourceCode
+---
+### 消息循环 
+
+```java
+public final class ActivityThread {  
+    ......  
+  
+    public static final void main(String[] args) {  
+
+        Looper.prepareMainLooper();  //sThreadLocal.set(new Looper());  
+        ActivityThread thread = new ActivityThread(); //H mH = new H();   
+        thread.attach(false);  
+        Looper.loop();  
+        thread.detach();  
+
+    }  
+}  
+```
+
+以上是主线程消息循环的创建过程。对于子线程来说，创建Handler时使用`new Handler(thread.getLooper())`
+
+
+#### Looper.cpp
+
+```c
+int result = pipe(wakeFds);  
+mWakeReadPipeFd = wakeFds[0];  
+mWakeWritePipeFd = wakeFds[1];  
+mEpollFd = epoll_create(EPOLL_SIZE_HINT);  
+struct epoll_event eventItem;  
+memset(& eventItem, 0, sizeof(epoll_event)); // zero out unused members of data field union  
+eventItem.events = EPOLLIN;  
+eventItem.data.fd = mWakeReadPipeFd;  
+result = epoll_ctl(mEpollFd, EPOLL_CTL_ADD, mWakeReadPipeFd, & eventItem);  
+```
+
+通过管道+epoll，主线程在消息队列中没有消息时要进入等待状态以及当消息队列有消息时要把应用程序主线程唤醒
+
+监控mWakeReadPipeFd文件描述符的EPOLLIN事件，即当管道中有内容可读时，就唤醒当前正在等待管道中的内容的线程。
+
+
+这里解释一下，管道和epoll的作用。管道是负责读和取。作为Linux弱智的我一开始总是不明白为什么有了管道还要有epoll,其实这两个是并列的关系，epoll/poll/select都是会**阻塞进程**的，在有多个Fd的时候，使用它们不需要使用多个程序来一一控制，多路复用最大的意义在于可以一个socket控制多个Fd。一个程序可以程序监视多个文件句柄(file descriptor)的状态变化。在后面，我们会看到Looper有一个addFd的接口，mLooper中的一个mEpollFd可以控制监视多个文件句柄。
+
+可以简单介绍一下epoll与select最大的区别，epoll中会维持一个队列，记录发生事件的Fd,而select不会维护导致上层需要遍历找到发生事件的Fd。epoll注册的时候可以有callback,当Fd发生事件时，会去回调这个callback。
+
+>pollInner
+
+```c
+int eventCount = epoll_wait(mEpollFd, eventItems, EPOLL_MAX_EVENTS, timeoutMillis);  
+nRead = read(mWakeReadPipeFd, buffer, sizeof(buffer));  
+```
+
+使用epoll_wait等待事件发生或是超时，然后从readPipeFd中读出数据。
+
+### 消息发送
+
+`queue.enqueueMessage(msg, uptimeMillis);  `
+
+将消息按消息的when插入到mMessage队列中
+
+### 消息接受
+
+通过write唤醒。
+
+这里特别要注意,pipe生成的read/write Fd只是用来通知唤醒，write只会往里写一个简单的1，read也只会去读出内容是否为1。真正的消息还是存放在下图中的mMessage队列中。这一点还是很有意思的。（管道不能传输太多数据？
+
+![](/img/2017-08-29-Handler/15040198460992.jpg)
+
+
+
+
+>handler.java
+
+```java
+public void dispatchMessage(Message msg) {  
+    if (msg.callback != null) {  
+        handleCallback(msg);  
+    } else {  
+        if (mCallback != null) {  
+            if (mCallback.handleMessage(msg)) {  
+                return;  
+            }  
+        }  
+        handleMessage(msg);  
+    }  
+}  
+```
+
+这个也值得记录。
+
+#### HandlerThread
+ 
+ `Handler sWorker = new Handler(sWorkerThread.getLooper());  //handlerThread`
+ 
+ 初始化的时候会`Looper.prepare,loop`
+ 
+#### 神秘的Toast报错
+ 
+ [来自知乎](https://www.zhihu.com/question/51099935/answer/125487934)
+ 
+ 涨姿势，Toast在创建的时候会进行`Handler myHandler = new Handler()`
+ 所以，如果不在主线程明显这句代码是会抛出错误的
+ 
+>
+```java
+new Thread(){
+    public void run(){
+      Looper.prepare();//给当前线程初始化Looper
+      Toast.makeText(getApplicationContext(),"你猜我能不能弹出来～～",0).show();//Toast初始化的时候会new Handler();无参构造默认获取当前线程的Looper，如果没有prepare过，则抛出题主描述的异常。上一句代码初始化过了，就不会出错。
+      Looper.loop();//这句执行，Toast排队show所依赖的Handler发出的消息就有人处理了，Toast就可以吐出来了。但是，这个Thread也阻塞这里了，因为loop()是个for (;;) ...
+    }
+  }.start();
+```
+
+ 
+### InputManager
+
+![](/img/2017-08-29-Handler/15040198266019.jpg)
+
+
+WindowManagerService在启动的时候就会通过系统输入管理器InputManager来总负责监控键盘消息。这些键盘消息一般都是分发给当前激活的Activity窗口来处理的，因此，当前激活的Activity窗口在创建的时候，会到WindowManagerService中去注册一个接收键盘消息的通道，表明它要处理键盘消息，而当InputManager监控到有键盘消息时，就会分给给它处理。当当前激活的Activity窗口不再处于激活状态时，它也会到WindowManagerService中去反注册之前的键盘消息接收通道
+ 
+ 
+
+ 
+#### poll
+ 
+inputReadThread会通过EventHub看是否有键盘事件发生，如果没有，通过poll来睡眠等待
+
+`int pollResult = poll(mFDs, mFDCount, -1); `
+
+这是一个Linux系统的文件操作系统调用，它用来查询指定的文件列表是否有有可读写的，如果有，就马上返回，否则的话，就阻塞线程，并等待驱动程序唤醒，重新调用poll函数，或超时返回。在我们的这个场景中，就是要查询是否有键盘事件发生，如果有的话，就返回，否则的话，当前线程就睡眠等待键盘事件的发生了。
+
+#### inputChannel
+
+` new InputChannel(serverChannelName,  
+                            serverAshmemFd, reverse[0], forward[1]);  `
+                            
+` new InputChannel(clientChannelName,  
+                            clientAshmemFd, forward[0], reverse[1]);    `
+
+>InputDispatcher.cpp
+
+```java
+sp<Connection> connection = new Connection(inputChannel);  
+status_t status = connection->initialize();  
+if (status) {  
+    LOGE("Failed to initialize input publisher for input channel '%s', status=%d",  
+        inputChannel->getName().string(), status);  
+    return status;  
+}  
+
+int32_t receiveFd = inputChannel->getReceivePipeFd();  
+mConnectionsByReceiveFd.add(receiveFd, connection);  
+
+if (monitor) {  
+    mMonitoringChannels.push(inputChannel);  
+}  
+
+mLooper->addFd(receiveFd, 0, ALOOPER_EVENT_INPUT, handleReceiveCallback, this);  //inputDispatcherThread.looper
+```
+
+client端：`looper->addFd(receiveFd, 0, ALOOPER_EVENT_INPUT, handleReceiveCallback, this); //mainLooper`
+
+回调函数：handleReceiveCallback（前面提到过
+
+```java
+ @Override  
+public boolean dispatchKeyEvent(KeyEvent event) {  
+    final Callback cb = getCallback();  
+    final boolean handled = cb != null && mFeatureId < 0 ? cb.dispatchKeyEvent(event)  
+        : super.dispatchKeyEvent(event);  
+}  
+```
+这里通过getCallback函数返回的是当前应用程序的激活的Activity窗口的Window.Callback接口，一般它不为NULL，因此，这个函数会调用Activity类的dispatchKeyEvent来处理这个键盘事件。
+
+
+```java
+public class KeyEvent extends InputEvent implements Parcelable {  
+    ......  
+  
+    public final boolean dispatch(Callback receiver, DispatcherState state,  
+            Object target) {  
+        switch (mAction) {  
+        case ACTION_DOWN: {  
+            ......  
+            boolean res = receiver.onKeyDown(mKeyCode, this);  
+            ......  
+            return res;  
+        }  
+        case ACTION_UP:  
+            ......  
+            return receiver.onKeyUp(mKeyCode, this);  
+        case ACTION_MULTIPLE:  
+            final int count = mRepeatCount;  
+            final int code = mKeyCode;  
+            if (receiver.onKeyMultiple(code, count, this)) {  
+                return true;  
+            }  
+            ......  
+            return false;  
+        }  
+        return false;  
+    }  
+  
+    ......  
+}  
+```
+
+
+#### Looper.addFd
+
+注册到epoll中,同时发生事件时进行回调。
+
+### 总结
+
+我们可以总结一下，
+
+>  A. 键盘事件发生，InputManager中的InputReader被唤醒，此前InputReader睡眠在/dev/input/event0这个设备文件上；
+B. InputReader被唤醒后，它接着唤醒InputManager中的InputDispatcher，此前InputDispatcher睡眠在InputManager所运行的线程中的Looper对象里面的管道的读端上；这是looper内部的管道
+C. InputDispatcher被唤醒后，它接着唤醒应用程序的主线程来处理这个键盘事件，此前应用程序的主线程睡眠在Client端InputChannel中的前向管道的读端上；
+D. 应用程序处理处理键盘事件之后，它接着唤醒InputDispatcher来执行善后工作，此前InputDispatcher睡眠在Server端InputChannel的反向管道的读端上，注意这里与第二个线索处的区别。
+C/D是Looper来自外部的管道
+
