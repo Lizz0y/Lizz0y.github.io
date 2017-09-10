@@ -1,0 +1,151 @@
+---
+layout:     post
+title:      "Asset介绍"
+date:       2017-09-10
+author:     "Liz"
+header-img: "img/waterfall.jpg"
+tags:
+    - Android
+    - SourceCode
+    - Resource
+---
+
+资源打包我感觉我至少看了三次了。。每次看完都属于一脸懵逼的状态，因为我觉得整个过程aapt似乎一直在做重复的事情。。。
+
+后来我也想通了，有些东西不用细究，不管aapt怎么搞，最后打包到apk里面的就是一个resources.asrc和R.java，所以把这两个搞清楚也差不多了。
+
+
+### 大致框架
+
+其实资源中最复杂的就是与配置config有关，也就是平时我们看到的ldpi,mdpi..
+
+在具体分析之前，要有一个大致的框架：
+
+一个包的资源会被划分为drawable,string,layout等等系统为你规定好的的type。
+
+每个type下面有具体的key，例如layout: main.xml就是key;string的key就是key....
+
+每个key下根据不同的config又有多个value对应。
+
+同时，要有一个概念:资源有string类型的，也有id类型的...
+
+所以aapt到底做了什么？
+
+### aapt 
+
+![](/img/2017-09-10-asset/15050438411182.jpg)
+
+```xml
+project  
+  --AndroidManifest.xml  
+  --res  
+    --drawable-ldpi  
+      --icon.png  
+    --drawable-mdpi  
+      --icon.png  
+    --drawable-hdpi  
+      --icon.png  
+    --layout  
+      --main.xml  
+      --sub.xml  
+    --values  
+      --strings.xml  
+```
+
+
+#### step3 收集资源
+
+收集layout,drawable等文件类资源加入资源表中。此外res/values/strings.xml是type为values的资源，这些资源要等编译后才会被加入到资源表中。
+
+所以到这一步，资源表ResourceTable中有什么了呢，就是一个个type下的一个个小entry。
+
+![](/img/2017-09-10-asset/15050439374445.jpg)
+
+
+#### 编译values类资源
+
+![](/img/2017-09-10-asset/15050439502657.jpg)
+
+
+#### 写入字符串资源池
+
+真的把前面收集的字符串写入chunk中，后续在替换xml中的字符串时，都会用`ResStringPool_ref`表示，即在字符串资源池中的Index
+
+
+#### 遍历xml替换为二进制struct
+
+其实就是把xml用内存中的`Node`来表示。
+
+```c
+struct ResXMLTree_attribute  
+{  
+    // Namespace of this attribute.  
+    struct ResStringPool_ref ns;  
+  
+    // Name of this attribute.  
+    struct ResStringPool_ref name;  
+  
+    // The original raw string value of this attribute.  
+    struct ResStringPool_ref rawValue;  
+  
+    // Processesd typed value of this attribute.  
+    struct Res_value typedValue;  
+};  
+```
+
+这是代表属性的struct,例如orientation，每一个属性都对应一个`ResXMLTree_attribute`，主要关注Res_value, 一个属性的值经过解析之后就用一个`Res_value`来表示。 例如，对于名称为orientation的属性的值vertical来说，经过解析之后，它就会用一个Res_value来表示，
+ 又如，对于第一个Button的属性text来说，它所对应的ResXMLTree_attribute的成员变量typedValue所指向的一个Res_value的各个成员变量的值如下所示：
+
+
+>--dataType：等于TYPE_REFERENCE，表示数据类型，即这是一个引用值。
+--data：等于分配给名称“start_in_process”的字符串的资源ID值，它的Package ID等于0x7f，而Type ID等于0x05，Entry ID取决于它的出现次序。
+        
+所以在遍历xml中,发现新的资源时会新增entry:
+![](/img/2017-09-10-asset/15050441011978.jpg)
+![](/img/2017-09-10-asset/15050441198717.jpg)
+
+
+#### resources.asrc
+
+![](/img/2017-09-10-asset/15050441301167.jpg)
+这里要注意，最上面的字符串是资源**值**的字符串。后面每个`package`中的资源类型是`drawable,layout`这一些,而资源项名称字符串池是`key`的字符串。
+
+##### 写入类型规范数据块
+
+以type为key:
+![](/img/2017-09-10-asset/15050442120160.jpg)
+
+0是uint32_t，用来描述一个资源项的配置差异性的,如果有不同配置，用来描述它的配置差异性的uint32_t的第`CONFIG_DENSITY`位就等于1
+
+##### 写入类型资源项数据块
+
+以type+config为key:
+
+![](/img/2017-09-10-asset/15050442501308.jpg)
+
+每一个资源项数据都是通过一个`ResTable_entry`来定义的,entry中包含`Res_Value`,代表这个资源项的值。
+
+
+### AssetManager && 解析资源
+
+![](/img/2017-09-10-asset/15050443706422.jpg)
+
+可以看到,AssetManager在初始化的时候会`addAssetPath`,一般是系统加`app`两个路径，不过当有插件的时候我们也可以自己加进去。`StringBlocks`是资源**值**字符串资源池。
+
+
+
+>在setContentView时,参数id描述的是一个类型为layout的资源ID，类型为layout的资源ID对应的资源值即为一个UI布局文件名称。有了这个UI布局文件名称之后，Resources类的成员函数loadXmlResourceParser会加载对应的UI布局文件，并且得到一个XmlResourceParser对象返回给调用者。
+
+
+### aapt改造
+
+看了携程的aapt改造,大致思路如下:
+
+先说一下目的，主要就是解决插件apk的资源会和主包的资源id重复的问题。那么就想到把插件资源id的packageId与普通主包的0x7f作区分。
+
+* 在aapt编译资源时，会初始化ResourceTable类,这个类因为知道是在编译应用app所以packageId一定是0x7f,这时候我们可以增加命令行参数传入我们希望并合法的packageId,并在RT类初始化时判断是否有这个参数，如果有就把packageId进行更改即可将该资源的packageId与普通的0x7f进行区分。
+* 在context初始化启动AssetManager时，要注意将包含插件apk的资源包加入到assetPath不然是找不到的。方法是系统的`AssetManager.addAssetPath`
+
+
+后面有空再总结一下主流插件中的资源处理方法和我们项目中遇到的问题 ：）
+
